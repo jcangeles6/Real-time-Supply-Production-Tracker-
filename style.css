@@ -1,0 +1,32 @@
+/* Sidebar */
+.sidebar {
+    width: 220px;
+    background: #8b4513;
+    color: #fff;
+    height: 100vh;
+    position: fixed;
+    top: 0;
+    left: 0;
+    padding: 20px 0;
+}
+.sidebar h2 {
+    text-align: center;
+    margin-bottom: 30px;
+    color: #ffffff !important;  /* force white */
+    font-weight: bold;
+    font-size: 22px;
+}
+.sidebar a {
+    display: block;
+    color: #fff;
+    padding: 12px 20px;
+    text-decoration: none;
+    font-weight: bold;
+}
+.sidebar a:hover {
+    background: #a0522d;
+}
+.sidebar a.active {
+    background: #5a2d0c;   /* Darker highlight */
+    border-radius: 6px;
+}
