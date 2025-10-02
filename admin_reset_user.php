@@ -1,6 +1,5 @@
 <?php
-include 'db.php';
-session_start();
+include 'backend/init.php';
 
 // Restrict access to admin
 if (!isset($_SESSION['username']) || $_SESSION['username'] !== 'admin') {

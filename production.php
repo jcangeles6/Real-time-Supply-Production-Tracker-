@@ -1,5 +1,5 @@
 <?php
-include 'db.php'; // connection file
+include 'backend/init.php';
 
 // Daily Batches
 $daily_batches = $conn->query("SELECT COUNT(*) as count FROM batches WHERE DATE(scheduled_at) = CURDATE()")->fetch_assoc()['count'];

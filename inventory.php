@@ -1,5 +1,5 @@
 <?php
-include 'db.php';
+include 'backend/init.php';
 
 // Fetch inventory
 $result = $conn->query("SELECT id, item_name, quantity, unit, status, updated_at FROM inventory ORDER BY item_name ASC");

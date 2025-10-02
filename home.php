@@ -1,12 +1,5 @@
 <?php
-session_start();
-include 'db.php';
-
-// Redirect to login if not logged in
-if (!isset($_SESSION['user_id'])) {
-    header("Location: login.php");
-    exit();
-}
+include 'backend/init.php';
 
 // Get username
 $user_id = $_SESSION['user_id'];

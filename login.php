@@ -1,34 +1,84 @@
 <?php
-include 'db.php';
-session_start();
+include __DIR__ . '/backend/init.php'; // Adjust path if needed
 
 $error_message = ''; // Variable to store error messages
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $username = $_POST['username'];
-    $password = $_POST['password'];
+    $username = trim($_POST['username']);
+    $password = trim($_POST['password']);
 
-    $stmt = $conn->prepare("SELECT id, password, is_admin FROM users WHERE username = ?");
+    // 🔹 Modified query: fetch failed_attempts and locked_until
+    $stmt = $conn->prepare("
+        SELECT id, password, is_admin, failed_attempts, locked_until 
+        FROM users 
+        WHERE username = ?
+    ");
     $stmt->bind_param("s", $username);
     $stmt->execute();
     $stmt->store_result();
-    $stmt->bind_result($user_id, $hash, $is_admin);
+    $stmt->bind_result($user_id, $hash, $is_admin, $failed_attempts, $locked_until);
 
-    if ($stmt->fetch() && password_verify($password, $hash)) {
-        $_SESSION['user_id'] = $user_id;
-        $_SESSION['username'] = $username;
-        $_SESSION['is_admin'] = $is_admin; // Store admin status in session
+    if ($stmt->fetch()) {
+        $current_page = basename($_SERVER['PHP_SELF']); // Get current page name
 
-        if ($is_admin == 1) {
-            // Redirect to admin dashboard if the user is an admin
-            header("Location: admin_dashboard.php");
+        // ✅ Only enforce lockout if NOT on forgot/reset password pages
+        if (!in_array($current_page, ['forgot_password.php', 'reset_password.php'])) {
+            if ($locked_until && strtotime($locked_until) > time()) {
+                $error_message = "⛔ Account is locked. Try again after " . $locked_until;
+            }
+        }
+
+        // ✅ Continue with login if not locked
+        if (!$error_message && password_verify($password, $hash)) {
+            // Success → reset attempts + unlock
+            $reset_stmt = $conn->prepare("
+                UPDATE users 
+                SET failed_attempts = 0, locked_until = NULL 
+                WHERE id = ?
+            ");
+            $reset_stmt->bind_param("i", $user_id);
+            $reset_stmt->execute();
+
+            session_regenerate_id(true);
+            $_SESSION['user_id']   = $user_id;
+            $_SESSION['username']  = $username;
+            $_SESSION['is_admin']  = $is_admin;
+
+            if ($is_admin == 1) {
+                header("Location: admin_dashboard.php");
+            } else {
+                header("Location: home.php");
+            }
+            exit();
         } else {
-            // Redirect to user homepage or normal dashboard
-            header("Location: home.php");
+            // ❌ Wrong password → increment attempts
+            $failed_attempts++;
+            if ($failed_attempts >= 5) {
+                // Lock for 10 minutes
+                $lock_time = date("Y-m-d H:i:s", strtotime("+10 minutes"));
+                $update_stmt = $conn->prepare("
+                    UPDATE users 
+                    SET failed_attempts = ?, locked_until = ? 
+                    WHERE id = ?
+                ");
+                $update_stmt->bind_param("isi", $failed_attempts, $lock_time, $user_id);
+                $update_stmt->execute();
+
+                $error_message = "⛔ Too many failed attempts. Account locked until $lock_time.";
+            } else {
+                $update_stmt = $conn->prepare("
+                    UPDATE users 
+                    SET failed_attempts = ? 
+                    WHERE id = ?
+                ");
+                $update_stmt->bind_param("ii", $failed_attempts, $user_id);
+                $update_stmt->execute();
+
+                $error_message = "Invalid username or password. Attempts left: " . (5 - $failed_attempts);
+            }
         }
     } else {
-        // Display error message if login fails
-        $error_message = 'Login failed. Invalid username or password.';
+        $error_message = 'Invalid username or password.';
     }
 }
 ?>
