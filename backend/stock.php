@@ -3,13 +3,6 @@ header('Content-Type: application/json');
 session_start();
 include '../db.php';
 
-// Check user authentication
-// if (!isset($_SESSION['user_id'])) {
-//     http_response_code(401);
-//     echo json_encode(['error' => 'Unauthorized']);
-//     exit;
-// }
-
 // Helper function to get JSON input
 function getJsonInput()
 {
@@ -17,8 +10,10 @@ function getJsonInput()
     return json_decode($input, true);
 }
 
-// GET → fetch all stocks or single stock by ID
+// GET → fetch stocks
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+
+    // Fetch single stock by ID
     if (isset($_GET['id']) && !empty($_GET['id'])) {
         $id = intval($_GET['id']);
         $stmt = $conn->prepare("SELECT * FROM inventory WHERE id = ?");
@@ -26,6 +21,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         $stmt->execute();
         $result = $stmt->get_result();
         $stock = $result->fetch_assoc();
+        $stmt->close();
 
         if ($stock) {
             echo json_encode($stock);
@@ -36,13 +32,82 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         exit;
     }
 
-    // If no ID provided, return all stocks
-    $result = $conn->query("SELECT * FROM inventory ORDER BY updated_at DESC");
+    // Pagination params
+    $page = isset($_GET['page']) ? intval($_GET['page']) : 1;
+    $limit = isset($_GET['limit']) ? intval($_GET['limit']) : 10;
+    $offset = ($page - 1) * $limit;
+
+    // Filter & search
+    $filter = isset($_GET['filter']) ? trim($_GET['filter']) : 'item_name';
+    $search = isset($_GET['search']) ? trim($_GET['search']) : '';
+
+    // Allowed filter columns
+    $allowedFilters = ['item_name', 'quantity', 'status'];
+    if (!in_array($filter, $allowedFilters)) {
+        $filter = 'item_name';
+    }
+
     $stocks = [];
+    $total = 0;
+
+    if ($search !== '') {
+        if ($filter === 'quantity' && is_numeric($search)) {
+            // Quantity “contains” search (e.g., 5 matches 5, 56, 54)
+            $searchParam = "%{$search}%";
+            $stmt = $conn->prepare("
+            SELECT * 
+            FROM inventory 
+            WHERE quantity LIKE ? 
+            ORDER BY quantity ASC, id ASC
+            LIMIT ? OFFSET ?
+        ");
+            $stmt->bind_param("sii", $searchParam, $limit, $offset);
+
+            $countStmt = $conn->prepare("SELECT COUNT(*) as total FROM inventory WHERE quantity LIKE ?");
+            $countStmt->bind_param("s", $searchParam);
+        } else {
+            // String search for item_name or status
+            $searchParam = "%{$search}%";
+            $stmt = $conn->prepare("
+            SELECT * 
+            FROM inventory 
+            WHERE $filter LIKE ? 
+            ORDER BY quantity ASC, id ASC
+            LIMIT ? OFFSET ?
+        ");
+            $stmt->bind_param("sii", $searchParam, $limit, $offset);
+
+            $countStmt = $conn->prepare("SELECT COUNT(*) as total FROM inventory WHERE $filter LIKE ?");
+            $countStmt->bind_param("s", $searchParam);
+        }
+
+        $countStmt->execute();
+        $total = $countStmt->get_result()->fetch_assoc()['total'];
+        $countStmt->close();
+    } else {
+        // No search, just fetch all
+        $stmt = $conn->prepare("SELECT * FROM inventory ORDER BY quantity ASC, id ASC LIMIT ? OFFSET ?");
+        $stmt->bind_param("ii", $limit, $offset);
+
+        $totalResult = $conn->query("SELECT COUNT(*) as total FROM inventory");
+        $total = $totalResult->fetch_assoc()['total'];
+    }
+
+
+
+    $stmt->execute();
+    $result = $stmt->get_result();
     while ($row = $result->fetch_assoc()) {
         $stocks[] = $row;
     }
-    echo json_encode($stocks);
+    $stmt->close();
+
+    echo json_encode([
+        'page' => $page,
+        'limit' => $limit,
+        'total' => $total,
+        'stocks' => $stocks
+    ]);
     exit;
 }
 
@@ -50,7 +115,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $data = getJsonInput();
 
-    if (empty($data['item_name']) || empty($data['quantity']) || empty($data['unit']) || empty($data['status'])) {
+    if (empty($data['item_name']) || !isset($data['quantity']) || empty($data['unit']) || empty($data['status'])) {
         http_response_code(400);
         echo json_encode(['error' => 'Missing required fields']);
         exit;
@@ -83,12 +148,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
     }
 
     $id = intval($_GET['id']);
-    if ($id <= 0) {
-        http_response_code(400);
-        echo json_encode(['error' => 'Invalid stock ID']);
-        exit;
-    }
-
     $stmt = $conn->prepare("DELETE FROM inventory WHERE id = ?");
     $stmt->bind_param("i", $id);
     $stmt->execute();
@@ -99,11 +158,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
         http_response_code(404);
         echo json_encode(['error' => 'Stock item not found']);
     }
-
     $stmt->close();
     exit;
 }
 
-// If method is not GET, POST, or DELETE
+// Method not allowed
 http_response_code(405);
 echo json_encode(['error' => 'Method Not Allowed']);

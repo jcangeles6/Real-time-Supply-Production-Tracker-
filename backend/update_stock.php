@@ -14,7 +14,6 @@ if (!isset($_GET['id'])) {
 
 $id = $_GET['id'];
 
-
 // Ensure ID is numeric
 $id = intval($_GET['id']);
 
@@ -37,8 +36,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $data = json_decode(file_get_contents('php://input'), true);
     $data = $data ?? $_POST; // Fallback to form POST
 
-    // Validate required fields
-    if (empty($data['item_name']) || empty($data['quantity']) || empty($data['unit']) || empty($data['status'])) {
+    // Validate required fields (quantity 0 is allowed)
+    if (empty($data['item_name']) || !isset($data['quantity']) || empty($data['unit'])) {
         echo "Missing required fields!";
         exit();
     }
@@ -46,7 +45,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $item_name = $data['item_name'];
     $quantity = intval($data['quantity']);
     $unit = $data['unit'];
-    $status = $data['status'];
+
+    // Automatically determine status
+    if ($quantity === 0) {
+        $status = 'out';
+    } elseif ($quantity > 0 && $quantity <= 4) {
+        $status = 'low';
+    } else {
+        $status = 'available';
+    }
 
     $update = $conn->prepare("UPDATE inventory SET item_name=?, quantity=?, unit=?, status=?, updated_at=NOW() WHERE id=?");
     $update->bind_param("sissi", $item_name, $quantity, $unit, $status, $id);
@@ -112,9 +119,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             margin: 0 auto 30px;
             width: 100%;
             max-width: 600px;
-            /* same as Add Stock form */
             box-sizing: border-box;
-            /* ensure padding doesn’t overflow */
         }
 
         label {
@@ -132,7 +137,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             border: 1px solid #ccc;
             border-radius: 8px;
             box-sizing: border-box;
-            /* prevents overlap */
         }
 
         button {
@@ -153,6 +157,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             text-align: center;
             margin-bottom: 15px;
         }
+
+        .status-display {
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        .status-available {
+            color: green;
+        }
+
+        .status-low {
+            color: orange;
+        }
+
+        .status-out {
+            color: red;
+        }
     </style>
 </head>
 
@@ -166,12 +187,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <?php endif; ?>
 
         <div class="form-box">
-            <form method="POST">
+            <form method="POST" id="updateForm">
                 <label>Item Name</label>
                 <input type="text" name="item_name" value="<?= htmlspecialchars($stock['item_name']); ?>" required>
 
                 <label>Quantity</label>
-                <input type="number" name="quantity" value="<?= $stock['quantity']; ?>" min="0" required>
+                <input type="number" name="quantity" id="quantityInput" value="<?= $stock['quantity']; ?>" min="0" required>
 
                 <label>Unit</label>
                 <select name="unit" required>
@@ -182,16 +203,43 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <option value="pcs" <?= $stock['unit'] == 'pcs' ? 'selected' : '' ?>>Pieces</option>
                 </select>
 
-                <label>Status</label>
-                <select name="status" required>
-                    <option value="available" <?= $stock['status'] == 'available' ? 'selected' : '' ?>>Available</option>
-                    <option value="low" <?= $stock['status'] == 'low' ? 'selected' : '' ?>>Low</option>
-                    <option value="out" <?= $stock['status'] == 'out' ? 'selected' : '' ?>>Out of Stock</option>
-                </select>
+                <!-- Hidden status input -->
+                <input type="hidden" name="status" id="statusInput" value="<?= $stock['status']; ?>">
+
+                <!-- Status display -->
+                <div id="statusDisplay" class="status-display"></div>
 
                 <button type="submit">Update Stock</button>
             </form>
         </div>
+
+        <script>
+            const quantityInput = document.getElementById('quantityInput');
+            const statusInput = document.getElementById('statusInput');
+            const statusDisplay = document.getElementById('statusDisplay');
+
+            function updateStatus() {
+                const qty = parseInt(quantityInput.value) || 0;
+                let status = '';
+                if (qty === 0) {
+                    status = 'out';
+                    statusDisplay.textContent = 'Out of Stock';
+                    statusDisplay.className = 'status-display status-out';
+                } else if (qty > 0 && qty <= 4) {
+                    status = 'low';
+                    statusDisplay.textContent = 'Low';
+                    statusDisplay.className = 'status-display status-low';
+                } else {
+                    status = 'available';
+                    statusDisplay.textContent = 'Available';
+                    statusDisplay.className = 'status-display status-available';
+                }
+                statusInput.value = status;
+            }
+
+            quantityInput.addEventListener('input', updateStatus);
+            updateStatus(); // initialize on page load
+        </script>
     </div>
 </body>
 
