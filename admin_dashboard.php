@@ -142,6 +142,7 @@ $result = $conn->query("SELECT id, username, email, reset_requested FROM users")
 <nav>
     <ul>
         <li><a href="admin_dashboard.php">Dashboard</a></li>
+        <li><a href="backend/add_stock.php">Add Stock</a></li>
         <li><a href="logout.php">Logout</a></li>
     </ul>
 </nav>

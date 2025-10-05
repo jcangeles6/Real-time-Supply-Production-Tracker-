@@ -23,6 +23,7 @@ $batches = $conn->query("SELECT id, product_name, status, scheduled_at, complete
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -33,10 +34,13 @@ $batches = $conn->query("SELECT id, product_name, status, scheduled_at, complete
             background: #fdf9f5;
             margin: 0;
         }
-        h1, h2 {
+
+        h1,
+        h2 {
             color: #5a2d0c;
             text-align: center;
         }
+
         #clock {
             text-align: center;
             font-size: 18px;
@@ -56,10 +60,12 @@ $batches = $conn->query("SELECT id, product_name, status, scheduled_at, complete
             left: 0;
             padding: 20px 0;
         }
+
         .sidebar h2 {
             text-align: center;
             margin-bottom: 30px;
         }
+
         .sidebar a {
             display: block;
             color: #fff;
@@ -67,6 +73,7 @@ $batches = $conn->query("SELECT id, product_name, status, scheduled_at, complete
             text-decoration: none;
             font-weight: bold;
         }
+
         .sidebar a:hover {
             background: #a0522d;
         }
@@ -87,6 +94,7 @@ $batches = $conn->query("SELECT id, product_name, status, scheduled_at, complete
             border-radius: 6px;
             font-size: 14px;
         }
+
         .back-btn:hover {
             background: #5a2d0c;
         }
@@ -99,23 +107,27 @@ $batches = $conn->query("SELECT id, product_name, status, scheduled_at, complete
             flex-wrap: wrap;
             margin-bottom: 40px;
         }
+
         .card {
             background: white;
             padding: 20px;
             border-radius: 12px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
             text-align: center;
             width: 220px;
         }
+
         .card h2 {
             color: #8b4513;
             font-size: 18px;
             margin-bottom: 10px;
         }
+
         .card p {
             font-size: 14px;
             margin: 5px 0 15px;
         }
+
         .btn {
             display: inline-block;
             padding: 10px 18px;
@@ -125,6 +137,7 @@ $batches = $conn->query("SELECT id, product_name, status, scheduled_at, complete
             text-decoration: none;
             font-size: 14px;
         }
+
         .btn:hover {
             background: #5a2d0c;
         }
@@ -137,28 +150,35 @@ $batches = $conn->query("SELECT id, product_name, status, scheduled_at, complete
             background: white;
             border-radius: 12px;
             overflow: hidden;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
         }
-        th, td {
+
+        th,
+        td {
             padding: 12px;
             text-align: center;
             border-bottom: 1px solid #ddd;
         }
+
         th {
             background: #8b4513;
             color: white;
         }
+
         tr:hover {
             background: #f3e9e2;
         }
+
         .status-in_progress {
             color: #d2691e;
             font-weight: bold;
         }
+
         .status-completed {
             color: green;
             font-weight: bold;
         }
+
         .status-pending {
             color: gray;
             font-weight: bold;
@@ -176,11 +196,12 @@ $batches = $conn->query("SELECT id, product_name, status, scheduled_at, complete
         window.onload = updateClock;
 
         // Auto refresh every 10s
-        setTimeout(function(){
+        setTimeout(function() {
             location.reload();
         }, 10000);
     </script>
 </head>
+
 <body>
 
     <!-- Sidebar -->
@@ -238,20 +259,36 @@ $batches = $conn->query("SELECT id, product_name, status, scheduled_at, complete
                 <th>Status</th>
                 <th>Scheduled At</th>
                 <th>Completed At</th>
+                <th>Actions</th>
             </tr>
             <?php while ($row = $batches->fetch_assoc()): ?>
-            <tr>
-                <td><?php echo $row['id']; ?></td>
-                <td><?php echo htmlspecialchars($row['product_name']); ?></td>
-                <td class="status-<?php echo $row['status']; ?>">
-                    <?php echo ucfirst($row['status']); ?>
-                </td>
-                <td><?php echo $row['scheduled_at']; ?></td>
-                <td><?php echo $row['completed_at'] ?? '—'; ?></td>
-            </tr>
+                <tr>
+                    <td><?php echo $row['id']; ?></td>
+                    <td><?php echo htmlspecialchars($row['product_name']); ?></td>
+                    <td class="status-<?php echo $row['status']; ?>">
+                        <?php echo ucfirst($row['status']); ?>
+                    </td>
+                    <td><?php echo $row['scheduled_at']; ?></td>
+                    <td><?php echo $row['completed_at'] ?? '—'; ?></td>
+                    <td>
+                        <?php if ($row['status'] === 'scheduled'): ?>
+                            <a href="update_batch.php?id=<?php echo $row['id']; ?>&status=in_progress" class="btn">▶ Start</a>
+                        <?php elseif ($row['status'] === 'in_progress'): ?>
+                            <a href="update_batch.php?id=<?php echo $row['id']; ?>&status=completed" class="btn">✅ Complete</a>
+                        <?php else: ?>
+                            <span style="color:gray;">✔ Done</span>
+                        <?php endif; ?>
+                        <!-- Delete Button -->
+                        <a href="delete_batch.php?id=<?php echo $row['id']; ?>"
+                            onclick="return confirm('Are you sure you want to delete this batch?');"
+                            class="btn"
+                            style="background:#b22222;">🗑 Delete</a>
+                    </td>
+                </tr>
             <?php endwhile; ?>
         </table>
     </div>
 
 </body>
+
 </html>
