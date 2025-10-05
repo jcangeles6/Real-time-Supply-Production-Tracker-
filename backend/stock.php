@@ -4,20 +4,39 @@ session_start();
 include '../db.php';
 
 // Check user authentication
-if (!isset($_SESSION['user_id'])) {
-    http_response_code(401);
-    echo json_encode(['error' => 'Unauthorized']);
-    exit;
-}
+// if (!isset($_SESSION['user_id'])) {
+//     http_response_code(401);
+//     echo json_encode(['error' => 'Unauthorized']);
+//     exit;
+// }
 
 // Helper function to get JSON input
-function getJsonInput() {
+function getJsonInput()
+{
     $input = file_get_contents('php://input');
     return json_decode($input, true);
 }
 
-// GET → fetch all stocks
+// GET → fetch all stocks or single stock by ID
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+    if (isset($_GET['id']) && !empty($_GET['id'])) {
+        $id = intval($_GET['id']);
+        $stmt = $conn->prepare("SELECT * FROM inventory WHERE id = ?");
+        $stmt->bind_param("i", $id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $stock = $result->fetch_assoc();
+
+        if ($stock) {
+            echo json_encode($stock);
+        } else {
+            http_response_code(404);
+            echo json_encode(['error' => 'Stock not found']);
+        }
+        exit;
+    }
+
+    // If no ID provided, return all stocks
     $result = $conn->query("SELECT * FROM inventory ORDER BY updated_at DESC");
     $stocks = [];
     while ($row = $result->fetch_assoc()) {
@@ -72,13 +91,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
 
     $stmt = $conn->prepare("DELETE FROM inventory WHERE id = ?");
     $stmt->bind_param("i", $id);
+    $stmt->execute();
 
-    if ($stmt->execute()) {
+    if ($stmt->affected_rows > 0) {
         echo json_encode(['success' => true]);
     } else {
-        http_response_code(500);
-        echo json_encode(['error' => 'Failed to delete stock']);
+        http_response_code(404);
+        echo json_encode(['error' => 'Stock item not found']);
     }
+
     $stmt->close();
     exit;
 }
