@@ -7,7 +7,7 @@ $message = "";
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $username = trim($_POST['username']);
     $email = trim($_POST['email']);
-    $password = $_POST['password'];
+    $password = trim($_POST['password']); // already trimmed
     $security_question = trim($_POST['security_question']);
     $security_answer = trim($_POST['security_answer']);
 
@@ -15,11 +15,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (empty($username) || empty($email) || empty($password) || empty($security_question) || empty($security_answer)) {
         $message = "❌ All fields are required.";
     } else {
-        // Hash password and security answer
-        $hashed_password = password_hash($password, PASSWORD_DEFAULT);
-        $hashed_answer = password_hash($security_answer, PASSWORD_DEFAULT);
+        // Check password strength
+        $uppercase    = preg_match('@[A-Z]@', $password);
+        $number       = preg_match('@[0-9]@', $password);
+        $specialChars = preg_match('@[^\w]@', $password);
 
-        // Insert into database
+        if (strlen($password) < 8 || !$uppercase || !$number || !$specialChars) {
+            $message = "❌ Password must be at least 8 characters long and include at least 1 uppercase letter, 1 number, and 1 special character.";
+        }
+    }
+
+    // Only insert if no errors
+    if (empty($message)) {
+        $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+        $hashed_answer   = password_hash($security_answer, PASSWORD_DEFAULT);
+
         $stmt = $conn->prepare("INSERT INTO users (username, email, password, security_question, security_answer) VALUES (?, ?, ?, ?, ?)");
         $stmt->bind_param("sssss", $username, $email, $hashed_password, $security_question, $hashed_answer);
 
@@ -34,6 +44,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <title>Register</title>
@@ -148,8 +159,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
             input[type="text"],
-            input[type="password"],
-            input[type="email"] {
+            input[type="email"],
+            input[type="password"] {
                 font-size: 14px;
             }
 
@@ -159,44 +170,56 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     </style>
 </head>
+
 <body>
 
-    <div class="register-container">
-        <h2>User Registration</h2>
+<div class="register-container">
+    <h2>User Registration</h2>
 
-        <!-- Display messages (success or error) -->
-        <?php if ($message): ?>
-            <div class="message <?php echo strpos($message, '✅') !== false ? 'success' : 'error'; ?>">
-                <?php echo $message; ?>
-            </div>
-        <?php endif; ?>
+    <!-- Display messages (success or error) -->
+    <?php if ($message): ?>
+        <div class="message <?php echo strpos($message, '✅') !== false ? 'success' : 'error'; ?>">
+            <?php echo $message; ?>
+        </div>
+    <?php endif; ?>
 
-        <form method="POST">
-            <label for="username">Username:</label>
-            <input type="text" name="username" required placeholder="Enter your username">
+    <form method="POST">
+        <label for="username">Username:</label>
+        <input type="text" name="username" required placeholder="Enter your username">
 
-            <label for="email">Email:</label>
-            <input type="email" name="email" required placeholder="Enter your email">
+        <label for="email">Email:</label>
+        <input type="email" name="email" required placeholder="Enter your email">
 
-            <label for="password">Password:</label>
-            <input type="password" name="password" required placeholder="Enter your password">
+        <label for="password">Password:</label>
+        <input type="password" name="password" id="password" required placeholder="Enter your password" style="margin-bottom: 0;">
+        <small style="color: #555; font-size: 12px; display: block; margin-top: 2px; margin-bottom: 16px;">
+            Password must be at least 8 characters and include 1 uppercase letter, 1 number, and 1 special character. Spaces are not allowed.
+        </small>
 
-            <label for="security_question">Security Question:</label>
-            <select name="security_question" required>
-                <option value="">-- Select a question --</option>
-                <option value="What is your favorite color?">What is your favorite color?</option>
-                <option value="What is your mother's maiden name?">What is your mother's maiden name?</option>
-                <option value="What is your first pet's name?">What is your first pet's name?</option>
-            </select>
+        <label for="security_question">Security Question:</label>
+        <select name="security_question" required>
+            <option value="">-- Select a question --</option>
+            <option value="What is your favorite color?">What is your favorite color?</option>
+            <option value="What is your mother's maiden name?">What is your mother's maiden name?</option>
+            <option value="What is your first pet's name?">What is your first pet's name?</option>
+        </select>
 
-            <label for="security_answer">Answer to Security Question:</label>
-            <input type="text" name="security_answer" required placeholder="Enter the answer">
+        <label for="security_answer">Answer to Security Question:</label>
+        <input type="text" name="security_answer" required placeholder="Enter the answer">
 
-            <button type="submit">Register</button>
-        </form>
+        <button type="submit">Register</button>
+    </form>
 
-        <p>Already have an account? <a href="login.php">Log in here</a>.</p>
-    </div>
+    <p>Already have an account? <a href="login.php">Log in here</a>.</p>
+</div>
+
+<script>
+    const passwordInput = document.getElementById('password');
+    passwordInput.addEventListener('input', () => {
+        // Remove spaces in real-time as the user types
+        passwordInput.value = passwordInput.value.replace(/\s/g, '');
+    });
+</script>
 
 </body>
 </html>

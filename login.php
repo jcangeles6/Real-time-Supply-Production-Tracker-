@@ -1,13 +1,14 @@
 <?php
 include __DIR__ . '/backend/init.php'; // Adjust path if needed
 
-$error_message = ''; // Variable to store error messages
+date_default_timezone_set('Asia/Manila');
+
+$error_message = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $username = trim($_POST['username']);
-    $password = trim($_POST['password']);
+    $password = $_POST['password']; // DO NOT trim or remove spaces here
 
-    // 🔹 Modified query: fetch failed_attempts and locked_until
     $stmt = $conn->prepare("
         SELECT id, password, is_admin, failed_attempts, locked_until 
         FROM users 
@@ -19,18 +20,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $stmt->bind_result($user_id, $hash, $is_admin, $failed_attempts, $locked_until);
 
     if ($stmt->fetch()) {
-        $current_page = basename($_SERVER['PHP_SELF']); // Get current page name
+        $current_page = basename($_SERVER['PHP_SELF']);
 
-        // ✅ Only enforce lockout if NOT on forgot/reset password pages
         if (!in_array($current_page, ['forgot_password.php', 'reset_password.php'])) {
             if ($locked_until && strtotime($locked_until) > time()) {
                 $error_message = "⛔ Account is locked. Try again after " . $locked_until;
             }
         }
 
-        // ✅ Continue with login if not locked
         if (!$error_message && password_verify($password, $hash)) {
-            // Success → reset attempts + unlock
             $reset_stmt = $conn->prepare("
                 UPDATE users 
                 SET failed_attempts = 0, locked_until = NULL 
@@ -51,11 +49,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             exit();
         } else {
-            // ❌ Wrong password → increment attempts
             $failed_attempts++;
             if ($failed_attempts >= 5) {
-                // Lock for 10 minutes
-                $lock_time = date("Y-m-d H:i:s", strtotime("+10 minutes"));
+                $lock_time = date("Y-m-d H:i:s", strtotime("+5 minutes"));
                 $update_stmt = $conn->prepare("
                     UPDATE users 
                     SET failed_attempts = ?, locked_until = ? 
@@ -64,7 +60,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $update_stmt->bind_param("isi", $failed_attempts, $lock_time, $user_id);
                 $update_stmt->execute();
 
-                $error_message = "⛔ Too many failed attempts. Account locked until $lock_time.";
+                $formatted_lock_time = date("M d, Y, h:i:s A", strtotime($lock_time));
+                $error_message = "⛔ Too many failed attempts. Account locked until $formatted_lock_time.";
             } else {
                 $update_stmt = $conn->prepare("
                     UPDATE users 
@@ -85,6 +82,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <title>Login</title>
@@ -203,6 +201,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     </style>
 </head>
+
 <body>
 
     <div class="login-container">
@@ -228,4 +227,5 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </div>
 
 </body>
+
 </html>

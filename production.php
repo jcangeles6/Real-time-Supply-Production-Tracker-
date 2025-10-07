@@ -268,8 +268,8 @@ $batches = $conn->query("SELECT id, product_name, status, scheduled_at, complete
                     <td class="status-<?php echo $row['status']; ?>">
                         <?php echo ucfirst($row['status']); ?>
                     </td>
-                    <td><?php echo $row['scheduled_at']; ?></td>
-                    <td><?php echo $row['completed_at'] ?? '—'; ?></td>
+                    <td><?php echo date("M d, Y, h:i:s A", strtotime($row['scheduled_at'])); ?></td>
+                    <td><?php echo $row['completed_at'] ? date("M d, Y, h:i:s A", strtotime($row['completed_at'])) : '—'; ?></td>
                     <td>
                         <?php if ($row['status'] === 'scheduled'): ?>
                             <a href="update_batch.php?id=<?php echo $row['id']; ?>&status=in_progress" class="btn">▶ Start</a>
