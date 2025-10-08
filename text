@@ -1,4 +1,78 @@
 <?php
+include 'db.php';
+
+if (isset($_GET['id']) && isset($_GET['status'])) {
+    $id = $_GET['id'];
+    $status = $_GET['status'];
+
+    $allowed = ['scheduled', 'in_progress', 'completed'];
+    if (!in_array($status, $allowed)) {
+        die("❌ Invalid status value.");
+    }
+
+    try {
+        // 🔹 Start a transaction
+        $conn->begin_transaction();
+
+        // When status changes to in_progress → deduct stock
+        if ($status === 'in_progress') {
+            // Get batch info
+            $batch = $conn->query("SELECT stock_id, quantity FROM batches WHERE id = $id")->fetch_assoc();
+            $stock_id = $batch['stock_id'];
+            $batch_qty = $batch['quantity'];
+
+            // Get current stock
+            $stock = $conn->query("SELECT quantity FROM stock WHERE id = $stock_id")->fetch_assoc();
+            $current_stock = $stock['quantity'];
+
+            // Check stock
+            if ($current_stock < $batch_qty) {
+                throw new Exception("⚠️ Insufficient stock to start batch.");
+            }
+
+            // Deduct stock
+            $new_stock = $current_stock - $batch_qty;
+            $updateStock = $conn->query("UPDATE stock SET quantity = $new_stock WHERE id = $stock_id");
+
+            if (!$updateStock) {
+                throw new Exception("❌ Failed to update stock.");
+            }
+        }
+
+        // 🔹 Update batch status
+        if ($status === 'completed') {
+            $stmt = $conn->prepare("UPDATE batches SET status = ?, completed_at = NOW() WHERE id = ?");
+        } else {
+            $stmt = $conn->prepare("UPDATE batches SET status = ? WHERE id = ?");
+        }
+
+        $stmt->bind_param("si", $status, $id);
+        $success = $stmt->execute();
+        $stmt->close();
+
+        if (!$success) {
+            throw new Exception("❌ Failed to update batch status.");
+        }
+
+        // 🔹 Commit changes
+        $conn->commit();
+        header("Location: production.php");
+        exit();
+
+    } catch (Exception $e) {
+        // 🔹 Rollback if anything fails
+        $conn->rollback();
+        echo $e->getMessage();
+    }
+
+} else {
+    echo "⚠️ Missing parameters.";
+}
+?>
+
+
+Production
+<?php
 include 'backend/init.php';
 
 // Daily Batches
@@ -17,18 +91,13 @@ $completed_today = $conn->query("
 // Ingredients Needed
 $ingredients_needed = $conn->query("SELECT COUNT(*) as count FROM requests WHERE status = 'pending'")->fetch_assoc()['count'];
 
-// Status filter
-$status_filter = $_GET['status_filter'] ?? 'all';
-$where = ($status_filter != 'all') ? "AND b.status='$status_filter'" : '';
-
 // Fetch batches for tracker
 $batches = $conn->query("
     SELECT b.id, b.product_name, b.status, b.scheduled_at, b.completed_at,
-           b.quantity AS batch_qty,   -- added this
            i.item_name AS stock_item, i.quantity AS stock_qty
     FROM batches b
     LEFT JOIN inventory i ON b.stock_id = i.id
-    WHERE b.is_deleted = 0 $where
+    WHERE b.is_deleted = 0
     ORDER BY b.scheduled_at DESC
 ");
 ?>
@@ -138,12 +207,6 @@ $batches = $conn->query("
             background: #5a2d0c;
         }
 
-        .btn-disabled {
-            background: #ccc !important;
-            pointer-events: none;
-            color: #666 !important;
-        }
-
         /* Tracker Table */
         table {
             width: 90%;
@@ -172,7 +235,6 @@ $batches = $conn->query("
             background: #f3e9e2;
         }
 
-        /* Status colors */
         .status-in_progress {
             color: #d2691e;
             font-weight: bold;
@@ -184,11 +246,6 @@ $batches = $conn->query("
         }
 
         .status-pending {
-            color: gray;
-            font-weight: bold;
-        }
-
-        .status-scheduled {
             color: gray;
             font-weight: bold;
         }
@@ -206,16 +263,20 @@ $batches = $conn->query("
             border: 1px solid #ccc;
         }
 
-        /* Actions Column */
+        /* Actions Column - Centered Buttons */
         th.actions {
             text-align: center;
+            /* center header */
         }
 
         td.actions {
             display: flex;
             justify-content: center;
+            /* center buttons horizontally */
             align-items: center;
+            /* center buttons vertically */
             gap: 4px;
+            /* space between buttons */
         }
 
         td.actions .btn {
@@ -227,15 +288,16 @@ $batches = $conn->query("
     <script>
         function updateClock() {
             const now = new Date();
-            document.getElementById('clock').innerText = "📅 " + now.toLocaleDateString() + " | ⏰ " + now.toLocaleTimeString();
+            const time = now.toLocaleTimeString();
+            const date = now.toLocaleDateString();
+            document.getElementById('clock').innerText = "📅 " + date + " | ⏰ " + time;
         }
         setInterval(updateClock, 1000);
         window.onload = updateClock;
 
-        function showStockAlert() {
-            alert("⚠️ Insufficient stock to start this batch!");
-        }
-
+        setTimeout(function() {
+            location.reload();
+        }, 10000);
 
         function filterTable() {
             const filter = document.getElementById('searchBatch').value.toLowerCase();
@@ -244,19 +306,6 @@ $batches = $conn->query("
                 if (index === 0) return;
                 row.style.display = row.textContent.toLowerCase().includes(filter) ? '' : 'none';
             });
-        }
-
-        // Modal delete
-        function showDeleteModal(batchId) {
-            const modal = document.getElementById('deleteModal');
-            modal.style.display = 'flex';
-            document.getElementById('confirmDeleteBtn').onclick = function() {
-                window.location.href = 'remove_batch.php?id=' + batchId;
-            }
-        }
-
-        function closeModal() {
-            document.getElementById('deleteModal').style.display = 'none';
         }
     </script>
 </head>
@@ -301,33 +350,18 @@ $batches = $conn->query("
 
         <input type="text" id="searchBatch" placeholder="Search batch..." onkeyup="filterTable()">
 
-        <!-- Status filter -->
-        <form method="GET" style="text-align:center;margin-bottom:15px;">
-            <label>Status Filter: </label>
-            <select name="status_filter" onchange="this.form.submit()">
-                <option value="all" <?php if ($status_filter == 'all') echo 'selected'; ?>>All</option>
-                <option value="scheduled" <?php if ($status_filter == 'scheduled') echo 'selected'; ?>>Scheduled</option>
-                <option value="in_progress" <?php if ($status_filter == 'in_progress') echo 'selected'; ?>>In Progress</option>
-                <option value="completed" <?php if ($status_filter == 'completed') echo 'selected'; ?>>Completed</option>
-            </select>
-        </form>
-
         <h2>📊 Production Tracker</h2>
         <table>
             <tr>
                 <th>ID</th>
                 <th>Product</th>
                 <th>Stock</th>
-                <th>Qty to Deduct</th>
                 <th>Status</th>
                 <th>Scheduled At</th>
                 <th>Completed At</th>
                 <th class="actions">Actions</th>
             </tr>
             <?php while ($row = $batches->fetch_assoc()): ?>
-                <?php
-                $startDisabled = ($row['stock_qty'] < 1 || !$row['stock_item']);
-                ?>
                 <tr>
                     <td><?php echo $row['id']; ?></td>
                     <td><?php echo htmlspecialchars($row['product_name']); ?></td>
@@ -337,8 +371,6 @@ $batches = $conn->query("
                             $stockDisplay = htmlspecialchars($row['stock_item']) . " (" . $row['stock_qty'] . " left)";
                             if ($row['stock_qty'] <= 10) {
                                 $stockDisplay = '<span style="color:red; font-weight:bold;">' . $stockDisplay . '</span>';
-                            } else {
-                                $stockDisplay = '<span style="color:green;">' . $stockDisplay . '</span>';
                             }
                             echo $stockDisplay;
                         } else {
@@ -346,48 +378,27 @@ $batches = $conn->query("
                         }
                         ?>
                     </td>
-                    <td>
-                        <?php
-                        echo $row['batch_qty'];// Display quantity to deduct
-                        ?>
-                    </td>
                     <td class="status-<?php echo $row['status']; ?>"><?php echo ucfirst($row['status']); ?></td>
                     <td><?php echo date("M d, Y, h:i:s A", strtotime($row['scheduled_at'])); ?></td>
                     <td><?php echo $row['completed_at'] ? date("M d, Y, h:i:s A", strtotime($row['completed_at'])) : '—'; ?></td>
                     <td class="actions">
                         <?php if ($row['status'] === 'scheduled'): ?>
-                            <?php if ($startDisabled): ?>
-                                <a href="#" onclick="showStockAlert()" class="btn">▶ Start</a>
-                            <?php else: ?>
-                                <a href="update_batch.php?id=<?php echo $row['id']; ?>&status=in_progress" class="btn">▶ Start</a>
-                            <?php endif; ?>
+                            <a href="update_batch.php?id=<?php echo $row['id']; ?>&status=in_progress" class="btn">▶ Start</a>
                         <?php elseif ($row['status'] === 'in_progress'): ?>
                             <a href="update_batch.php?id=<?php echo $row['id']; ?>&status=completed" class="btn">✅ Complete</a>
                         <?php else: ?>
                             <span style="color:gray;">✔ Done</span>
                         <?php endif; ?>
 
-                        <a href="#" onclick="showDeleteModal(<?php echo $row['id']; ?>)" class="btn" style="background:#b22222;">🗑 Delete</a>
-                        <a href="add_batch.php?product_name=<?php echo urlencode($row['product_name']); ?>&quantity=<?php echo $row['quantity'] ?? 1; ?>" class="btn" style="background:#228b22;">📄 Duplicate</a>
+                        <a href="remove_batch.php?id=<?php echo $row['id']; ?>"
+                            onclick="return confirm('Are you sure you want to delete this batch?');"
+                            class="btn" style="background:#b22222;">🗑 Delete</a>
+
+                        <a href="add_batch.php?product_name=<?php echo urlencode($row['product_name']); ?>&quantity=<?php echo $row['stock_qty'] ?? 1; ?>" class="btn" style="background:#228b22;">📄 Duplicate</a>
                     </td>
                 </tr>
             <?php endwhile; ?>
         </table>
-
-        <!-- Manual refresh -->
-        <div style="text-align:center;margin-top:15px;">
-            <a href="production.php" class="btn">🔄 Refresh</a>
-        </div>
-
-        <!-- Delete Modal -->
-        <div class="modal" id="deleteModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background: rgba(0,0,0,0.5);justify-content:center;align-items:center;">
-            <div style="background:white;padding:20px;border-radius:10px;text-align:center;width:300px;">
-                <p>Are you sure you want to delete this batch?</p>
-                <button onclick="closeModal()" class="btn">Cancel</button>
-                <button id="confirmDeleteBtn" class="btn" style="background:#b22222;">Delete</button>
-            </div>
-        </div>
-
     </div>
 </body>
 
