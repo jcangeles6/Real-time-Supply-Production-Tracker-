@@ -7,7 +7,7 @@ $error_message = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $username = trim($_POST['username']);
-    $password = $_POST['password']; // DO NOT trim or remove spaces here
+    $password = $_POST['password'];
 
     $stmt = $conn->prepare("
         SELECT id, password, is_admin, failed_attempts, locked_until 
@@ -85,147 +85,121 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 <head>
     <meta charset="UTF-8">
-    <title>Login</title>
+    <title>Bakery Login</title>
     <style>
         body {
-            font-family: 'Arial', sans-serif;
-            background-color: #f1f1f1;
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #fff5e1, #fce4d6);
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
             margin: 0;
-            padding: 0;
         }
 
         .login-container {
-            background-color: #fff;
-            border-radius: 8px;
-            box-shadow: 0 8px 16px rgba(247, 165, 165, 0.2);
+            background-color: #fffaf0;
+            border-radius: 15px;
+            box-shadow: 0 4px 10px rgba(139, 69, 19, 0.2);
             padding: 40px;
-            width: 100%;
-            max-width: 380px;
-            transition: transform 0.3s ease-in-out;
-        }
-
-        .login-container:hover {
-            transform: scale(1.05);
+            width: 350px;
+            text-align: center;
         }
 
         h2 {
-            text-align: center;
-            color: #333;
-            margin-bottom: 30px;
-            font-size: 28px;
-            font-weight: bold;
+            color: #8b4513;
+            margin-bottom: 25px;
+            font-size: 26px;
         }
 
         label {
             display: block;
-            font-weight: bold;
+            text-align: left;
+            font-weight: 600;
+            color: #5a2d0c;
             margin-bottom: 8px;
-            color: #333;
         }
 
         input[type="text"],
         input[type="password"] {
-            width: 100%;
-            padding: 14px;
+            width: 93%;
+            padding: 12px;
             margin-bottom: 20px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            font-size: 16px;
-            box-sizing: border-box;
+            border: 1px solid #d2b48c;
+            border-radius: 8px;
+            font-size: 15px;
+            background-color: #fffdf8;
         }
 
         button {
             width: 100%;
-            padding: 14px;
-            background-color: #007BFF;
+            padding: 12px;
+            background-color: #8b4513;
             color: white;
             border: none;
-            border-radius: 6px;
-            font-size: 18px;
+            border-radius: 8px;
+            font-size: 16px;
             cursor: pointer;
-            transition: background-color 0.3s ease;
+            transition: 0.3s;
         }
 
         button:hover {
-            background-color: #0056b3;
+            background-color: #a0522d;
         }
 
         .error-message {
-            background-color: #ffcccc;
-            color: #ff0000;
+            background-color: #fbeaea;
+            color: #b22222;
             padding: 10px;
+            border-radius: 8px;
             margin-bottom: 15px;
-            border-radius: 6px;
-            font-size: 14px;
-            text-align: center;
-        }
-
-        p {
-            text-align: center;
-            margin-top: 20px;
             font-size: 14px;
         }
 
         a {
-            color: #007BFF;
+            color: #8b4513;
             text-decoration: none;
-            font-weight: bold;
+            font-weight: 600;
         }
 
         a:hover {
             text-decoration: underline;
         }
 
-        @media (max-width: 500px) {
-            .login-container {
-                padding: 25px;
-                width: 90%;
-            }
+        p {
+            margin-top: 15px;
+            font-size: 14px;
+        }
 
-            h2 {
-                font-size: 24px;
-            }
-
-            input[type="text"],
-            input[type="password"] {
-                font-size: 14px;
-            }
-
-            button {
-                font-size: 16px;
-            }
+        .emoji {
+            font-size: 40px;
+            margin-bottom: 10px;
         }
     </style>
 </head>
 
 <body>
-
     <div class="login-container">
-        <h2>Login</h2>
+        <div class="emoji">🍞</div>
+        <h2>Bakery Login</h2>
 
-        <!-- Display error message if login fails -->
         <?php if ($error_message): ?>
             <div class="error-message"><?php echo $error_message; ?></div>
         <?php endif; ?>
 
         <form action="login.php" method="POST">
-            <label for="username">Username:</label>
+            <label for="username">Username</label>
             <input type="text" name="username" required placeholder="Enter your username">
 
-            <label for="password">Password:</label>
+            <label for="password">Password</label>
             <input type="password" name="password" required placeholder="Enter your password">
 
             <button type="submit">Login</button>
         </form>
 
         <p><a href="forgot_password.php">Forgot password?</a></p>
-        <p>Don't have an account? <a href="register.php">Register here</a></p>
+        <p>Don’t have an account? <a href="register.php">Create one</a></p>
     </div>
-
 </body>
 
 </html>

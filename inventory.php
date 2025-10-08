@@ -1,135 +1,244 @@
 <?php
 include 'backend/init.php';
 
-// Fetch inventory
-$result = $conn->query("SELECT id, item_name, quantity, unit, status, updated_at FROM inventory ORDER BY item_name ASC");
-?>
+// Pagination setup
+$limit = 10;
+$page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+$start = ($page - 1) * $limit;
 
+// Fetch total rows
+$total_result = $conn->query("SELECT COUNT(*) AS total FROM inventory");
+$total_row = $total_result->fetch_assoc();
+$total_items = $total_row['total'];
+$total_pages = ceil($total_items / $limit);
+
+// Fetch inventory with limit
+$result = $conn->query("
+    SELECT id, item_name, quantity, unit, status, updated_at
+    FROM inventory
+    ORDER BY item_name ASC
+    LIMIT $start, $limit
+");
+
+// Get username
+$user_id = $_SESSION['user_id'];
+$user_query = $conn->query("SELECT username FROM users WHERE id = $user_id");
+$user = $user_query->fetch_assoc();
+$username = $user['username'];
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bakery Inventory</title>
+    <title>Inventory | SweetCrumb</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --brown: #8b4513;
+            --light-brown: #c3814a;
+            --cream: #fdf6f0;
+            --white: #ffffff;
+            --soft-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
         body {
-            font-family: Arial, sans-serif;
-            background: #fdf9f5;
+            font-family: 'Poppins', sans-serif;
             margin: 0;
+            background: var(--cream);
+            color: #333;
+            display: flex;
         }
 
         /* Sidebar */
         .sidebar {
-            width: 220px;
-            background: #8b4513;
-            color: #fff;
+            width: 240px;
+            background: linear-gradient(180deg, var(--brown), #a0522d);
+            color: var(--white);
             height: 100vh;
             position: fixed;
-            top: 0;
-            left: 0;
-            padding: 20px 0;
+            display: flex;
+            flex-direction: column;
+            padding: 25px 20px;
+            box-shadow: var(--soft-shadow);
         }
         .sidebar h2 {
             text-align: center;
-            margin-bottom: 30px;
+            font-weight: 600;
+            font-size: 22px;
+            margin-bottom: 40px;
         }
         .sidebar a {
             display: block;
-            color: #fff;
-            padding: 12px 20px;
+            color: var(--white);
+            padding: 12px 18px;
+            margin: 8px 0;
             text-decoration: none;
-            font-weight: bold;
+            border-radius: 10px;
+            transition: 0.3s;
         }
-        .sidebar a:hover {
-            background: #a0522d;
+        .sidebar a:hover, .sidebar a.active {
+            background: var(--light-brown);
+            transform: translateX(4px);
         }
 
         /* Main */
         .main {
-            margin-left: 240px;
-            padding: 20px;
+            margin-left: 260px;
+            flex-grow: 1;
+            padding: 25px 35px;
         }
 
-        .back-btn {
-            display: inline-block;
+        /* Top bar */
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        .welcome {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--brown);
+        }
+        .top-right {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .search-bar input {
+            padding: 10px 14px;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            width: 200px;
+            transition: 0.3s;
+        }
+        .search-bar input:focus {
+            border-color: var(--brown);
+            outline: none;
+        }
+        .notif {
+            font-size: 20px;
+            cursor: pointer;
+        }
+        #live-time {
+            font-weight: 500;
+            color: #6d3f1a;
+        }
+
+        /* Table Card */
+        .card {
+            background: var(--white);
+            padding: 25px;
+            border-radius: 16px;
+            box-shadow: var(--soft-shadow);
+            margin-top: 20px;
+        }
+        .card h3 {
+            color: var(--brown);
             margin-bottom: 20px;
-            padding: 8px 16px;
-            background: #8b4513;
-            color: white;
-            text-decoration: none;
-            border-radius: 6px;
-            font-size: 14px;
-        }
-        .back-btn:hover {
-            background: #5a2d0c;
-        }
-
-        h1 {
-            color: #5a2d0c;
+            font-weight: 600;
             text-align: center;
-            margin-bottom: 20px;
         }
 
-        /* Table */
         table {
-            width: 90%;
-            margin: auto;
+            width: 100%;
             border-collapse: collapse;
             background: white;
-            border-radius: 12px;
+            border-radius: 10px;
             overflow: hidden;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
         }
         th, td {
-            padding: 12px;
+            padding: 14px;
             text-align: center;
-            border-bottom: 1px solid #ddd;
+            border-bottom: 1px solid #eee;
         }
         th {
-            background: #8b4513;
+            background: var(--brown);
             color: white;
+            font-weight: 500;
         }
         tr:hover {
-            background: #f3e9e2;
+            background: #fff7ef;
         }
 
         .status-available {
             color: green;
-            font-weight: bold;
+            font-weight: 600;
         }
         .status-low {
             color: #d2691e;
-            font-weight: bold;
+            font-weight: 600;
         }
         .status-out {
             color: red;
-            font-weight: bold;
+            font-weight: 600;
+        }
+
+        /* Pagination */
+        .pagination {
+            text-align: center;
+            margin-top: 25px;
+        }
+        .pagination a {
+            display: inline-block;
+            padding: 8px 14px;
+            margin: 0 4px;
+            background: var(--brown);
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: 0.3s;
+        }
+        .pagination a.active {
+            background: var(--light-brown);
+            font-weight: 600;
+        }
+        .pagination a:hover {
+            background: var(--light-brown);
+        }
+
+        @media (max-width: 768px) {
+            .main {
+                margin-left: 0;
+                padding: 20px;
+            }
+            .sidebar {
+                display: none;
+            }
         }
     </style>
 </head>
 <body>
 
-    <!-- Sidebar -->
-    <div class="sidebar">
-        <h2>🍞 Bakery</h2>
-        <a href="home.php" style="background:#5a2d0c; border-radius:6px; margin:0 10px 15px; text-align:center;">
-            ⬅ Back to Dashboard</a>
-        <a href="supply.php">Supply</a>
-        <a href="production.php">Production</a>
-        <a href="my_requests.php">My Requests</a>
-        <a href="inventory.php">Inventory</a>
-        <a href="logout.php">Logout</a>
+<!-- Sidebar -->
+<div class="sidebar">
+    <h2>🍞 SweetCrumb</h2>
+    <a href="home.php">🏠 Dashboard</a>
+    <a href="supply.php">📦 Supply</a>
+    <a href="production.php">🧁 Production</a>
+    <a href="my_requests.php">📋 My Requests</a>
+    <a href="inventory.php" class="active">📊 Inventory</a>
+    <a href="logout.php">🚪 Logout</a>
+</div>
+
+<!-- Main -->
+<div class="main">
+    <div class="top-bar">
+        <div class="welcome">📊 Inventory Overview</div>
+        <div class="top-right">
+            <div id="live-time">⏰ Loading...</div>
+            <div class="search-bar"><input type="text" placeholder="Search items..."></div>
+            <span class="notif">🔔</span>
+        </div>
     </div>
 
-    <!-- Main -->
-    <div class="main">
-        <a href="home.php" class="back-btn">⬅ Back to Dashboard</a>
-        <h1>📦 Bakery Inventory</h1>
-
+    <div class="card">
+        <h3>🍰 Bakery Inventory List</h3>
         <table>
             <tr>
                 <th>ID</th>
-                <th>Item</th>
+                <th>Item Name</th>
                 <th>Quantity</th>
                 <th>Unit</th>
                 <th>Status</th>
@@ -148,7 +257,31 @@ $result = $conn->query("SELECT id, item_name, quantity, unit, status, updated_at
             </tr>
             <?php endwhile; ?>
         </table>
+
+        <div class="pagination">
+            <?php if ($page > 1): ?>
+                <a href="?page=<?= $page - 1; ?>">⮜ Prev</a>
+            <?php endif; ?>
+            <?php for ($i = 1; $i <= $total_pages; $i++): ?>
+                <a href="?page=<?= $i; ?>" class="<?= ($i == $page) ? 'active' : ''; ?>"><?= $i; ?></a>
+            <?php endfor; ?>
+            <?php if ($page < $total_pages): ?>
+                <a href="?page=<?= $page + 1; ?>">Next ⮞</a>
+            <?php endif; ?>
+        </div>
     </div>
+</div>
+
+<script>
+function updateTime() {
+    const now = new Date();
+    const options = { hour: '2-digit', minute: '2-digit', second: '2-digit',
+                      weekday: 'short', month: 'short', day: 'numeric' };
+    document.getElementById("live-time").innerHTML = "⏰ " + now.toLocaleString('en-US', options);
+}
+setInterval(updateTime, 1000);
+updateTime();
+</script>
 
 </body>
 </html>
