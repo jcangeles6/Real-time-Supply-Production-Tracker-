@@ -15,12 +15,21 @@ $result = $conn->query("SELECT id, username, email, reset_requested FROM users")
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Admin Dashboard - Bakery</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🍞 SweetCrumb Admin Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+
     <style>
+        :root {
+            --brown: #8b4513;
+            --light-brown: #c3814a;
+            --cream: #fdf6f0;
+            --white: #ffffff;
+            --shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
         body {
             font-family: 'Poppins', sans-serif;
-            background-color: #fdf9f5;
+            background: var(--cream);
             color: #5a2d0c;
             margin: 0;
             display: flex;
@@ -28,123 +37,128 @@ $result = $conn->query("SELECT id, username, email, reset_requested FROM users")
 
         /* Sidebar */
         .sidebar {
-            width: 220px;
-            background: linear-gradient(180deg, #8b4513, #a0522d);
-            color: #fff;
+            width: 240px;
+            background: linear-gradient(180deg, var(--brown), #a0522d);
+            color: var(--white);
             height: 100vh;
-            padding: 25px 0;
+            position: fixed;
+            padding: 25px 20px;
             display: flex;
             flex-direction: column;
-            align-items: center;
-            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+            box-shadow: var(--shadow);
         }
 
         .sidebar h2 {
-            margin-bottom: 40px;
+            text-align: center;
+            font-weight: 600;
             font-size: 22px;
-            font-weight: bold;
-            letter-spacing: 1px;
+            margin-bottom: 40px;
         }
 
         .sidebar a {
-            color: white;
+            display: block;
+            color: var(--white);
+            padding: 12px 18px;
+            margin: 6px 0;
             text-decoration: none;
-            padding: 12px 20px;
-            width: 80%;
-            text-align: center;
-            border-radius: 8px;
-            margin-bottom: 15px;
-            font-weight: 600;
-            background-color: transparent;
-            transition: background-color 0.3s;
+            border-radius: 10px;
+            transition: 0.3s;
+            text-align: left;
         }
 
         .sidebar a:hover {
-            background-color: #c67d45;
+            background: var(--light-brown);
+            transform: translateX(4px);
         }
 
-        /* Main Content */
-        .main-content {
+        .logout {
+            margin-top: auto;
+        }
+
+        .logout a {
+            display: block;
+            background: #b22222;
+            text-align: center;
+            padding: 10px 18px;
+            border-radius: 10px;
+            text-decoration: none;
+            color: white;
+            font-weight: 500;
+        }
+
+        .logout a:hover {
+            background: #a52a2a;
+        }
+
+        /* Main content */
+        .main {
             flex: 1;
+            margin-left: 260px;
             padding: 30px;
         }
 
-        .main-content h2 {
+        h1 {
+            color: var(--brown);
             text-align: center;
-            color: #8b4513;
-            font-size: 28px;
-            margin-bottom: 10px;
+            font-weight: 600;
+            margin-bottom: 5px;
         }
 
-        .main-content p {
+        p {
             text-align: center;
             color: #7b4b22;
-            margin-bottom: 30px;
+            margin-bottom: 25px;
+        }
+
+        /* Card container */
+        .card {
+            background: var(--white);
+            border-radius: 18px;
+            box-shadow: var(--shadow);
+            padding: 25px;
+            margin-bottom: 25px;
         }
 
         /* Table */
         table {
             width: 100%;
             border-collapse: collapse;
-            background-color: #fffaf0;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-            border-radius: 12px;
+            background: var(--white);
+            border-radius: 16px;
             overflow: hidden;
+            box-shadow: var(--shadow);
         }
 
         th, td {
-            padding: 12px 15px;
+            padding: 12px 14px;
             text-align: center;
-            border-bottom: 1px solid #e0c9a6;
+            border-bottom: 1px solid #eee;
         }
 
         th {
-            background-color: #8b4513;
-            color: white;
+            background: var(--brown);
+            color: var(--white);
+            font-weight: 500;
         }
 
         tr:hover {
-            background-color: #f3e9e2;
-        }
-
-        td {
-            color: #5a2d0c;
+            background: #fff5ea;
         }
 
         /* Buttons */
         input[type="submit"] {
-            background-color: #a0522d;
+            background: var(--brown);
             color: white;
             border: none;
             padding: 8px 14px;
-            border-radius: 6px;
+            border-radius: 20px;
             cursor: pointer;
-            font-weight: bold;
+            font-weight: 500;
+            transition: 0.3s;
         }
 
         input[type="submit"]:hover {
-            background-color: #8b4513;
-        }
-
-        /* Logout Button */
-        .logout {
-            margin-top: auto;
-        }
-
-        .logout a {
-            background: #8b0000;
-            color: #fff;
-            padding: 10px 25px;
-            text-decoration: none;
-            border-radius: 6px;
-            font-weight: bold;
-            display: block;
-            text-align: center;
-            width: 80%;
-        }
-
-        .logout a:hover {
-            background: #a52a2a;
+            background: var(--light-brown);
         }
     </style>
 </head>
@@ -152,40 +166,43 @@ $result = $conn->query("SELECT id, username, email, reset_requested FROM users")
 
 <!-- Sidebar -->
 <div class="sidebar">
-    <h2>🍞 Bakery Admin</h2>
-    <a href="admin_dashboard.php">Dashboard</a>
-    <a href="backend/add_stock.php">Add Stock</a>
-    <a href="logout.php">Logout</a>
+    <h2>🍞 SweetCrumb Admin</h2>
+        <a href="admin_dashboard.php" style="background: var(--light-brown);">📋 Dashboard</a>
+        <a href="backend/add_stock.php">📦 Add Stock</a>
+        <a href="logout.php">🚪 Logout</a>
+    </div>
 </div>
 
 <!-- Main Content -->
-<div class="main-content">
-    <h2>Welcome, Admin <?php echo htmlspecialchars($_SESSION['username']); ?>!</h2>
-    <p>Manage users and password reset requests below:</p>
+<div class="main">
+    <h1>👨‍🍳 Welcome, Admin <?php echo htmlspecialchars($_SESSION['username']); ?>!</h1>
+    <p>Manage users and password reset requests here.</p>
 
-    <table>
-        <tr>
-            <th>ID</th>
-            <th>Username</th>
-            <th>Email</th>
-            <th>Reset Requested</th>
-            <th>Action</th>
-        </tr>
-        <?php while ($row = $result->fetch_assoc()): ?>
+    <div class="card">
+        <table>
             <tr>
-                <td><?php echo $row['id']; ?></td>
-                <td><?php echo htmlspecialchars($row['username']); ?></td>
-                <td><?php echo htmlspecialchars($row['email']); ?></td>
-                <td><?php echo $row['reset_requested'] ? 'Yes' : 'No'; ?></td>
-                <td>
-                    <form action="admin_reset_user.php" method="POST">
-                        <input type="hidden" name="user_id" value="<?php echo $row['id']; ?>">
-                        <input type="submit" name="reset" value="Reset Password">
-                    </form>
-                </td>
+                <th>ID</th>
+                <th>Username</th>
+                <th>Email</th>
+                <th>Reset Requested</th>
+                <th>Action</th>
             </tr>
-        <?php endwhile; ?>
-    </table>
+            <?php while ($row = $result->fetch_assoc()): ?>
+                <tr>
+                    <td><?php echo $row['id']; ?></td>
+                    <td><?php echo htmlspecialchars($row['username']); ?></td>
+                    <td><?php echo htmlspecialchars($row['email']); ?></td>
+                    <td><?php echo $row['reset_requested'] ? '<span style="color:red;font-weight:bold;">Yes</span>' : 'No'; ?></td>
+                    <td>
+                        <form action="admin_reset_user.php" method="POST" style="margin:0;">
+                            <input type="hidden" name="user_id" value="<?php echo $row['id']; ?>">
+                            <input type="submit" name="reset" value="Reset Password">
+                        </form>
+                    </td>
+                </tr>
+            <?php endwhile; ?>
+        </table>
+    </div>
 </div>
 
 </body>
