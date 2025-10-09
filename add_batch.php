@@ -11,7 +11,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $product_name = trim($_POST['product_name']);
     $quantity = intval($_POST['quantity']);
 
-    // 🔹 Find inventory item with enough quantity
     $stockQuery = $conn->prepare("SELECT id, quantity FROM inventory WHERE item_name = ? AND quantity >= ? LIMIT 1");
     $stockQuery->bind_param("si", $product_name, $quantity);
     $stockQuery->execute();
@@ -22,17 +21,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stock_id = $stockResult['id'];
         $current_stock = $stockResult['quantity'];
 
-        // 🔹 Start transaction
         $conn->begin_transaction();
         try {
-            // 🔹 Insert batch with stock_id
             $stmt = $conn->prepare("INSERT INTO batches (product_name, stock_id, quantity, status, scheduled_at) VALUES (?, ?, ?, 'scheduled', NOW())");
             $stmt->bind_param("sii", $product_name, $stock_id, $quantity);
             $stmt->execute();
-            $batch_id = $conn->insert_id; // get inserted batch ID
+            $batch_id = $conn->insert_id;
             $stmt->close();
 
-            // 🔹 Log batch creation
             session_start();
             $user_id = $_SESSION['user_id'] ?? null;
             if ($user_id) {
@@ -43,7 +39,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
             $conn->commit();
-
             $messageType = 'success';
             $message = "✅ Batch '$product_name' added successfully! Current stock: $current_stock left.";
 
@@ -53,7 +48,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $message = "❌ Error adding batch: " . $e->getMessage();
         }
     } else {
-        $stock_id = NULL;
         $messageType = 'error';
         $message = "⚠️ Product '$product_name' not found in inventory or insufficient stock.";
     }
@@ -62,123 +56,150 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Add Batch</title>
+    <title>Add Batch | SweetCrumb</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
-            background: #fdf9f5;
-            padding: 40px;
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(to bottom right, #fff7f3, #ffe9dc);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
 
         .form-box {
             background: white;
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-            max-width: 400px;
-            margin: auto;
+            border-radius: 20px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            width: 380px;
+            padding: 30px;
+            text-align: center;
+            animation: fadeIn 0.6s ease-in-out;
         }
 
         h2 {
-            color: #5a2d0c;
-            text-align: center;
+            color: #7b3f00;
+            margin-bottom: 20px;
         }
 
         label {
+            text-align: left;
             display: block;
-            margin: 10px 0 5px;
-            font-weight: bold;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #5a2d0c;
         }
 
-        input,
-        button {
-            width: 100%;
-            padding: 10px;
+        input {
+            width: 93%;
+            padding: 10px 14px;
             margin-bottom: 15px;
-            border: 1px solid #ccc;
-            border-radius: 8px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            font-size: 15px;
+            transition: border 0.2s;
+        }
+
+        input:focus {
+            border: 1px solid #c47a3f;
+            outline: none;
         }
 
         button {
-            background: #8b4513;
+            width: 102%;
+            padding: 12px;
+            background: #c47a3f;
             color: white;
-            font-weight: bold;
+            font-weight: 600;
             border: none;
+            border-radius: 10px;
             cursor: pointer;
+            transition: all 0.3s ease;
         }
 
         button:hover {
+            background: #9b5a26;
+            transform: scale(1.03);
+        }
+
+        .back-btn {
+            background: #7b3f00;
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+
+        .back-btn:hover {
             background: #5a2d0c;
+        }
+
+        #stockHint {
+            font-size: 13px;
+            color: #777;
+            margin-bottom: 10px;
+            display: block;
         }
 
         /* Modal styles */
         .modal {
             display: none;
             position: fixed;
-            z-index: 1000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            overflow: auto;
-            background-color: rgba(0, 0, 0, 0.4);
+            z-index: 999;
+            left: 0; top: 0;
+            width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(4px);
         }
 
         .modal-content {
-            background-color: #fefefe;
-            margin: 15% auto;
-            padding: 20px;
-            border: 1px solid #888;
-            width: 90%;
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
             max-width: 400px;
-            border-radius: 12px;
+            margin: 15% auto;
             text-align: center;
+            animation: pop 0.3s ease-in-out;
         }
 
         .close-btn {
-            background: #8b4513;
+            background: #7b3f00;
             color: white;
-            padding: 8px 16px;
             border: none;
-            border-radius: 6px;
+            border-radius: 8px;
+            padding: 10px 20px;
             cursor: pointer;
-            margin-top: 10px;
+            margin-top: 15px;
         }
 
-        .close-btn:hover {
-            background: #5a2d0c;
+        .success { color: #2e8b57; font-weight: 600; }
+        .error { color: #cc0000; font-weight: 600; }
+
+        @keyframes fadeIn {
+            from {opacity: 0; transform: translateY(20px);}
+            to {opacity: 1; transform: translateY(0);}
         }
 
-        .success {
-            color: green;
-            font-weight: bold;
-        }
-
-        .error {
-            color: red;
-            font-weight: bold;
+        @keyframes pop {
+            0% {transform: scale(0.9); opacity: 0;}
+            100% {transform: scale(1); opacity: 1;}
         }
     </style>
 </head>
-
 <body>
     <div class="form-box">
-        <button type="button" onclick="window.location.href='production.php'" style="background:#555; margin-bottom:15px; font-size:14px;">← Back</button>
-        <h2>➕ Add New Batch</h2>
+        <button type="button" class="back-btn" onclick="window.location.href='production.php'">← Back</button>
+        <h2>🍞 Add New Batch</h2>
         <form id="batchForm" method="POST">
             <label>Product Name</label>
             <input type="text" name="product_name" required value="<?php echo $product_name_prefill; ?>">
 
             <label>Quantity</label>
             <input type="number" name="quantity" min="1" required value="<?php echo $quantity_prefill; ?>">
-            <span id="stockHint" style="font-size:13px; color:#555;"></span>
+            <span id="stockHint"></span>
 
-
-            <button type="submit">Save Batch</button>
+            <button type="submit" id="saveBtn">Save Batch</button>
         </form>
     </div>
 
@@ -197,8 +218,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (message) {
             const modal = document.getElementById('messageModal');
             modal.style.display = 'block';
-
-            // Reset form if success
             if (messageType === 'success') {
                 document.getElementById('batchForm').reset();
             }
@@ -206,37 +225,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         function closeModal() {
             document.getElementById('messageModal').style.display = 'none';
-            // 🔹 Redirect to production page after closing modal
             window.location.href = "production.php";
         }
+
+        // Stock checker
+        const productInput = document.querySelector('input[name="product_name"]');
+        const stockHint = document.getElementById('stockHint');
+
+        productInput.addEventListener('input', function() {
+            const productName = this.value.trim();
+            if (!productName) {
+                stockHint.innerText = '';
+                return;
+            }
+
+            fetch('check_stock.php?product_name=' + encodeURIComponent(productName))
+                .then(response => response.json())
+                .then(data => {
+                    if (data.found) {
+                        stockHint.innerText = "Available stock: " + data.quantity;
+                        stockHint.style.color = data.quantity > 0 ? 'green' : 'red';
+                    } else {
+                        stockHint.innerText = "Product not found in inventory";
+                        stockHint.style.color = 'red';
+                    }
+                });
+        });
     </script>
 </body>
-
-<script>
-const productInput = document.querySelector('input[name="product_name"]');
-const stockHint = document.getElementById('stockHint');
-
-productInput.addEventListener('input', function() {
-    const productName = this.value.trim();
-    if (!productName) {
-        stockHint.innerText = '';
-        return;
-    }
-
-    // 🔹 Fetch available stock via AJAX
-    fetch('check_stock.php?product_name=' + encodeURIComponent(productName))
-        .then(response => response.json())
-        .then(data => {
-            if (data.found) {
-                stockHint.innerText = "Available stock: " + data.quantity;
-                stockHint.style.color = data.quantity > 0 ? 'green' : 'red';
-            } else {
-                stockHint.innerText = "Product not found in inventory";
-                stockHint.style.color = 'red';
-            }
-        });
-});
-</script>
-
-
 </html>
