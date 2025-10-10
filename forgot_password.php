@@ -1,15 +1,13 @@
 <?php
-include 'backend/init.php'; // includes db.php, session_start(), security settings
-redirect_if_logged_in(); // send logged-in users to home.php
+include 'backend/init.php'; 
+redirect_if_logged_in(); 
 
-$step = 1; // Step 1: email -> 2: question -> 3: reset password -> 4: confirmation
+$step = 1; 
 $message = "";
 
-// Handle form submissions
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['step'])) {
     switch ($_POST['step']) {
         case 1:
-            // Step 1: Verify email
             $email = $_POST['email'];
             $stmt = $conn->prepare("SELECT id, security_question, security_answer FROM users WHERE email = ?");
             $stmt->bind_param("s", $email);
@@ -18,7 +16,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['step'])) {
             $stmt->bind_result($user_id, $security_question, $hashed_answer);
 
             if ($stmt->fetch()) {
-                // Store in temporary session variables for forgot password
                 $_SESSION['fp_user_id'] = $user_id;
                 $_SESSION['security_question'] = $security_question;
                 $_SESSION['security_answer'] = $hashed_answer;
@@ -30,26 +27,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['step'])) {
             break;
 
         case 2:
-            // Step 2: Verify security answer
             $answer = $_POST['answer'];
             if (password_verify($answer, $_SESSION['security_answer'])) {
                 $step = 3;
             } else {
                 $message = "❌ Security answer is incorrect. Please try again.";
-                $step = 2; // Stay on step 2
+                $step = 2;
             }
             break;
 
         case 3:
-            // Step 3: Reset password
             $new_password = $_POST['new_password'];
-
-            // Password strength regex
             $pattern = "/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/";
 
             if (!preg_match($pattern, $new_password)) {
-                $message = "❌ Password must be at least 8 characters, include uppercase, lowercase, number, and special character.";
-                $step = 3; // stay on Step 3
+                $message = "❌ Password must include uppercase, lowercase, number, and special character.";
+                $step = 3;
             } else {
                 $hashed_password = password_hash($new_password, PASSWORD_DEFAULT);
 
@@ -58,16 +51,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['step'])) {
                     $update_stmt->bind_param("si", $hashed_password, $_SESSION['fp_user_id']);
                     $update_stmt->execute();
 
-                    $message = "✅ Your password has been successfully reset. You can now log in with your new password.";
+                    $message = "✅ Password successfully reset. You can now log in.";
                     $step = 4;
 
-                    // Clear forgot-password session variables
-                    unset($_SESSION['fp_user_id']);
-                    unset($_SESSION['security_question']);
-                    unset($_SESSION['security_answer']);
-                    unset($_SESSION['fp_email']);
+                    unset($_SESSION['fp_user_id'], $_SESSION['security_question'], $_SESSION['security_answer'], $_SESSION['fp_email']);
                 } else {
-                    $message = "❌ Session expired. Please start the process again.";
+                    $message = "❌ Session expired. Please start again.";
                     $step = 1;
                 }
             }
@@ -77,14 +66,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['step'])) {
 ?>
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
-    <title>Forgot Password</title>
+    <title>SweetCrumb | Forgot Password</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
-            background-color: #f1f1f1;
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(180deg, #fff9f3 0%, #fce4cc 100%);
             display: flex;
             justify-content: center;
             align-items: center;
@@ -92,157 +80,174 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['step'])) {
             margin: 0;
         }
 
-        .forgot-password-container {
-            background-color: #fff;
-            border-radius: 8px;
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+        .forgot-container {
+            background: #fffaf5;
+            border-radius: 20px;
+            box-shadow: 0 6px 20px rgba(140, 85, 30, 0.15);
             padding: 40px;
             width: 100%;
-            max-width: 380px;
+            max-width: 400px;
+            text-align: center;
         }
 
         h2 {
-            text-align: center;
-            color: #333;
-            margin-bottom: 30px;
-            font-size: 28px;
-            font-weight: bold;
+            color: #8b4513;
+            font-size: 26px;
+            margin-bottom: 20px;
+        }
+
+        p {
+            color: #5a2d0c;
+            font-size: 15px;
+            margin-bottom: 25px;
         }
 
         label {
             display: block;
-            font-weight: bold;
-            margin-bottom: 8px;
-            color: #333;
+            text-align: left;
+            color: #5a2d0c;
+            font-weight: 600;
+            margin-bottom: 6px;
         }
 
-        input[type="text"],
         input[type="email"],
+        input[type="text"],
         input[type="password"] {
             width: 100%;
-            padding: 14px;
-            margin-bottom: 20px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            font-size: 16px;
+            padding: 12px;
+            border: 1px solid #dcbf9e;
+            border-radius: 10px;
+            margin-bottom: 18px;
+            font-size: 15px;
+            background: #fffdf9;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #c47f3e;
+            box-shadow: 0 0 6px rgba(196, 127, 62, 0.3);
         }
 
         button {
             width: 100%;
-            padding: 14px;
-            background-color: #007BFF;
-            color: white;
+            padding: 12px;
+            background-color: #c47f3e;
             border: none;
-            border-radius: 6px;
-            font-size: 18px;
+            color: #fff;
+            font-size: 16px;
+            border-radius: 10px;
             cursor: pointer;
+            font-weight: 600;
+            transition: background 0.3s ease;
         }
 
         button:hover {
-            background-color: #0056b3;
+            background-color: #a6652a;
         }
 
         .message {
-            text-align: center;
-            font-size: 16px;
             margin-bottom: 15px;
+            font-weight: 500;
+            padding: 10px;
+            border-radius: 10px;
         }
 
-        .message.success {
-            color: #28a745;
+        .success {
+            background-color: #e6ffee;
+            color: #2e7d32;
+            border: 1px solid #9ccc65;
         }
 
-        .message.error {
-            color: #dc3545;
+        .error {
+            background-color: #ffeaea;
+            color: #c62828;
+            border: 1px solid #ef9a9a;
         }
 
         .back-login {
-            display: block;
-            text-align: center;
+            display: inline-block;
             margin-top: 15px;
-            font-size: 14px;
-            color: #007BFF;
-            text-decoration: underline;
+            color: #c47f3e;
+            text-decoration: none;
+            font-weight: 600;
         }
 
         .back-login:hover {
-            color: #0056b3;
+            color: #a6652a;
         }
 
-        p {
-            text-align: center;
-            margin-top: 20px;
-            font-size: 14px;
+        /* Sweet loading animation */
+        .loader {
+            display: inline-block;
+            border: 3px solid #f3e2d2;
+            border-top: 3px solid #c47f3e;
+            border-radius: 50%;
+            width: 22px;
+            height: 22px;
+            animation: spin 0.9s linear infinite;
+            margin-left: 8px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
 
         @media (max-width: 500px) {
-            .forgot-password-container {
-                padding: 25px;
+            .forgot-container {
                 width: 90%;
-            }
-
-            h2 {
-                font-size: 24px;
-            }
-
-            input[type="text"],
-            input[type="email"],
-            input[type="password"] {
-                font-size: 14px;
-            }
-
-            button {
-                font-size: 16px;
+                padding: 30px;
             }
         }
     </style>
 </head>
-
 <body>
-    <div class="forgot-password-container">
-        <h2>Forgot Password</h2>
 
-        <?php if ($message): ?>
-            <div class="message <?php echo strpos($message, '✅') !== false ? 'success' : 'error'; ?>">
-                <?php echo $message; ?>
-            </div>
-        <?php endif; ?>
+<div class="forgot-container">
+    <h2>🍰 Forgot Password</h2>
 
-        <?php if ($step === 1): ?>
-            <p>Enter your registered email to start the reset process.</p>
-            <form method="POST">
-                <label>Email:</label>
-                <input type="email" name="email" required placeholder="Enter your email">
-                <input type="hidden" name="step" value="1">
-                <button type="submit">Continue</button>
-            </form>
-            <a href="login.php?from_forgot=1" class="back-login">Back to Login</a>
+    <?php if ($message): ?>
+        <div class="message <?php echo strpos($message, '✅') !== false ? 'success' : 'error'; ?>">
+            <?php echo $message; ?>
+        </div>
+    <?php endif; ?>
 
-        <?php elseif ($step === 2): ?>
-            <p>Answer your security question to verify your identity.</p>
-            <p><strong>Security Question:</strong> <?php echo htmlspecialchars($_SESSION['security_question']); ?></p>
-            <form method="POST">
-                <label>Answer:</label>
-                <input type="text" name="answer" required placeholder="Enter your answer">
-                <input type="hidden" name="step" value="2">
-                <button type="submit">Submit</button>
-            </form>
-            <a href="login.php?from_forgot=1" class="back-login">Back to Login</a>
+    <?php if ($step === 1): ?>
+        <p>Enter your registered email to begin the reset.</p>
+        <form method="POST">
+            <label>Email</label>
+            <input type="email" name="email" required placeholder="Enter your email">
+            <input type="hidden" name="step" value="1">
+            <button type="submit">Continue</button>
+        </form>
+        <a href="login.php" class="back-login">← Back to Login</a>
 
-        <?php elseif ($step === 3): ?>
-            <p>Enter your new password below.</p>
-            <form method="POST">
-                <label>New Password:</label>
-                <input type="password" name="new_password" required placeholder="Enter new password">
-                <input type="hidden" name="step" value="3">
-                <button type="submit">Confirm New Password</button>
-            </form>
-            <a href="login.php?from_forgot=1" class="back-login">Back to Login</a>
+    <?php elseif ($step === 2): ?>
+        <p>Answer your security question to continue.</p>
+        <p><strong><?php echo htmlspecialchars($_SESSION['security_question']); ?></strong></p>
+        <form method="POST">
+            <label>Answer</label>
+            <input type="text" name="answer" required placeholder="Your answer">
+            <input type="hidden" name="step" value="2">
+            <button type="submit">Submit</button>
+        </form>
+        <a href="login.php" class="back-login">← Back to Login</a>
 
-        <?php elseif ($step === 4): ?>
-            <a href="login.php?from_forgot=1" class="back-login">Back to Login</a>
-        <?php endif; ?>
-    </div>
+    <?php elseif ($step === 3): ?>
+        <p>Enter your new password below.</p>
+        <form method="POST">
+            <label>New Password</label>
+            <input type="password" name="new_password" required placeholder="Enter new password">
+            <input type="hidden" name="step" value="3">
+            <button type="submit">Reset Password</button>
+        </form>
+        <a href="login.php" class="back-login">← Back to Login</a>
+
+    <?php elseif ($step === 4): ?>
+        <p>Password successfully reset! 🎉</p>
+        <a href="login.php" class="back-login">Go to Login</a>
+    <?php endif; ?>
+</div>
+
 </body>
-
 </html>
