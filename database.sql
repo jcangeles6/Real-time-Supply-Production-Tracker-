@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Oct 08, 2025 at 12:13 PM
+-- Generation Time: Oct 11, 2025 at 01:30 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -30,7 +30,6 @@ SET time_zone = "+00:00";
 CREATE TABLE `batches` (
   `id` int(11) NOT NULL,
   `product_name` varchar(100) NOT NULL,
-  `stock_id` int(11) DEFAULT NULL,
   `quantity` int(11) NOT NULL,
   `status` enum('scheduled','in_progress','completed') DEFAULT 'scheduled',
   `scheduled_at` timestamp NOT NULL DEFAULT current_timestamp(),
@@ -42,11 +41,8 @@ CREATE TABLE `batches` (
 -- Dumping data for table `batches`
 --
 
-INSERT INTO `batches` (`id`, `product_name`, `stock_id`, `quantity`, `status`, `scheduled_at`, `completed_at`, `is_deleted`) VALUES
-(84, 'Sugar', 66, 1, 'completed', '2025-10-08 08:25:18', '2025-10-08 08:25:38', 0),
-(85, 'Sugar', 66, 7, 'completed', '2025-10-08 08:36:06', '2025-10-08 08:38:06', 0),
-(86, 'Sugar', 66, 90, 'completed', '2025-10-08 08:37:53', '2025-10-08 08:38:07', 0),
-(87, 'Sugar', 66, 50, 'completed', '2025-10-08 08:37:59', '2025-10-08 08:48:09', 0);
+INSERT INTO `batches` (`id`, `product_name`, `quantity`, `status`, `scheduled_at`, `completed_at`, `is_deleted`) VALUES
+(227, 'Sir Dennis', 1, 'scheduled', '2025-10-11 11:29:35', NULL, 0);
 
 -- --------------------------------------------------------
 
@@ -67,18 +63,29 @@ CREATE TABLE `batch_log` (
 --
 
 INSERT INTO `batch_log` (`id`, `batch_id`, `user_id`, `action`, `timestamp`) VALUES
-(106, 84, 14, 'Batch Created', '2025-10-08 16:25:18'),
-(107, 84, 14, 'Batch Started', '2025-10-08 16:25:33'),
-(108, 84, 14, 'Batch Completed', '2025-10-08 16:25:38'),
-(109, 85, 14, 'Batch Created', '2025-10-08 16:36:06'),
-(110, 85, 14, 'Batch Started', '2025-10-08 16:36:09'),
-(111, 86, 14, 'Batch Created', '2025-10-08 16:37:53'),
-(112, 87, 14, 'Batch Created', '2025-10-08 16:37:59'),
-(113, 86, 14, 'Batch Started', '2025-10-08 16:38:02'),
-(114, 85, 14, 'Batch Completed', '2025-10-08 16:38:06'),
-(115, 86, 14, 'Batch Completed', '2025-10-08 16:38:07'),
-(116, 87, 14, 'Batch Started', '2025-10-08 16:48:07'),
-(117, 87, 14, 'Batch Completed', '2025-10-08 16:48:09');
+(568, 227, 14, 'Batch Created', '2025-10-11 19:29:35');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `batch_materials`
+--
+
+CREATE TABLE `batch_materials` (
+  `id` int(11) NOT NULL,
+  `batch_id` int(11) NOT NULL,
+  `stock_id` int(11) NOT NULL,
+  `quantity_used` int(11) NOT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `quantity_reserved` int(11) DEFAULT 0
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `batch_materials`
+--
+
+INSERT INTO `batch_materials` (`id`, `batch_id`, `stock_id`, `quantity_used`, `created_at`, `quantity_reserved`) VALUES
+(308, 227, 68, 2, '2025-10-11 11:29:35', 0);
 
 -- --------------------------------------------------------
 
@@ -101,7 +108,7 @@ CREATE TABLE `ingredients` (
 
 INSERT INTO `ingredients` (`id`, `name`, `price`, `unit`, `supplier`, `created_at`) VALUES
 (1, 'Flour', 20.00, '25kg', 'ABC Mills', '2025-09-28 14:17:31'),
-(2, 'Sugar', 18.00, '25kg', 'Sweet Co.', '2025-09-28 14:17:31'),
+(2, 'Sugar	', 18.00, '25kg', 'Sweet Co.', '2025-09-28 14:17:31'),
 (3, 'Butter', 45.00, '10kg', 'Dairy Best', '2025-09-28 14:17:31'),
 (4, 'Yeast', 12.00, '5kg', 'BakePro', '2025-09-28 14:17:31');
 
@@ -126,24 +133,11 @@ CREATE TABLE `inventory` (
 --
 
 INSERT INTO `inventory` (`id`, `item_name`, `quantity`, `unit`, `status`, `updated_at`, `created_at`) VALUES
-(66, 'Sugar', 50, 'kg', 'available', '2025-10-08 08:48:07', '2025-10-08 05:04:18'),
-(67, 'Flour', 86, 'g', 'available', '2025-10-08 08:02:00', '2025-10-08 05:04:30'),
-(68, 'Eggs', 80, 'pcs', 'available', '2025-10-08 07:12:33', '2025-10-08 05:04:38'),
-(69, 'Milk', 100, 'kg', 'available', '2025-10-08 06:08:47', '2025-10-08 05:04:44');
-
--- --------------------------------------------------------
-
---
--- Table structure for table `production_batches`
---
-
-CREATE TABLE `production_batches` (
-  `id` int(11) NOT NULL,
-  `product_name` varchar(100) NOT NULL,
-  `quantity` int(11) NOT NULL,
-  `status` enum('Scheduled','In Progress','Completed') DEFAULT 'Scheduled',
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+(66, 'Design', 17, 'pcs', 'available', '2025-10-11 11:14:10', '2025-10-08 05:04:18'),
+(67, 'Paper', 45, 'pcs', 'available', '2025-10-11 11:14:10', '2025-10-08 05:04:30'),
+(68, 'Ribbon', 40, 'pcs', 'available', '2025-10-11 11:29:35', '2025-10-08 05:04:38'),
+(69, 'Vase', 49, 'pcs', 'available', '2025-10-11 11:14:10', '2025-10-08 05:04:44'),
+(71, 'Rose', 49, 'pcs', 'available', '2025-10-11 11:14:10', '2025-10-11 00:04:26');
 
 -- --------------------------------------------------------
 
@@ -231,6 +225,14 @@ ALTER TABLE `batch_log`
   ADD PRIMARY KEY (`id`);
 
 --
+-- Indexes for table `batch_materials`
+--
+ALTER TABLE `batch_materials`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `batch_id` (`batch_id`),
+  ADD KEY `stock_id` (`stock_id`);
+
+--
 -- Indexes for table `ingredients`
 --
 ALTER TABLE `ingredients`
@@ -240,12 +242,6 @@ ALTER TABLE `ingredients`
 -- Indexes for table `inventory`
 --
 ALTER TABLE `inventory`
-  ADD PRIMARY KEY (`id`);
-
---
--- Indexes for table `production_batches`
---
-ALTER TABLE `production_batches`
   ADD PRIMARY KEY (`id`);
 
 --
@@ -269,13 +265,19 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT for table `batches`
 --
 ALTER TABLE `batches`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=88;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=228;
 
 --
 -- AUTO_INCREMENT for table `batch_log`
 --
 ALTER TABLE `batch_log`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=118;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=569;
+
+--
+-- AUTO_INCREMENT for table `batch_materials`
+--
+ALTER TABLE `batch_materials`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=309;
 
 --
 -- AUTO_INCREMENT for table `ingredients`
@@ -287,13 +289,7 @@ ALTER TABLE `ingredients`
 -- AUTO_INCREMENT for table `inventory`
 --
 ALTER TABLE `inventory`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=70;
-
---
--- AUTO_INCREMENT for table `production_batches`
---
-ALTER TABLE `production_batches`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=72;
 
 --
 -- AUTO_INCREMENT for table `requests`
@@ -306,6 +302,17 @@ ALTER TABLE `requests`
 --
 ALTER TABLE `users`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
+
+--
+-- Constraints for dumped tables
+--
+
+--
+-- Constraints for table `batch_materials`
+--
+ALTER TABLE `batch_materials`
+  ADD CONSTRAINT `batch_materials_ibfk_1` FOREIGN KEY (`batch_id`) REFERENCES `batches` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `batch_materials_ibfk_2` FOREIGN KEY (`stock_id`) REFERENCES `inventory` (`id`) ON DELETE CASCADE;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
