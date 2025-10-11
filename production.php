@@ -23,76 +23,80 @@ if (!$batches) die("SQL Error: " . $conn->error);
 
 <head>
     <meta charset="UTF-8">
-    <title>🍞 SweetCrumb Production</title>
+    <title>🌸 BloomLux Production</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
-        /* --- CSS same as your previous code --- */
         :root {
-            --brown: #8b4513;
-            --light-brown: #c3814a;
-            --cream: #fdf6f0;
-            --white: #ffffff;
-            --soft-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            --bg: #ffb3ecff;          /* main background */
+            --card: #f5f0fa;        /* soft lavender card background */
+            --primary: #2e1a2eff;     /* lavender accent */
+            --text: #000000ff;        /* main text color */
+            --highlight: #000000ff;   /* darker lavender for buttons/status */
+            --shadow: 0 3px 10px rgba(0,0,0,0.08);
         }
 
         body {
             font-family: 'Poppins', sans-serif;
-            background: var(--cream);
+            background: var(--bg);
             margin: 0;
             display: flex;
-            color: #333;
+            color: var(--text);
         }
 
+        /* Sidebar */
         .sidebar {
             width: 240px;
-            background: linear-gradient(180deg, var(--brown), #a0522d);
-            color: var(--white);
+            background: var(--primary);
+            color: #ffffff;
             height: 100vh;
             position: fixed;
-            padding: 25px 20px;
+            padding: 40px 20px;
             display: flex;
             flex-direction: column;
-            box-shadow: var(--soft-shadow);
+            box-shadow: var(--shadow);
         }
 
         .sidebar h2 {
             text-align: center;
-            font-weight: 600;
-            font-size: 22px;
+            font-weight: 700;
+            font-size: 30px;
             margin-bottom: 40px;
+            color: #ffffff;
         }
 
         .sidebar a {
             display: block;
-            color: var(--white);
-            padding: 12px 18px;
-            margin: 6px 0;
+            color: #ffffff;
+            padding: 20px 18px;
+            margin: 8px 0;
             text-decoration: none;
-            border-radius: 10px;
+            border-radius: 50px;
             transition: 0.3s;
         }
 
         .sidebar a:hover {
-            background: var(--light-brown);
-            transform: translateX(4px);
+            background: var(--bg);
+            transform: translateX(3px);
         }
 
+        /* Main content */
         .main {
             margin-left: 260px;
             flex: 1;
-            padding: 30px;
+            padding: 60px;
+            background: var(--bg);
         }
 
         h1 {
-            color: var(--brown);
+            color: var(--primary);
             text-align: center;
-            font-weight: 600;
+            font-weight: 700;
             margin-bottom: 5px;
         }
 
         #clock {
             text-align: center;
-            color: #6d3f1a;
+            color: var(--highlight);
             font-weight: 500;
             margin-bottom: 30px;
         }
@@ -106,9 +110,9 @@ if (!$batches) die("SQL Error: " . $conn->error);
         }
 
         .card {
-            background: var(--white);
-            border-radius: 18px;
-            box-shadow: var(--soft-shadow);
+            background: var(--card);
+            border-radius: 16px;
+            box-shadow: var(--shadow);
             text-align: center;
             padding: 22px;
             width: 230px;
@@ -117,65 +121,45 @@ if (!$batches) die("SQL Error: " . $conn->error);
         }
 
         .card:hover {
-            transform: translateY(-5px);
+            transform: translateY(-3px);
+            box-shadow: 0 6px 15px rgba(0,0,0,0.1);
         }
 
         .card h2 {
-            color: var(--brown);
+            color: var(--highlight);
             margin: 0 0 10px;
+            font-weight: 600;
         }
 
         .card p {
             margin: 0 0 15px;
-            color: #5a2d0c;
+            color: var(--text);
             font-size: 15px;
         }
 
         .btn {
-            background: var(--brown);
-            color: var(--white);
+            background: var(--primary);
+            color: #ffffff;
             padding: 8px 16px;
-            border-radius: 20px;
+            border-radius: 18px;
             text-decoration: none;
             font-size: 14px;
             transition: 0.3s;
         }
 
         .btn:hover {
-            background: var(--light-brown);
+            background: var(--highlight);
         }
 
         .card.loading {
-            background: linear-gradient(135deg, #fff3e0, #ffe0b2);
-            box-shadow: 0 4px 15px rgba(255, 193, 7, 0.4);
-            overflow: hidden;
-        }
-
-        .card.loading::after {
-            content: "";
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.5) 50%, rgba(255, 255, 255, 0) 100%);
-            animation: loadingGlow 1.5s infinite;
-        }
-
-        @keyframes loadingGlow {
-            0% {
-                left: -100%;
-            }
-
-            100% {
-                left: 100%;
-            }
+            background: #ede5f5;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
         }
 
         .spinner {
             margin: 8px auto 10px;
             border: 4px solid #f3f3f3;
-            border-top: 4px solid var(--brown);
+            border-top: 4px solid var(--primary);
             border-radius: 50%;
             width: 28px;
             height: 28px;
@@ -183,13 +167,8 @@ if (!$batches) die("SQL Error: " . $conn->error);
         }
 
         @keyframes spin {
-            0% {
-                transform: rotate(0deg);
-            }
-
-            100% {
-                transform: rotate(360deg);
-            }
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
 
         .controls {
@@ -207,97 +186,74 @@ if (!$batches) die("SQL Error: " . $conn->error);
             border-radius: 10px;
             font-size: 14px;
             transition: 0.3s;
+            background: #fff;
+            color: var(--text);
         }
 
         input[type="text"]:focus,
         select:focus {
-            border-color: var(--brown);
+            border-color: var(--primary);
             outline: none;
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
-            background: var(--white);
-            border-radius: 16px;
+            background: var(--card);
+            border-radius: 12px;
             overflow: hidden;
-            box-shadow: var(--soft-shadow);
+            box-shadow: var(--shadow);
+            color: var(--text);
         }
 
-        th,
-        td {
+        th, td {
             padding: 12px 14px;
             text-align: center;
             border-bottom: 1px solid #eee;
         }
 
         th {
-            background: var(--brown);
-            color: var(--white);
+            background: var(--primary);
+            color: #ffffff;
             font-weight: 500;
         }
 
         tr:hover {
-            background: #fff5ea;
+            background: #f3eafa;
         }
 
-        .status-scheduled {
-            color: gray;
-            font-weight: 500;
-        }
-
-        .status-in_progress {
-            color: #d2691e;
-            font-weight: 600;
-        }
-
-        .status-completed {
-            color: green;
-            font-weight: 600;
-        }
-
-        td.actions {
-            display: flex;
-            justify-content: center;
-            gap: 6px;
-            align-items: center;
-            /* <-- vertically center the buttons */
-            flex-wrap: wrap;
-            /* optional: wrap buttons if too many */
-            min-height: 50px;
-            /* optional: ensure enough height */
-        }
+        .status-scheduled { color: gray; font-weight: 500; }
+        .status-in_progress { color: var(--highlight); font-weight: 600; }
+        .status-completed { color: #6aa84f; font-weight: 600; }
 
         td.actions .btn {
             padding: 6px 10px;
             font-size: 13px;
             line-height: 1.2;
-            /* ensures text is vertically centered in button */
         }
 
         .modal {
             display: none;
             position: fixed;
             inset: 0;
-            background: rgba(0, 0, 0, 0.5);
+            background: rgba(0, 0, 0, 0.4);
             justify-content: center;
             align-items: center;
         }
 
         .modal-content {
-            background: white;
+            background: var(--card);
             padding: 20px;
             border-radius: 10px;
             text-align: center;
-            box-shadow: var(--soft-shadow);
+            box-shadow: var(--shadow);
+            color: var(--text);
         }
 
-        .quantity-info {
-            font-size: 13px;
-            color: #333;
-            margin-top: 4px;
-        }
+        .quantity-info { font-size: 13px; color: var(--highlight); margin-top: 4px; }
     </style>
+
+
     <script>
         function updateClock() {
             const now = new Date();
@@ -336,17 +292,17 @@ if (!$batches) die("SQL Error: " . $conn->error);
 
 <body>
     <div class="sidebar">
-        <h2>🍞 SweetCrumb</h2>
+        <h2>🌸 BloomLux Production 🌸</h2>
         <a href="home.php">🏠 Dashboard</a>
         <a href="supply.php">📦 Supply</a>
-        <a href="production.php" style="background: var(--light-brown);">🧁 Production</a>
+        <a href="production.php">🧁 Production</a>
         <a href="my_requests.php">📋 My Requests</a>
         <a href="inventory.php">📊 Inventory</a>
         <a href="logout.php">🚪 Logout</a>
     </div>
 
     <div class="main">
-        <h1>🍰 Production Dashboard</h1>
+        <h1>🌸 BloomLux Production Dashboard 🌸</h1>
         <div id="clock"></div>
 
         <div class="dashboard">

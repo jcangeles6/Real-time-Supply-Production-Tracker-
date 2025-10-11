@@ -271,13 +271,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         button {
-            width: 102%;
+            width: 100%;
             padding: 12px;
             background: #c47a3f;
             color: white;
             font-weight: 600;
             border: none;
-            border-radius: 10px;
+            border-radius: 40px;
             cursor: pointer;
             transition: all 0.3s ease;
         }
@@ -405,7 +405,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             </select>
                             <label>Quantity</label>
                             <input type="number" name="materials[<?php echo $index; ?>][quantity]" value="<?php echo htmlspecialchars($mat['quantity_used']); ?>" min="1" required>
-                            <button type="button" class="removeMaterialBtn" style="background:#b22222;color:white;border:none;border-radius:5px;padding:5px 10px;margin-top:5px;cursor:pointer;">Remove</button>
+                            <button type="button" class="removeMaterialBtn" style="background:#b22222;color:white;border:none;border-radius:40px;padding:1px 10px;margin-top:5px;cursor:pointer;">Remove</button>
                         </div>
                     <?php endforeach; ?>
                 <?php else: ?>
@@ -421,7 +421,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         </select>
                         <label>Quantity</label>
                         <input type="number" name="materials[0][quantity]" min="1" required>
-                        <button type="button" class="removeMaterialBtn" style="background:#b22222;color:white;border:none;border-radius:5px;padding:5px 10px;margin-top:5px;cursor:pointer;">Remove</button>
+                        <button type="button" class="removeMaterialBtn" style="background:#b22222;color:white;border:none;border-radius:40px;padding:10px 10px;margin-top:5px;cursor:pointer;">Remove</button>
                     </div>
                 <?php endif; ?>
             </div>

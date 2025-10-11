@@ -18,54 +18,55 @@ $result_requests = $conn->query("SELECT * FROM requests ORDER BY requested_at DE
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
         :root {
-            --brown: #8b4513;
-            --light-brown: #c3814a;
-            --cream: #fdf6f0;
-            --white: #ffffff;
-            --soft-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            --bg: #ffb3ecff;          /* main background */
+            --card: #f5f0fa;        /* soft lavender card background */
+            --primary: #2e1a2eff;     /* lavender accent */
+            --text: #000000ff;        /* main text color */
+            --highlight: #000000ff;   /* darker lavender for buttons/status */
+            --shadow: 0 3px 10px rgba(0,0,0,0.08);
         }
 
         body {
             font-family: 'Poppins', sans-serif;
             margin: 0;
-            background: var(--cream);
-            color: #333;
+            background: var(--bg);
             display: flex;
+            color: var(--text);
         }
 
         /* Sidebar */
         .sidebar {
             width: 240px;
-            background: linear-gradient(180deg, var(--brown), #a0522d);
-            color: var(--white);
+            background: var(--primary);
+            color: #ffffff;
             height: 100vh;
             position: fixed;
             display: flex;
             flex-direction: column;
-            padding: 25px 20px;
-            box-shadow: var(--soft-shadow);
+            padding: 40px 20px;
+            box-shadow: var(--shadow);
         }
 
         .sidebar h2 {
             text-align: center;
-            font-weight: 600;
-            font-size: 22px;
+            font-weight: 700;
+            font-size: 30px;
             margin-bottom: 40px;
         }
 
         .sidebar a {
             display: block;
-            color: var(--white);
-            padding: 12px 18px;
+            color: #ffffff;
+            padding: 20px 18px;
             margin: 8px 0;
             text-decoration: none;
-            border-radius: 10px;
+            border-radius: 50px;
             transition: 0.3s;
         }
 
         .sidebar a:hover {
-            background: var(--light-brown);
-            transform: translateX(4px);
+            background: var(--bg);
+            transform: translateX(3px);
         }
 
         /* Main Section */
@@ -85,8 +86,8 @@ $result_requests = $conn->query("SELECT * FROM requests ORDER BY requested_at DE
 
         .welcome {
             font-size: 1.5rem;
-            font-weight: 600;
-            color: var(--brown);
+            font-weight: 700;
+            color: var(--primary);
         }
 
         .top-right {
@@ -101,10 +102,12 @@ $result_requests = $conn->query("SELECT * FROM requests ORDER BY requested_at DE
             border-radius: 20px;
             width: 200px;
             transition: 0.3s;
+            background: #fff;
+            color: var(--text);
         }
 
         .search-bar input:focus {
-            border-color: var(--brown);
+            border-color: var(--primary);
             outline: none;
         }
 
@@ -115,20 +118,20 @@ $result_requests = $conn->query("SELECT * FROM requests ORDER BY requested_at DE
 
         #live-time {
             font-weight: 500;
-            color: #6d3f1a;
+            color: var(--highlight);
         }
 
         /* Card styles */
         .card {
-            background: var(--white);
+            background: var(--card);
             padding: 20px;
             border-radius: 16px;
-            box-shadow: var(--soft-shadow);
+            box-shadow: var(--shadow);
             margin-bottom: 25px;
         }
 
         .card h3 {
-            color: var(--brown);
+            color: var(--highlight);
             margin-bottom: 15px;
             font-weight: 600;
         }
@@ -137,9 +140,11 @@ $result_requests = $conn->query("SELECT * FROM requests ORDER BY requested_at DE
         table {
             width: 100%;
             border-collapse: collapse;
-            background: var(--white);
+            background: var(--bg);
             border-radius: 10px;
             overflow: hidden;
+            box-shadow: var(--shadow);
+            color: var(--text);
         }
 
         th, td {
@@ -149,38 +154,38 @@ $result_requests = $conn->query("SELECT * FROM requests ORDER BY requested_at DE
         }
 
         th {
-            background: var(--brown);
-            color: white;
+            background: var(--primary);
+            color: #fff;
             font-weight: 600;
         }
 
         tr:hover {
-            background: #fff5e9;
+            background: #f3eafa;
         }
 
         .btn {
             display: inline-block;
-            background: var(--brown);
+            background: var(--primary);
             color: white;
             padding: 8px 14px;
-            border-radius: 8px;
+            border-radius: 10px;
             text-decoration: none;
             font-weight: 500;
             transition: 0.3s;
         }
 
         .btn:hover {
-            background: var(--light-brown);
+            background: var(--highlight);
         }
 
         .badge {
             padding: 5px 10px;
-            border-radius: 5px;
+            border-radius: 8px;
             font-weight: bold;
         }
 
-        .pending { background: #ffeb99; color: #665c00; }
-        .approved { background: #c6f6c6; color: #006600; }
+        .pending { background: #f4e2ff; color: #6e54a3; }
+        .approved { background: #d9f0ff; color: #0a5c91; }
         .cancelled { background: #f8d7da; color: #721c24; }
 
         /* Pagination */
@@ -192,22 +197,22 @@ $result_requests = $conn->query("SELECT * FROM requests ORDER BY requested_at DE
         }
 
         .pagination a {
-            background: #fff;
+            background: var(--bg);
             border: 1px solid #ccc;
             padding: 8px 14px;
             border-radius: 6px;
             text-decoration: none;
-            color: var(--brown);
+            color: var(--primary);
             transition: 0.3s;
         }
 
         .pagination a:hover {
-            background: var(--light-brown);
+            background: var(--highlight);
             color: white;
         }
 
         .pagination .active {
-            background: var(--brown);
+            background: var(--primary);
             color: white;
             font-weight: bold;
         }
@@ -217,7 +222,7 @@ $result_requests = $conn->query("SELECT * FROM requests ORDER BY requested_at DE
 
 <!-- Sidebar -->
 <div class="sidebar">
-    <h2>🍞 SweetCrumb</h2>
+    <h2>🌸 BloomLux Production 🌸</h2>
     <a href="home.php">🏠 Dashboard</a>
     <a href="supply.php" style="background: var(--light-brown);">📦 Supply</a>
     <a href="production.php">🧁 Production</a>

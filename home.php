@@ -10,56 +10,57 @@ $username = $user['username'];
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Bakery Production Tracker</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<meta charset="UTF-8">
+<title>SweetCrumb Production Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
         :root {
-            --brown: #8b4513;
-            --light-brown: #c3814a;
-            --cream: #fdf6f0;
-            --white: #ffffff;
-            --soft-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            --bg: #ffb3ecff;          /* main background */
+            --card: #f5f0fa;        /* soft lavender card background */
+            --primary: #2e1a2eff;     /* lavender accent */
+            --text: #000000ff;        /* main text color */
+            --highlight: #000000ff;   /* darker lavender for buttons/status */
+            --shadow: 0 3px 10px rgba(0,0,0,0.08);
         }
 
         body {
             font-family: 'Poppins', sans-serif;
             margin: 0;
-            background: var(--cream);
-            color: #333;
+            background: var(--bg);
             display: flex;
+            color: var(--text);
         }
 
         /* Sidebar */
         .sidebar {
             width: 240px;
-            background: linear-gradient(180deg, var(--brown), #a0522d);
-            color: var(--white);
+            background: var(--primary);
+            color: #fff;
             height: 100vh;
             position: fixed;
             display: flex;
             flex-direction: column;
-            padding: 25px 20px;
-            box-shadow: var(--soft-shadow);
+            padding: 40px 20px;
+            box-shadow: var(--shadow);
         }
         .sidebar h2 {
             text-align: center;
-            font-weight: 600;
-            font-size: 22px;
+            font-weight: 700;
+            font-size: 30px;
             margin-bottom: 40px;
         }
         .sidebar a {
             display: block;
-            color: var(--white);
-            padding: 12px 18px;
+            color: #fff;
+            padding: 20px 18px;
             margin: 8px 0;
             text-decoration: none;
-            border-radius: 10px;
+            border-radius: 50px;
             transition: 0.3s;
         }
         .sidebar a:hover {
-            background: var(--light-brown);
-            transform: translateX(4px);
+            background: var(--bg);
+            transform: translateX(3px);
         }
 
         /* Main Section */
@@ -78,8 +79,8 @@ $username = $user['username'];
         }
         .welcome {
             font-size: 1.5rem;
-            font-weight: 600;
-            color: var(--brown);
+            font-weight: 700;
+            color: var(--accent);
         }
         .top-right {
             display: flex;
@@ -92,9 +93,11 @@ $username = $user['username'];
             border-radius: 20px;
             width: 200px;
             transition: 0.3s;
+            background: #fff;
+            color: var(--text);
         }
         .search-bar input:focus {
-            border-color: var(--brown);
+            border-color: var(--accent);
             outline: none;
         }
         .notif {
@@ -103,28 +106,26 @@ $username = $user['username'];
         }
         #live-time {
             font-weight: 500;
-            color: #6d3f1a;
+            color: var(--accent);
         }
 
-        /* Dashboard grid */
+        /* Dashboard Grid */
         .dashboard {
             display: grid;
             grid-template-columns: 2fr 1fr;
             gap: 25px;
         }
-
         .stats {
             display: flex;
             gap: 20px;
             margin-bottom: 20px;
         }
-
         .stat-box {
             flex: 1;
-            background: linear-gradient(135deg, #ffeed8, #ffe0b2);
+            background: var(--card);
             padding: 20px;
             border-radius: 16px;
-            box-shadow: var(--soft-shadow);
+            box-shadow: var(--shadow);
             text-align: center;
             transition: 0.3s;
         }
@@ -134,23 +135,24 @@ $username = $user['username'];
         .stat-box h3 {
             margin: 0;
             font-size: 26px;
-            color: var(--brown);
+            color: var(--accent);
         }
         .stat-box p {
             margin: 8px 0 0;
-            color: #5a2d0c;
+            color: var(--text);
             font-weight: 500;
         }
 
+        /* Cards */
         .card {
-            background: var(--white);
+            background: var(--card);
             padding: 20px;
             border-radius: 16px;
-            box-shadow: var(--soft-shadow);
+            box-shadow: var(--shadow);
+            margin-bottom: 20px;
         }
-
         .card h3 {
-            color: var(--brown);
+            color: var(--accent);
             margin-bottom: 15px;
             font-weight: 600;
         }
@@ -159,12 +161,13 @@ $username = $user['username'];
         .notifications ul {
             list-style: none;
             padding: 0;
+            margin: 0;
         }
         .notifications li {
-            background: #fff5ea;
+            background: #f8f4fb;
             padding: 10px 12px;
             margin-bottom: 10px;
-            border-left: 5px solid var(--brown);
+            border-left: 5px solid var(--accent);
             border-radius: 6px;
             font-size: 0.95rem;
         }
@@ -181,7 +184,7 @@ $username = $user['username'];
 
 <!-- Sidebar -->
 <div class="sidebar">
-    <h2>🍞 SweetCrumb</h2>
+    <h2>🌸 BloomLux Production 🌸</h2>
     <a href="supply.php">📦 Supply</a>
     <a href="production.php">🧁 Production</a>
     <a href="my_requests.php">📋 My Requests</a>
@@ -262,3 +265,4 @@ updateTime();
 
 </body>
 </html>
+
