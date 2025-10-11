@@ -1,5 +1,5 @@
 <?php
-include 'db.php';
+include 'backend/init.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $ingredient = $_POST['ingredient_name'];

@@ -1,6 +1,6 @@
 <?php
-include 'db.php';
-session_start();
+include 'backend/init.php';
+
 $message = "";
 
 // Handle form submission
@@ -41,13 +41,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <title>Register - Bakery System</title>
     <style>
         body {
             font-family: 'Poppins', sans-serif;
-            background-color: #fdf6f0; /* soft cream background */
+            background-color: #fdf6f0;
+            /* soft cream background */
             display: flex;
             justify-content: center;
             align-items: center;
@@ -56,7 +58,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         .register-container {
-            background-color: #fff8f0; /* warm beige */
+            background-color: #fff8f0;
+            /* warm beige */
             border-radius: 15px;
             box-shadow: 0 6px 15px rgba(139, 69, 19, 0.2);
             padding: 40px;
@@ -72,7 +75,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         h2 {
             text-align: center;
-            color: #8b4513; /* warm brown */
+            color: #8b4513;
+            /* warm brown */
             margin-bottom: 25px;
             font-size: 28px;
         }
@@ -97,7 +101,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             font-size: 15px;
         }
 
-        input:focus, select:focus {
+        input:focus,
+        select:focus {
             outline: none;
             border-color: #c68642;
             box-shadow: 0 0 5px rgba(198, 134, 66, 0.4);
@@ -168,6 +173,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 width: 90%;
                 padding: 25px;
             }
+
             h2 {
                 font-size: 22px;
             }
@@ -177,49 +183,50 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 <body>
 
-<div class="register-container">
-    <h2>🍞 Bakery Registration</h2>
+    <div class="register-container">
+        <h2>🍞 Bakery Registration</h2>
 
-    <?php if ($message): ?>
-        <div class="message <?php echo strpos($message, '✅') !== false ? 'success' : 'error'; ?>">
-            <?php echo $message; ?>
-        </div>
-    <?php endif; ?>
+        <?php if ($message): ?>
+            <div class="message <?php echo strpos($message, '✅') !== false ? 'success' : 'error'; ?>">
+                <?php echo $message; ?>
+            </div>
+        <?php endif; ?>
 
-    <form method="POST">
-        <label for="username">Username:</label>
-        <input type="text" name="username" required placeholder="Enter your username">
+        <form method="POST">
+            <label for="username">Username:</label>
+            <input type="text" name="username" required placeholder="Enter your username">
 
-        <label for="email">Email:</label>
-        <input type="email" name="email" required placeholder="Enter your email">
+            <label for="email">Email:</label>
+            <input type="email" name="email" required placeholder="Enter your email">
 
-        <label for="password">Password:</label>
-        <input type="password" name="password" id="password" required placeholder="Enter your password">
-        <small>Password must be at least 8 characters with 1 uppercase, 1 number, and 1 special character.</small>
+            <label for="password">Password:</label>
+            <input type="password" name="password" id="password" required placeholder="Enter your password">
+            <small>Password must be at least 8 characters with 1 uppercase, 1 number, and 1 special character.</small>
 
-        <label for="security_question">Security Question:</label>
-        <select name="security_question" required>
-            <option value="">-- Select a question --</option>
-            <option value="What is your favorite bread?">What is your favorite bread?</option>
-            <option value="What is your first pet's name?">What is your first pet's name?</option>
-            <option value="What city were you born in?">What city were you born in?</option>
-        </select>
+            <label for="security_question">Security Question:</label>
+            <select name="security_question" required>
+                <option value="">-- Select a question --</option>
+                <option value="What is your favorite bread?">What is your favorite bread?</option>
+                <option value="What is your first pet's name?">What is your first pet's name?</option>
+                <option value="What city were you born in?">What city were you born in?</option>
+            </select>
 
-        <label for="security_answer">Answer:</label>
-        <input type="text" name="security_answer" required placeholder="Enter your answer">
+            <label for="security_answer">Answer:</label>
+            <input type="text" name="security_answer" required placeholder="Enter your answer">
 
-        <button type="submit">Register</button>
-    </form>
+            <button type="submit">Register</button>
+        </form>
 
-    <p>Already have an account? <a href="login.php">Login here</a>.</p>
-</div>
+        <p>Already have an account? <a href="login.php">Login here</a>.</p>
+    </div>
 
-<script>
-    const passwordInput = document.getElementById('password');
-    passwordInput.addEventListener('input', () => {
-        passwordInput.value = passwordInput.value.replace(/\s/g, '');
-    });
-</script>
+    <script>
+        const passwordInput = document.getElementById('password');
+        passwordInput.addEventListener('input', () => {
+            passwordInput.value = passwordInput.value.replace(/\s/g, '');
+        });
+    </script>
 
 </body>
+
 </html>

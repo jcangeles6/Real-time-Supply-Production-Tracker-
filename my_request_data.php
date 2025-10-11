@@ -1,6 +1,5 @@
 <?php
-session_start();
-include 'db.php';
+include 'backend/init.php';
 
 if (!isset($_SESSION['user_id'])) {
     exit("Not logged in");

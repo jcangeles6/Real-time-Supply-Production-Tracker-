@@ -1,5 +1,5 @@
 <?php
-include 'db.php';
+include 'backend/init.php';
 
 $product_name = $_GET['product_name'] ?? '';
 

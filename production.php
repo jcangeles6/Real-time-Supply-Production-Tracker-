@@ -2,34 +2,31 @@
 include 'backend/init.php';
 
 // Dashboard Data
-$daily_batches = $conn->query("SELECT COUNT(*) as count FROM batches WHERE DATE(scheduled_at) = CURDATE()")->fetch_assoc()['count'];
-$in_progress = $conn->query("SELECT COUNT(*) as count FROM batches WHERE status = 'in_progress'")->fetch_assoc()['count'];
+$daily_batches = $conn->query("SELECT COUNT(*) as count 
+    FROM batches 
+    WHERE DATE(scheduled_at) = CURDATE() 
+      AND is_deleted = 0")->fetch_assoc()['count'];
+$in_progress = $conn->query("SELECT COUNT(*) as count FROM batches WHERE status = 'in_progress' AND is_deleted = 0")->fetch_assoc()['count'];
 $completed_today = $conn->query("SELECT COUNT(*) as count FROM batches WHERE status = 'completed' AND DATE(completed_at) = CURDATE()")->fetch_assoc()['count'];
 $ingredients_needed = $conn->query("SELECT COUNT(*) as count FROM requests WHERE status = 'pending'")->fetch_assoc()['count'];
 
 // Filter
 $status_filter = $_GET['status_filter'] ?? 'all';
-$where = ($status_filter != 'all') ? "AND b.status='$status_filter'" : '';
+$where = ($status_filter != 'all') ? "AND status='$status_filter'" : '';
 
-// Fetch batches
-$batches = $conn->query("
-    SELECT b.id, b.product_name, b.status, b.scheduled_at, b.completed_at,
-           b.quantity AS batch_qty,
-           i.item_name AS stock_item, i.quantity AS stock_qty
-    FROM batches b
-    LEFT JOIN inventory i ON b.stock_id = i.id
-    WHERE 1 $where
-    ORDER BY b.scheduled_at DESC
-");
+$batches = $conn->query("SELECT * FROM batches WHERE is_deleted = 0 $where ORDER BY scheduled_at DESC");
+if (!$batches) die("SQL Error: " . $conn->error);
 ?>
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <title>🍞 SweetCrumb Production</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
+        /* --- CSS same as your previous code --- */
         :root {
             --brown: #8b4513;
             --light-brown: #c3814a;
@@ -46,7 +43,6 @@ $batches = $conn->query("
             color: #333;
         }
 
-        /* Sidebar */
         .sidebar {
             width: 240px;
             background: linear-gradient(180deg, var(--brown), #a0522d);
@@ -58,12 +54,14 @@ $batches = $conn->query("
             flex-direction: column;
             box-shadow: var(--soft-shadow);
         }
+
         .sidebar h2 {
             text-align: center;
             font-weight: 600;
             font-size: 22px;
             margin-bottom: 40px;
         }
+
         .sidebar a {
             display: block;
             color: var(--white);
@@ -73,12 +71,12 @@ $batches = $conn->query("
             border-radius: 10px;
             transition: 0.3s;
         }
+
         .sidebar a:hover {
             background: var(--light-brown);
             transform: translateX(4px);
         }
 
-        /* Main Section */
         .main {
             margin-left: 260px;
             flex: 1;
@@ -99,7 +97,6 @@ $batches = $conn->query("
             margin-bottom: 30px;
         }
 
-        /* Dashboard cards */
         .dashboard {
             display: flex;
             flex-wrap: wrap;
@@ -118,13 +115,16 @@ $batches = $conn->query("
             transition: 0.3s ease;
             position: relative;
         }
+
         .card:hover {
             transform: translateY(-5px);
         }
+
         .card h2 {
             color: var(--brown);
             margin: 0 0 10px;
         }
+
         .card p {
             margin: 0 0 15px;
             color: #5a2d0c;
@@ -140,16 +140,17 @@ $batches = $conn->query("
             font-size: 14px;
             transition: 0.3s;
         }
+
         .btn:hover {
             background: var(--light-brown);
         }
 
-        /* Animated Loading Card */
         .card.loading {
             background: linear-gradient(135deg, #fff3e0, #ffe0b2);
             box-shadow: 0 4px 15px rgba(255, 193, 7, 0.4);
             overflow: hidden;
         }
+
         .card.loading::after {
             content: "";
             position: absolute;
@@ -157,13 +158,20 @@ $batches = $conn->query("
             left: -100%;
             width: 100%;
             height: 100%;
-            background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.5) 50%, rgba(255,255,255,0) 100%);
+            background: linear-gradient(90deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.5) 50%, rgba(255, 255, 255, 0) 100%);
             animation: loadingGlow 1.5s infinite;
         }
+
         @keyframes loadingGlow {
-            0% { left: -100%; }
-            100% { left: 100%; }
+            0% {
+                left: -100%;
+            }
+
+            100% {
+                left: 100%;
+            }
         }
+
         .spinner {
             margin: 8px auto 10px;
             border: 4px solid #f3f3f3;
@@ -173,12 +181,17 @@ $batches = $conn->query("
             height: 28px;
             animation: spin 1s linear infinite;
         }
+
         @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
         }
 
-        /* Controls */
         .controls {
             display: flex;
             justify-content: center;
@@ -187,19 +200,21 @@ $batches = $conn->query("
             flex-wrap: wrap;
         }
 
-        input[type="text"], select {
+        input[type="text"],
+        select {
             padding: 10px 14px;
             border: 1px solid #ccc;
             border-radius: 10px;
             font-size: 14px;
             transition: 0.3s;
         }
-        input[type="text"]:focus, select:focus {
+
+        input[type="text"]:focus,
+        select:focus {
             border-color: var(--brown);
             outline: none;
         }
 
-        /* Table */
         table {
             width: 100%;
             border-collapse: collapse;
@@ -209,7 +224,8 @@ $batches = $conn->query("
             box-shadow: var(--soft-shadow);
         }
 
-        th, td {
+        th,
+        td {
             padding: 12px 14px;
             text-align: center;
             border-bottom: 1px solid #eee;
@@ -225,31 +241,49 @@ $batches = $conn->query("
             background: #fff5ea;
         }
 
-        /* Status colors */
-        .status-scheduled { color: gray; font-weight: 500; }
-        .status-in_progress { color: #d2691e; font-weight: 600; }
-        .status-completed { color: green; font-weight: 600; }
+        .status-scheduled {
+            color: gray;
+            font-weight: 500;
+        }
 
-        /* Actions */
+        .status-in_progress {
+            color: #d2691e;
+            font-weight: 600;
+        }
+
+        .status-completed {
+            color: green;
+            font-weight: 600;
+        }
+
         td.actions {
             display: flex;
             justify-content: center;
             gap: 6px;
+            align-items: center;
+            /* <-- vertically center the buttons */
+            flex-wrap: wrap;
+            /* optional: wrap buttons if too many */
+            min-height: 50px;
+            /* optional: ensure enough height */
         }
+
         td.actions .btn {
             padding: 6px 10px;
             font-size: 13px;
+            line-height: 1.2;
+            /* ensures text is vertically centered in button */
         }
 
-        /* Modal */
         .modal {
             display: none;
             position: fixed;
             inset: 0;
-            background: rgba(0,0,0,0.5);
+            background: rgba(0, 0, 0, 0.5);
             justify-content: center;
             align-items: center;
         }
+
         .modal-content {
             background: white;
             padding: 20px;
@@ -257,8 +291,13 @@ $batches = $conn->query("
             text-align: center;
             box-shadow: var(--soft-shadow);
         }
-    </style>
 
+        .quantity-info {
+            font-size: 13px;
+            color: #333;
+            margin-top: 4px;
+        }
+    </style>
     <script>
         function updateClock() {
             const now = new Date();
@@ -281,7 +320,7 @@ $batches = $conn->query("
             const modal = document.getElementById('deleteModal');
             modal.style.display = 'flex';
             document.getElementById('confirmDeleteBtn').onclick = function() {
-                window.location.href = 'remove_batch.php?id=' + batchId;
+                window.location.href = 'delete_batch.php?id=' + batchId;
             };
         }
 
@@ -294,6 +333,7 @@ $batches = $conn->query("
         }
     </script>
 </head>
+
 <body>
     <div class="sidebar">
         <h2>🍞 SweetCrumb</h2>
@@ -315,19 +355,16 @@ $batches = $conn->query("
                 <p><?php echo $daily_batches; ?> Scheduled</p>
                 <a href="add_batch.php" class="btn">➕ Add Batch</a>
             </div>
-
             <div class="card loading">
                 <h2>In Progress</h2>
                 <div class="spinner"></div>
                 <p><?php echo $in_progress; ?> Ongoing</p>
             </div>
-
             <div class="card">
                 <h2>Completed Today</h2>
                 <p><?php echo $completed_today; ?> Done</p>
                 <a href="report.php" class="btn">📊 Report</a>
             </div>
-
             <div class="card">
                 <h2>Ingredients Needed</h2>
                 <p><?php echo $ingredients_needed; ?> Pending</p>
@@ -351,49 +388,108 @@ $batches = $conn->query("
             <tr>
                 <th>ID</th>
                 <th>Product</th>
-                <th>Stock</th>
-                <th>Qty</th>
+                <th>Current Stock</th>
+                <th>Stock After Deduction</th>
                 <th>Status</th>
                 <th>Scheduled At</th>
                 <th>Completed At</th>
                 <th>Actions</th>
             </tr>
+
             <?php while ($row = $batches->fetch_assoc()): ?>
-                <?php $startDisabled = ($row['stock_qty'] < 1 || !$row['stock_item']); ?>
+                <?php
+                $batch_id = $row['id'];
+                $materials_res = $conn->query("
+        SELECT i.id AS stock_id, i.item_name, i.quantity AS current_stock,
+               bm.quantity_used, bm.quantity_reserved
+        FROM batch_materials bm
+        JOIN inventory i ON bm.stock_id = i.id
+        WHERE bm.batch_id = $batch_id
+    ");
+
+                $materials = [];
+                $startDisabled = false;
+
+                while ($mat = $materials_res->fetch_assoc()) {
+                    $needed_total = $mat['quantity_used']; // just the quantity inputted per item
+                    $after = $mat['current_stock'] - max($needed_total - $mat['quantity_reserved'], 0);
+
+
+                    if ($after < 0) $startDisabled = true;
+
+                    $materials[] = [
+                        'stock_id' => $mat['stock_id'],
+                        'name' => $mat['item_name'],
+                        'current' => $mat['current_stock'],
+                        'needed' => $needed_total,
+                        'reserved' => $mat['quantity_reserved'],
+                        'after' => $after
+                    ];
+                }
+                ?>
                 <tr>
-                    <td><?php echo $row['id']; ?></td>
-                    <td><?php echo htmlspecialchars($row['product_name']); ?></td>
+                    <td><?= $row['id'] ?></td>
+                    <td>
+                        <?= htmlspecialchars($row['product_name']) ?>
+                        <div class="quantity-info">Quantity: <b><?= $row['quantity'] ?></b></div>
+                    </td>
                     <td>
                         <?php
-                        if ($row['stock_item']) {
-                            $stockDisplay = htmlspecialchars($row['stock_item']) . " (" . $row['stock_qty'] . ")";
-                            echo $row['stock_qty'] <= 10
-                                ? "<span style='color:red;font-weight:bold;'>$stockDisplay</span>"
-                                : "<span style='color:green;'>$stockDisplay</span>";
-                        } else echo "<span style='color:red;'>Not linked</span>";
+                        if (!empty($materials)) {
+                            foreach ($materials as $m) {
+                                echo "{$m['name']}: <b style='color:blue'>{$m['current']}</b>";
+                                if ($row['status'] === 'scheduled') {
+                                    echo " | Needed: <b>{$m['needed']}</b>";
+                                }
+                                echo "<br>";
+                            }
+                        } else {
+                            echo "<span style='color:red;'>No materials linked</span>";
+                        }
                         ?>
                     </td>
-                    <td><?php echo $row['batch_qty']; ?></td>
-                    <td class="status-<?php echo $row['status']; ?>"><?php echo ucfirst($row['status']); ?></td>
-                    <td><?php echo date("M d, Y, h:i A", strtotime($row['scheduled_at'])); ?></td>
-                    <td><?php echo $row['completed_at'] ? date("M d, Y, h:i A", strtotime($row['completed_at'])) : '—'; ?></td>
+                    <td>
+                        <?php
+                        if (!empty($materials)) {
+                            foreach ($materials as $m) {
+                                if ($row['status'] === 'scheduled') {
+                                    echo $m['name'] . ": " . ($m['after'] >= 0 ? "<b style='color:orange'>{$m['after']}</b>" : "<b style='color:red'>❌ Insufficient</b>") . "<br>";
+                                } elseif ($row['status'] === 'in_progress') {
+                                    echo $m['name'] . ": <b style='color:green'>Reserved: {$m['needed']}</b><br>";
+                                } else {
+                                    echo '—';
+                                }
+                            }
+                        } else {
+                            echo '—';
+                        }
+                        ?>
+                    </td>
+                    <td class="status-<?= $row['status'] ?>"><?= ucfirst($row['status']) ?></td>
+                    <td><?= date("M d, Y, h:i A", strtotime($row['scheduled_at'])) ?></td>
+                    <td><?= $row['completed_at'] ? date("M d, Y, h:i A", strtotime($row['completed_at'])) : '—' ?></td>
                     <td class="actions">
                         <?php if ($row['status'] === 'scheduled'): ?>
                             <?php if ($startDisabled): ?>
                                 <a href="#" onclick="showStockAlert()" class="btn">▶ Start</a>
                             <?php else: ?>
-                                <a href="update_batch.php?id=<?php echo $row['id']; ?>&status=in_progress" class="btn">▶ Start</a>
+                                <a href="update_batch.php?id=<?= $row['id'] ?>&status=in_progress" class="btn">▶ Start</a>
                             <?php endif; ?>
                         <?php elseif ($row['status'] === 'in_progress'): ?>
-                            <a href="update_batch.php?id=<?php echo $row['id']; ?>&status=completed" class="btn">✅ Complete</a>
+                            <a href="update_batch.php?id=<?= $row['id'] ?>&status=completed" class="btn">✅ Complete</a>
                         <?php else: ?>
                             <span style="color:gray;">✔ Done</span>
                         <?php endif; ?>
-                        <a href="#" onclick="showDeleteModal(<?php echo $row['id']; ?>)" class="btn" style="background:#b22222;">🗑</a>
-                        <a href="add_batch.php?product_name=<?php echo urlencode($row['product_name']); ?>&quantity=<?php echo $row['quantity'] ?? 1; ?>" class="btn" style="background:#228b22;">📄</a>
+
+                        <?php if ($row['status'] !== 'completed'): ?>
+                            <a href="#" onclick="showDeleteModal(<?= $row['id'] ?>)" class="btn" style="background:#b22222;">🗑</a>
+                            <a href="add_batch.php?batch_id=<?= $row['id'] ?>" class="btn" style="background:#228b22;">📄</a>
+                        <?php else: ?>
+                        <?php endif; ?>
                     </td>
                 </tr>
             <?php endwhile; ?>
+
         </table>
 
         <div style="text-align:center;margin-top:15px;">
@@ -409,4 +505,5 @@ $batches = $conn->query("
         </div>
     </div>
 </body>
+
 </html>

@@ -3,15 +3,25 @@ include 'backend/init.php';
 
 // Get completed batches today
 $query = "
-    SELECT b.id, b.product_name, b.quantity, b.completed_at, i.item_name AS stock_item
+    SELECT 
+        b.id, 
+        b.product_name, 
+        b.quantity, 
+        b.completed_at,
+        GROUP_CONCAT(CONCAT(i.item_name, ' (', bm.quantity_used, ')') SEPARATOR ', ') AS materials
     FROM batches b
-    LEFT JOIN inventory i ON b.stock_id = i.id
-    WHERE b.status = 'completed' AND DATE(b.completed_at) = CURDATE()
+    LEFT JOIN batch_materials bm ON b.id = bm.batch_id
+    LEFT JOIN inventory i ON bm.stock_id = i.id
+    WHERE b.status = 'completed'
+      AND DATE(b.completed_at) = CURDATE()
+      AND b.is_deleted = 0
+    GROUP BY b.id, b.product_name, b.quantity, b.completed_at
     ORDER BY b.completed_at DESC
 ";
 $batches = $conn->query($query);
 $total_completed = $batches->num_rows;
 $total_quantity = 0;
+$data = [];
 while ($row = $batches->fetch_assoc()) {
     $total_quantity += $row['quantity'];
     $data[] = $row;
@@ -20,6 +30,7 @@ while ($row = $batches->fetch_assoc()) {
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <title>🍞 SweetCrumb - Daily Report</title>
@@ -30,7 +41,7 @@ while ($row = $batches->fetch_assoc()) {
             --light-brown: #c3814a;
             --cream: #fdf6f0;
             --white: #ffffff;
-            --soft-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            --soft-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         }
 
         body {
@@ -53,12 +64,14 @@ while ($row = $batches->fetch_assoc()) {
             flex-direction: column;
             box-shadow: var(--soft-shadow);
         }
+
         .sidebar h2 {
             text-align: center;
             font-weight: 600;
             font-size: 22px;
             margin-bottom: 40px;
         }
+
         .sidebar a {
             display: block;
             color: var(--white);
@@ -68,6 +81,7 @@ while ($row = $batches->fetch_assoc()) {
             border-radius: 10px;
             transition: 0.3s;
         }
+
         .sidebar a:hover {
             background: var(--light-brown);
             transform: translateX(4px);
@@ -131,7 +145,8 @@ while ($row = $batches->fetch_assoc()) {
             box-shadow: var(--soft-shadow);
         }
 
-        th, td {
+        th,
+        td {
             padding: 12px 14px;
             text-align: center;
             border-bottom: 1px solid #eee;
@@ -163,12 +178,16 @@ while ($row = $batches->fetch_assoc()) {
             display: inline-block;
             transition: 0.3s;
         }
+
         .btn:hover {
             background: var(--light-brown);
         }
 
         @media (max-width: 768px) {
-            .summary { flex-direction: column; align-items: center; }
+            .summary {
+                flex-direction: column;
+                align-items: center;
+            }
         }
     </style>
 
@@ -188,11 +207,20 @@ while ($row = $batches->fetch_assoc()) {
         function exportCSV() {
             const table = document.querySelector("table");
             let csv = [];
+
             for (const row of table.rows) {
-                const cols = Array.from(row.cells).map(cell => cell.innerText);
-                csv.push(cols.join(","));
+                const cols = Array.from(row.cells).map(cell => {
+                    // Escape double quotes by doubling them
+                    let text = cell.innerText.replace(/"/g, '""');
+                    // Wrap every cell in double quotes
+                    return `"${text}"`;
+                });
+                csv.push(cols.join(",")); // Join columns with comma
             }
-            const blob = new Blob([csv.join("\n")], { type: "text/csv" });
+
+            const blob = new Blob([csv.join("\n")], {
+                type: "text/csv"
+            });
             const link = document.createElement("a");
             link.href = URL.createObjectURL(blob);
             link.download = "sweetcrumb_report.csv";
@@ -200,6 +228,7 @@ while ($row = $batches->fetch_assoc()) {
         }
     </script>
 </head>
+
 <body>
     <div class="sidebar">
         <h2>🍞 SweetCrumb</h2>
@@ -236,7 +265,7 @@ while ($row = $batches->fetch_assoc()) {
                 <th>ID</th>
                 <th>Product</th>
                 <th>Quantity</th>
-                <th>Stock Item</th>
+                <th>Materials Used</th>
                 <th>Completed At</th>
             </tr>
             <?php if (!empty($data)): ?>
@@ -245,14 +274,17 @@ while ($row = $batches->fetch_assoc()) {
                         <td><?php echo $row['id']; ?></td>
                         <td><?php echo htmlspecialchars($row['product_name']); ?></td>
                         <td><?php echo $row['quantity']; ?></td>
-                        <td><?php echo htmlspecialchars($row['stock_item']); ?></td>
+                        <td><?php echo htmlspecialchars($row['materials']); ?></td>
                         <td><?php echo date("M d, Y h:i A", strtotime($row['completed_at'])); ?></td>
                     </tr>
                 <?php endforeach; ?>
             <?php else: ?>
-                <tr><td colspan="5">No batches completed today.</td></tr>
+                <tr>
+                    <td colspan="5">No batches completed today.</td>
+                </tr>
             <?php endif; ?>
         </table>
     </div>
 </body>
+
 </html>

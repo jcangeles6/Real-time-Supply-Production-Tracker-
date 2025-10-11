@@ -1,6 +1,5 @@
 <?php
-include 'db.php';
-session_start();
+include 'backend/init.php';
 
 if (!isset($_SESSION['reset_user_id'])) {
     echo "Unauthorized access.";

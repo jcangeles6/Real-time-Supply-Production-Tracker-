@@ -1,6 +1,5 @@
 <?php
-session_start();
-include 'db.php';
+include 'backend/init.php';
 
 // Redirect to login if not logged in
 if (!isset($_SESSION['user_id'])) {
