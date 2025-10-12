@@ -23,86 +23,76 @@ if (!$batches) die("SQL Error: " . $conn->error);
 
 <head>
     <meta charset="UTF-8">
-    <title>🌸 BloomLux Production</title>
+    <title>🍞 SweetCrumb Production</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     <style>
+        /* --- CSS same as your previous code --- */
         :root {
-            --bg: #ffb3ecff;
-            /* main background */
-            --card: #f5f0fa;
-            /* soft lavender card background */
-            --primary: #2e1a2eff;
-            /* lavender accent */
-            --text: #000000ff;
-            /* main text color */
-            --highlight: #000000ff;
-            /* darker lavender for buttons/status */
-            --shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+            --brown: #8b4513;
+            --light-brown: #c3814a;
+            --cream: #fdf6f0;
+            --white: #ffffff;
+            --soft-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         }
 
         body {
             font-family: 'Poppins', sans-serif;
-            background: var(--bg);
+            background: var(--cream);
             margin: 0;
             display: flex;
-            color: var(--text);
+            color: #333;
         }
 
-        /* Sidebar */
         .sidebar {
             width: 240px;
-            background: var(--primary);
-            color: #ffffff;
+            background: linear-gradient(180deg, var(--brown), #a0522d);
+            color: var(--white);
             height: 100vh;
             position: fixed;
-            padding: 40px 20px;
+            padding: 25px 20px;
             display: flex;
             flex-direction: column;
-            box-shadow: var(--shadow);
+            box-shadow: var(--soft-shadow);
         }
 
         .sidebar h2 {
             text-align: center;
-            font-weight: 700;
-            font-size: 30px;
+            font-weight: 600;
+            font-size: 22px;
             margin-bottom: 40px;
-            color: #ffffff;
         }
 
         .sidebar a {
             display: block;
-            color: #ffffff;
-            padding: 20px 18px;
-            margin: 8px 0;
+            color: var(--white);
+            padding: 12px 18px;
+            margin: 6px 0;
             text-decoration: none;
-            border-radius: 50px;
+            border-radius: 10px;
             transition: 0.3s;
         }
 
         .sidebar a:hover {
-            background: var(--bg);
-            transform: translateX(3px);
+            background: var(--light-brown);
+            transform: translateX(4px);
         }
 
-        /* Main content */
         .main {
             margin-left: 260px;
             flex: 1;
-            padding: 60px;
-            background: var(--bg);
+            padding: 30px;
         }
 
         h1 {
-            color: var(--primary);
+            color: var(--brown);
             text-align: center;
-            font-weight: 700;
+            font-weight: 600;
             margin-bottom: 5px;
         }
 
         #clock {
             text-align: center;
-            color: var(--highlight);
+            color: #6d3f1a;
             font-weight: 500;
             margin-bottom: 30px;
         }
@@ -116,9 +106,9 @@ if (!$batches) die("SQL Error: " . $conn->error);
         }
 
         .card {
-            background: var(--card);
-            border-radius: 16px;
-            box-shadow: var(--shadow);
+            background: var(--white);
+            border-radius: 18px;
+            box-shadow: var(--soft-shadow);
             text-align: center;
             padding: 22px;
             width: 230px;
@@ -127,45 +117,65 @@ if (!$batches) die("SQL Error: " . $conn->error);
         }
 
         .card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+            transform: translateY(-5px);
         }
 
         .card h2 {
-            color: var(--highlight);
+            color: var(--brown);
             margin: 0 0 10px;
-            font-weight: 600;
         }
 
         .card p {
             margin: 0 0 15px;
-            color: var(--text);
+            color: #5a2d0c;
             font-size: 15px;
         }
 
         .btn {
-            background: var(--primary);
-            color: #ffffff;
+            background: var(--brown);
+            color: var(--white);
             padding: 8px 16px;
-            border-radius: 18px;
+            border-radius: 20px;
             text-decoration: none;
             font-size: 14px;
             transition: 0.3s;
         }
 
         .btn:hover {
-            background: var(--highlight);
+            background: var(--light-brown);
         }
 
         .card.loading {
-            background: #ede5f5;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            background: linear-gradient(135deg, #fff3e0, #ffe0b2);
+            box-shadow: 0 4px 15px rgba(255, 193, 7, 0.4);
+            overflow: hidden;
+        }
+
+        .card.loading::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.5) 50%, rgba(255, 255, 255, 0) 100%);
+            animation: loadingGlow 1.5s infinite;
+        }
+
+        @keyframes loadingGlow {
+            0% {
+                left: -100%;
+            }
+
+            100% {
+                left: 100%;
+            }
         }
 
         .spinner {
             margin: 8px auto 10px;
             border: 4px solid #f3f3f3;
-            border-top: 4px solid var(--primary);
+            border-top: 4px solid var(--brown);
             border-radius: 50%;
             width: 28px;
             height: 28px;
@@ -197,24 +207,21 @@ if (!$batches) die("SQL Error: " . $conn->error);
             border-radius: 10px;
             font-size: 14px;
             transition: 0.3s;
-            background: #fff;
-            color: var(--text);
         }
 
         input[type="text"]:focus,
         select:focus {
-            border-color: var(--primary);
+            border-color: var(--brown);
             outline: none;
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
-            background: var(--card);
-            border-radius: 12px;
+            background: var(--white);
+            border-radius: 16px;
             overflow: hidden;
-            box-shadow: var(--shadow);
-            color: var(--text);
+            box-shadow: var(--soft-shadow);
         }
 
         th,
@@ -225,13 +232,13 @@ if (!$batches) die("SQL Error: " . $conn->error);
         }
 
         th {
-            background: var(--primary);
-            color: #c386afff;
+            background: var(--brown);
+            color: var(--white);
             font-weight: 500;
         }
 
         tr:hover {
-            background: #f3eafa;
+            background: #fff5ea;
         }
 
         .status-scheduled {
@@ -240,113 +247,57 @@ if (!$batches) die("SQL Error: " . $conn->error);
         }
 
         .status-in_progress {
-            color: var(--highlight);
+            color: #d2691e;
             font-weight: 600;
         }
 
         .status-completed {
-            color: #6aa84f;
+            color: green;
             font-weight: 600;
+        }
+
+        td.actions {
+            display: flex;
+            justify-content: center;
+            gap: 6px;
+            align-items: center;
+            /* <-- vertically center the buttons */
+            flex-wrap: wrap;
+            /* optional: wrap buttons if too many */
+            min-height: 50px;
+            /* optional: ensure enough height */
         }
 
         td.actions .btn {
             padding: 6px 10px;
             font-size: 13px;
             line-height: 1.2;
+            /* ensures text is vertically centered in button */
         }
 
         .modal {
             display: none;
             position: fixed;
             inset: 0;
-            background: rgba(0, 0, 0, 0.4);
+            background: rgba(0, 0, 0, 0.5);
             justify-content: center;
             align-items: center;
         }
 
         .modal-content {
-            background: var(--card);
+            background: white;
             padding: 20px;
             border-radius: 10px;
             text-align: center;
-            box-shadow: var(--shadow);
-            color: var(--text);
+            box-shadow: var(--soft-shadow);
         }
 
         .quantity-info {
             font-size: 13px;
-            color: var(--highlight);
+            color: #333;
             margin-top: 4px;
         }
-
-        /* Tooltip container */
-        .tooltip {
-            position: relative;
-            display: inline-block;
-        }
-
-        /* Tooltip icon */
-        .tooltip i {
-            color: #ff69b4;
-            /* hot pink flower-themed icon */
-            cursor: pointer;
-            transition: color 0.3s;
-        }
-
-        /* Tooltip text (bubble) */
-        .tooltip .tooltip-text {
-            visibility: hidden;
-            width: max-content;
-            max-width: 220px;
-            background-color: #ffd1dc;
-            /* soft pink flower background */
-            color: #5a2e5c;
-            /* deep lavender text */
-            text-align: left;
-            border-radius: 8px;
-            padding: 6px 10px;
-            position: fixed;
-            /* <-- change from absolute to fixed */
-            top: 0;
-            /* we will offset with JS */
-            left: 0;
-            /* we will offset with JS */
-            z-index: 1000;
-            opacity: 0;
-            transition: opacity 0.3s;
-            white-space: normal;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            font-size: 13px;
-        }
-
-        /* Arrow pointing down to icon */
-        .tooltip .tooltip-text::after {
-            content: "";
-            position: absolute;
-            top: 100%;
-            /* bottom of tooltip */
-            left: 50%;
-            transform: translateX(-50%);
-            border-width: 6px;
-            border-style: solid;
-            border-color: #ffd1dc transparent transparent transparent;
-            /* arrow color */
-        }
-
-        /* Show tooltip on hover */
-        .tooltip:hover .tooltip-text {
-            visibility: visible;
-            opacity: 1;
-        }
-
-        /* Change icon color on hover */
-        .tooltip:hover i {
-            color: #d147a3;
-            /* darker pink */
-        }
     </style>
-
-
     <script>
         function updateClock() {
             const now = new Date();
@@ -385,17 +336,17 @@ if (!$batches) die("SQL Error: " . $conn->error);
 
 <body>
     <div class="sidebar">
-        <h2>🌸 BloomLux Production 🌸</h2>
+        <h2>🍞 SweetCrumb</h2>
         <a href="home.php">🏠 Dashboard</a>
         <a href="supply.php">📦 Supply</a>
-        <a href="production.php">🧁 Production</a>
+        <a href="production.php" style="background: var(--light-brown);">🧁 Production</a>
         <a href="my_requests.php">📋 My Requests</a>
         <a href="inventory.php">📊 Inventory</a>
         <a href="logout.php">🚪 Logout</a>
     </div>
 
     <div class="main">
-        <h1>🌸 BloomLux Production Dashboard 🌸</h1>
+        <h1>🍰 Production Dashboard</h1>
         <div id="clock"></div>
 
         <div class="dashboard">
@@ -435,71 +386,16 @@ if (!$batches) die("SQL Error: " . $conn->error);
 
         <table>
             <tr>
-                <th>
-                    ID
-                    <br>
-                    <span class="tooltip">
-                        <i class="fa fa-info-circle"></i>
-                        <span class="tooltip-text">Batch ID</span>
-                    </span>
-                </th>
-                <th>
-                    Product
-                    <br>
-                    <span class="tooltip">
-                        <i class="fa fa-info-circle"></i>
-                        <span class="tooltip-text">Name of the product being produced</span>
-                    </span>
-                </th>
-                <th>
-                    Current Stock
-                    <br>
-                    <span class="tooltip">
-                        <i class="fa fa-info-circle"></i>
-                        <span class="tooltip-text">Number of items currently in inventory</span>
-                    </span>
-                </th>
-                <th>
-                    Material Status
-                    <br>
-                    <span class="tooltip">
-                        <i class="fa fa-info-circle"></i>
-                        <span class="tooltip-text">Reserved or used material for this batch</span>
-                    </span>
-                </th>
-                <th>
-                    Status
-                    <br>
-                    <span class="tooltip">
-                        <i class="fa fa-info-circle"></i>
-                        <span class="tooltip-text">Current production status</span>
-                    </span>
-                </th>
-                <th>
-                    Scheduled At
-                    <br>
-                    <span class="tooltip">
-                        <i class="fa fa-info-circle"></i>
-                        <span class="tooltip-text">When the batch is scheduled</span>
-                    </span>
-                </th>
-                <th>
-                    Completed At
-                    <br>
-                    <span class="tooltip">
-                        <i class="fa fa-info-circle"></i>
-                        <span class="tooltip-text">When the batch was completed</span>
-                    </span>
-                </th>
-                <th>
-                    Actions
-                    <br>
-                    <span class="tooltip">
-                        <i class="fa fa-info-circle"></i>
-                        <span class="tooltip-text">Available actions for this batch</span>
-                    </span>
-                </th>
+                <th>ID</th>
+                <th>Product</th>
+                <th>Current Stock</th>
+                <th>Stock After Deduction</th>
+                <th>Status</th>
+                <th>Scheduled At</th>
+                <th>Completed At</th>
+                <th>Actions</th>
             </tr>
+
             <?php while ($row = $batches->fetch_assoc()): ?>
                 <?php
                 $batch_id = $row['id'];
@@ -557,18 +453,15 @@ if (!$batches) die("SQL Error: " . $conn->error);
                         if (!empty($materials)) {
                             foreach ($materials as $m) {
                                 if ($row['status'] === 'scheduled') {
-                                    // Scheduled → Reserved
-                                    echo "<span style='font-family:Poppins,sans-serif;'>{$m['name']}: Reserved (<b style='color:orange'>{$m['needed']}</b>)</span><br>";
+                                    echo $m['name'] . ": " . ($m['after'] >= 0 ? "<b style='color:orange'>{$m['after']}</b>" : "<b style='color:red'>❌ Insufficient</b>") . "<br>";
                                 } elseif ($row['status'] === 'in_progress') {
-                                    // In Progress → Used
-                                    echo "<span style='font-family:Poppins,sans-serif;'>{$m['name']}: Used (<b style='color:green'>{$m['needed']}</b>)</span><br>";
+                                    echo $m['name'] . ": <b style='color:green'>Reserved: {$m['needed']}</b><br>";
                                 } else {
-                                    // Completed
-                                    echo "<span style='font-family:Poppins,sans-serif;'>—</span>";
+                                    echo '—';
                                 }
                             }
                         } else {
-                            echo "<span style='font-family:Poppins,sans-serif;'>—</span>";
+                            echo '—';
                         }
                         ?>
                     </td>
@@ -583,13 +476,15 @@ if (!$batches) die("SQL Error: " . $conn->error);
                                 <a href="update_batch.php?id=<?= $row['id'] ?>&status=in_progress" class="btn">▶ Start</a>
                             <?php endif; ?>
                         <?php elseif ($row['status'] === 'in_progress'): ?>
-                            <a href="update_batch.php?id=<?= $row['id'] ?>&status=completed" class="btn" style="background:#6aa84f;">✔ Complete</a>
+                            <a href="update_batch.php?id=<?= $row['id'] ?>&status=completed" class="btn">✅ Complete</a>
                         <?php else: ?>
                             <span style="color:gray;">✔ Done</span>
                         <?php endif; ?>
+
                         <?php if ($row['status'] !== 'completed'): ?>
                             <a href="#" onclick="showDeleteModal(<?= $row['id'] ?>)" class="btn" style="background:#b22222;">🗑</a>
                             <a href="add_batch.php?batch_id=<?= $row['id'] ?>" class="btn" style="background:#228b22;">📄</a>
+                        <?php else: ?>
                         <?php endif; ?>
                     </td>
                 </tr>
@@ -609,34 +504,6 @@ if (!$batches) die("SQL Error: " . $conn->error);
             </div>
         </div>
     </div>
-    <script>
-        document.querySelectorAll('.tooltip').forEach(t => {
-            const icon = t.querySelector('i');
-            const bubble = t.querySelector('.tooltip-text');
-
-            icon.addEventListener('mouseenter', () => {
-                const rect = icon.getBoundingClientRect();
-                bubble.style.top = (rect.top - bubble.offsetHeight - 6) + 'px'; // 6px gap
-                bubble.style.left = (rect.left + rect.width / 2 - bubble.offsetWidth / 2) + 'px';
-            });
-        });
-    </script>
-
 </body>
-<?php if (!empty($_SESSION['batch_error'])): ?>
-    <script>
-        const modal = document.createElement('div');
-        modal.style = "position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);display:flex;justify-content:center;align-items:center;z-index:999;";
-        modal.innerHTML = `
-        <div style="background:white;padding:20px;border-radius:15px;text-align:center;max-width:400px;">
-            <p><?php echo $_SESSION['batch_error']; ?></p>
-            <button onclick="this.parentElement.parentElement.remove();" style="margin-top:10px;padding:8px 15px;border:none;border-radius:10px;background:#c47a3f;color:white;cursor:pointer;">OK</button>
-        </div>
-    `;
-        document.body.appendChild(modal);
-    </script>
-<?php unset($_SESSION['batch_error']);
-endif; ?>
-
 
 </html>
