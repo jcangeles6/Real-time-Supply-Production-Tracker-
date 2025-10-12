@@ -11,7 +11,7 @@ $username = $user['username'];
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>SweetCrumb Production Tracker</title>
+<title>🌸 BloomLux Dashboard 🌸</title>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -184,10 +184,9 @@ $username = $user['username'];
 
 <!-- Sidebar -->
 <div class="sidebar">
-    <h2>🌸 BloomLux Production 🌸</h2>
+    <h2>🌸 BloomLux Dashboard 🌸</h2>
     <a href="supply.php">📦 Supply</a>
     <a href="production.php">🧁 Production</a>
-    <a href="my_requests.php">📋 My Requests</a>
     <a href="inventory.php">📊 Inventory</a>
     <a href="logout.php">🚪 Logout</a>
 </div>
@@ -208,7 +207,7 @@ $username = $user['username'];
             <div class="stats">
                 <div class="stat-box">
                     <h3>520</h3>
-                    <p>Breads in Stock</p>
+                    <p>Materials in Stock</p>
                 </div>
                 <div class="stat-box">
                     <h3>150</h3>
@@ -231,9 +230,9 @@ $username = $user['username'];
             <div class="card notifications">
                 <h3>🔔 Notifications</h3>
                 <ul>
-                    <li>🥖 Fresh batch of baguettes completed</li>
-                    <li>🍰 Cake production rescheduled for 2PM</li>
-                    <li>✔ Flour stock updated successfully</li>
+                    <li>💐 Fresh batch of Roses Bouquet completed</li>
+                    <li>🌸 Bouquet production rescheduled for 2PM</li>
+                    <li>🎀 Ribbons stock updated successfully</li>
                 </ul>
             </div>
 
@@ -245,8 +244,8 @@ $username = $user['username'];
 
             <div class="card">
                 <h3>🗓 Production Schedule</h3>
-                <p><strong>Next Batch:</strong> Chocolate Cake - <em>2:00 PM</em></p>
-                <p><strong>Oven Status:</strong> Preheating 🔥</p>
+                <p><strong>Next Batch:</strong> SunFlower Bouquet - <em>2:00 PM</em></p>
+                <p><strong>Production Status:</strong> Preparing Materials 🛠️</p>
             </div>
         </div>
     </div>

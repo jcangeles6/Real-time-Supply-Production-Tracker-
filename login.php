@@ -82,106 +82,135 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
-    <title>Bakery Login</title>
+    <title>🌸 BloomLux | Login</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --bg: #ffb3ecff;
+            --card: #f5f0fa;
+            --primary: #2e1a2eff;
+            --text: #000000ff;
+            --highlight: #000000ff;
+            --shadow: 0 3px 10px rgaba(0,0,0,0.08);
+        }
+
         body {
             font-family: 'Poppins', sans-serif;
-            background: linear-gradient(135deg, #fff5e1, #fce4d6);
+            margin: 0;
+            background: var(--bg);
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
-            margin: 0;
+            color: var(--text);
         }
 
         .login-container {
-            background-color: #fffaf0;
-            border-radius: 15px;
-            box-shadow: 0 4px 10px rgba(139, 69, 19, 0.2);
-            padding: 40px;
-            width: 350px;
+            background: var(--card);
+            border-radius: 20px;
+            box-shadow: var(--shadow);
+            width: 400px;
+            padding: 40px 35px;
             text-align: center;
         }
 
-        h2 {
-            color: #8b4513;
+        .login-container h2 {
+            color: var(--primary);
+            font-weight: 700;
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .login-container p {
+            color: var(--text);
+            font-size: 15px;
             margin-bottom: 25px;
-            font-size: 26px;
         }
 
         label {
             display: block;
             text-align: left;
-            font-weight: 600;
-            color: #5a2d0c;
-            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--primary);
+            margin-bottom: 6px;
         }
 
         input[type="text"],
         input[type="password"] {
-            width: 93%;
+            width: 94%;
             padding: 12px;
-            margin-bottom: 20px;
-            border: 1px solid #d2b48c;
-            border-radius: 8px;
+            margin-bottom: 18px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
             font-size: 15px;
-            background-color: #fffdf8;
+            background: #fff;
+            transition: 0.3s;
+        }
+
+        input[type="text"]:focus,
+        input[type="password"]:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 6px rgba(46, 26, 46, 0.3);
+            outline: none;
         }
 
         button {
             width: 100%;
             padding: 12px;
-            background-color: #8b4513;
-            color: white;
             border: none;
-            border-radius: 8px;
+            border-radius: 10px;
+            background: var(--primary);
+            color: white;
+            font-weight: 600;
             font-size: 16px;
             cursor: pointer;
             transition: 0.3s;
         }
 
         button:hover {
-            background-color: #a0522d;
+            background: var(--highlight);
         }
 
         .error-message {
-            background-color: #fbeaea;
-            color: #b22222;
+            background: #ffe6eb;
+            color: #b71c1c;
             padding: 10px;
-            border-radius: 8px;
+            border-radius: 10px;
             margin-bottom: 15px;
             font-size: 14px;
         }
 
         a {
-            color: #8b4513;
-            text-decoration: none;
+            color: var(--primary);
             font-weight: 600;
+            text-decoration: none;
+            transition: 0.3s;
         }
 
         a:hover {
+            color: var(--highlight);
             text-decoration: underline;
         }
 
-        p {
-            margin-top: 15px;
-            font-size: 14px;
+        .emoji {
+            font-size: 45px;
+            margin-bottom: 10px;
         }
 
-        .emoji {
-            font-size: 40px;
-            margin-bottom: 10px;
+        footer {
+            margin-top: 20px;
+            font-size: 13px;
+            color: #333;
         }
     </style>
 </head>
 
 <body>
     <div class="login-container">
-        <div class="emoji">🍞</div>
-        <h2>Bakery Login</h2>
+        <div class="emoji">🌸</div>
+        <h2>🌸 BloomLux Login 🌸</h2>
 
         <?php if ($error_message): ?>
             <div class="error-message"><?php echo $error_message; ?></div>

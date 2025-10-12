@@ -30,167 +30,190 @@ $stmt->close();
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>🍞 SweetCrumb | My Requests</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --brown: #8b4513;
-            --light-brown: #c3814a;
-            --cream: #fdf6f0;
-            --white: #ffffff;
-            --shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-        }
+  <meta charset="UTF-8">
+  <title>🌸 BloomLux | My Requests</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #ffb3ecff;          /* soft pink background */
+      --card: #f5f0fa;          /* lavender card */
+      --primary: #2e1a2eff;     /* dark lavender text/button */
+      --accent: #ff7dd8;        /* bright pink accent */
+      --text: #000000ff;        /* standard text */
+      --shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+    }
 
-        body {
-            font-family: 'Poppins', sans-serif;
-            background: var(--cream);
-            margin: 0;
-            color: #333;
-            display: flex;
-        }
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: var(--bg);
+      margin: 0;
+      color: var(--text);
+      display: flex;
+    }
 
-        /* Sidebar */
-        .sidebar {
-            width: 240px;
-            background: linear-gradient(180deg, var(--brown), #a0522d);
-            color: var(--white);
-            height: 100vh;
-            position: fixed;
-            display: flex;
-            flex-direction: column;
-            padding: 25px 20px;
-            box-shadow: var(--shadow);
-        }
+    /* Sidebar */
+    .sidebar {
+      width: 240px;
+      background: var(--primary);
+      color: #fff;
+      height: 100vh;
+      position: fixed;
+      display: flex;
+      flex-direction: column;
+      padding: 30px 20px;
+      box-shadow: var(--shadow);
+    }
 
-        .sidebar h2 {
-            text-align: center;
-            font-weight: 600;
-            font-size: 22px;
-            margin-bottom: 40px;
-        }
+    .sidebar h2 {
+      text-align: center;
+      font-weight: 700;
+      font-size: 24px;
+      margin-bottom: 40px;
+    }
 
-        .sidebar a {
-            display: block;
-            color: var(--white);
-            padding: 12px 18px;
-            margin: 8px 0;
-            text-decoration: none;
-            border-radius: 10px;
-            transition: 0.3s;
-        }
+    .sidebar a {
+      display: block;
+      color: #fff;
+      padding: 14px 18px;
+      margin: 8px 0;
+      text-decoration: none;
+      border-radius: 30px;
+      transition: 0.3s;
+    }
 
-        .sidebar a:hover {
-            background: var(--light-brown);
-            transform: translateX(4px);
-        }
+    .sidebar a:hover {
+      background: var(--accent);
+      transform: translateX(5px);
+    }
 
-        /* Main area */
-        .main {
-            margin-left: 260px;
-            flex-grow: 1;
-            padding: 30px 40px;
-        }
+    /* Main area */
+    .main {
+      margin-left: 260px;
+      flex-grow: 1;
+      padding: 35px 45px;
+    }
 
-        .top-bar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 25px;
-        }
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 25px;
+    }
 
-        .title {
-            font-size: 1.5rem;
-            font-weight: 600;
-            color: var(--brown);
-        }
+    .title {
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: var(--primary);
+    }
 
-        #live-time {
-            color: #6d3f1a;
-            font-weight: 500;
-        }
+    #live-time {
+      color: var(--accent);
+      font-weight: 600;
+    }
 
-        /* Card container */
-        .card {
-            background: var(--white);
-            padding: 25px;
-            border-radius: 16px;
-            box-shadow: var(--shadow);
-        }
+    /* Card container */
+    .card {
+      background: var(--card);
+      padding: 25px;
+      border-radius: 20px;
+      box-shadow: var(--shadow);
+      animation: fadeIn 0.6s ease-in-out;
+    }
 
-        .card h3 {
-            color: var(--brown);
-            margin-bottom: 20px;
-            font-weight: 600;
-        }
+    .card h3 {
+      color: var(--primary);
+      margin-bottom: 20px;
+      font-weight: 600;
+    }
 
-        /* Table styling */
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            background: var(--white);
-            border-radius: 12px;
-            overflow: hidden;
-        }
+    /* Table styling */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+    }
 
-        th, td {
-            padding: 12px 15px;
-            border-bottom: 1px solid #eee;
-            text-align: center;
-        }
+    th, td {
+      padding: 12px 15px;
+      border-bottom: 1px solid #eee;
+      text-align: center;
+    }
 
-        th {
-            background: var(--brown);
-            color: white;
-            font-weight: 600;
-        }
+    th {
+      background: var(--accent);
+      color: white;
+      font-weight: 600;
+    }
 
-        tr:hover {
-            background: #fff5e9;
-        }
+    tr:hover {
+      background: #ffe9f6;
+      transition: 0.2s;
+    }
 
-        /* Status badges */
-        .status {
-            font-weight: 600;
-            padding: 6px 10px;
-            border-radius: 8px;
-        }
+    /* Status badges */
+    .status {
+      font-weight: 600;
+      padding: 6px 12px;
+      border-radius: 10px;
+      display: inline-block;
+    }
 
-        .pending { background: #ffeb99; color: #665c00; }
-        .done { background: #c6f6c6; color: #006600; }
-        .cancelled { background: #f8d7da; color: #721c24; }
+    .pending { background: #fff3cd; color: #8a6d3b; }
+    .done { background: #d4edda; color: #155724; }
+    .cancelled { background: #f8d7da; color: #721c24; }
 
-        /* Cancel button */
-        .btn-cancel {
-            background: #b22222;
-            color: white;
-            padding: 6px 14px;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: 0.3s;
-        }
+    /* Cancel button */
+    .btn-cancel {
+      background: var(--primary);
+      color: white;
+      padding: 6px 14px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
 
-        .btn-cancel:hover {
-            background: #800000;
-        }
+    .btn-cancel:hover {
+      background: var(--accent);
+      transform: scale(1.05);
+      box-shadow: var(--shadow);
+    }
 
-        .empty {
-            color: var(--brown);
-            text-align: center;
-            padding: 20px 0;
-        }
-    </style>
+    .empty {
+      color: var(--primary);
+      text-align: center;
+      padding: 20px 0;
+      font-weight: 500;
+    }
+
+    /* Animation */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Responsive */
+    @media (max-width: 992px) {
+      .main {
+        margin-left: 0;
+        padding: 20px;
+      }
+      .sidebar {
+        display: none;
+      }
+    }
+  </style>
 </head>
 <body>
 
 <div class="sidebar">
-    <h2>🍞 SweetCrumb</h2>
-    <a href="home.php">🏠 Dashboard</a>
-    <a href="supply.php">📦 Supply</a>
-    <a href="production.php">🧁 Production</a>
-    <a href="my_requests.php" style="background: var(--light-brown);">📋 My Requests</a>
-    <a href="inventory.php">📊 Inventory</a>
+    <h2>🌸 BloomLux Requests 🌸</h2>
+    <a href="admin_dashboard.php">🌸 Back to Dashboard 🌸</a>
+    <a href="my_requests.php">📋 My Requests</a>
+    <a href="backend/add_stock.php">📦 Add Stock</a>
     <a href="logout.php">🚪 Logout</a>
 </div>
 

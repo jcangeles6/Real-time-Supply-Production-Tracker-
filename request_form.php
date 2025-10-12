@@ -20,105 +20,138 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Request Ingredient</title>
+    <title>🌸 BloomLux Request Material 🌸</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+
     <style>
+        :root {
+            --bg: #ffb3ecff;
+            --card: #f5f0fa;
+            --primary: #2e1a2eff;
+            --text: #000000ff;
+            --highlight: #000000ff;
+            --shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+        }
+
         body {
             font-family: 'Poppins', sans-serif;
-            background: linear-gradient(135deg, #fff5e1, #fce4d6);
+            background: var(--bg);
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
             margin: 0;
+            color: var(--text);
         }
 
         .form-box {
-            background: #fffaf0;
-            padding: 40px 30px;
-            border-radius: 15px;
-            box-shadow: 0 4px 12px rgba(139, 69, 19, 0.2);
-            width: 380px;
+            background: var(--card);
+            padding: 40px 35px;
+            border-radius: 20px;
+            box-shadow: var(--shadow);
+            width: 100%;
+            max-width: 400px;
             text-align: center;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .form-box:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(46, 26, 46, 0.15);
+        }
+
+        .emoji {
+            font-size: 40px;
+            margin-bottom: 10px;
         }
 
         h2 {
-            color: #8b4513;
-            font-size: 24px;
-            margin-bottom: 25px;
+            color: var(--primary);
+            font-size: 26px;
+            font-weight: 700;
+            margin-bottom: 20px;
         }
 
         label {
             display: block;
             text-align: left;
             font-weight: 600;
-            color: #5a2d0c;
+            color: var(--primary);
             margin-bottom: 6px;
             margin-top: 10px;
         }
 
         input, select {
-            width: 95%;
+            width: 94%;
             padding: 12px;
-            border: 1px solid #d2b48c;
-            border-radius: 8px;
-            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            margin-bottom: 18px;
             font-size: 15px;
-            background-color: #fffdf8;
+            background-color: #fff;
+            transition: 0.3s;
         }
 
         input:focus, select:focus {
             outline: none;
-            border-color: #8b4513;
-            box-shadow: 0 0 5px rgba(139, 69, 19, 0.4);
+            border-color: var(--primary);
+            box-shadow: 0 0 6px rgba(46, 26, 46, 0.3);
         }
 
         button {
-            width: 102%;
+            width: 100%;
             padding: 12px;
-            background-color: #8b4513;
+            background-color: var(--primary);
             color: white;
-            font-weight: bold;
+            font-weight: 600;
             border: none;
-            border-radius: 8px;
+            border-radius: 10px;
             font-size: 16px;
             cursor: pointer;
-            transition: 0.3s;
+            transition: background 0.3s ease, transform 0.2s ease;
         }
 
         button:hover {
-            background-color: #a0522d;
+            background-color: var(--highlight);
+            transform: scale(1.03);
         }
 
         .back-btn {
             display: inline-block;
-            margin-top: 12px;
+            margin-top: 15px;
             padding: 10px 15px;
-            background-color: #d2b48c;
-            color: #4b2e05;
+            background-color: #e7d4f9;
+            color: var(--primary);
             text-decoration: none;
-            font-weight: bold;
-            border-radius: 8px;
+            font-weight: 600;
+            border-radius: 10px;
             transition: 0.3s;
         }
 
         .back-btn:hover {
-            background-color: #b8860b;
-            color: white;
+            background-color: var(--primary);
+            color: #fff;
         }
 
-        .emoji {
-            font-size: 35px;
-            margin-bottom: 8px;
+        @media (max-width: 500px) {
+            .form-box {
+                width: 90%;
+                padding: 30px;
+            }
+
+            h2 {
+                font-size: 22px;
+            }
         }
     </style>
 </head>
 <body>
     <div class="form-box">
-        <div class="emoji">🥖</div>
+        <div class="emoji">🌸</div>
         <h2>Request Ingredient</h2>
         <form method="POST">
-            <label>Ingredient Name</label>
-            <input type="text" name="ingredient_name" placeholder="e.g. Flour" required>
+            <label>Material Name</label>
+            <input type="text" name="ingredient_name" placeholder="e.g. Paper" required>
 
             <label>Quantity</label>
             <input type="number" name="quantity" min="1" placeholder="e.g. 5" required>

@@ -30,55 +30,59 @@ $username = $user['username'];
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Inventory | SweetCrumb</title>
+    <title>🌸 BloomLux Inventory 🌸</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
         :root {
-            --brown: #8b4513;
-            --light-brown: #c3814a;
-            --cream: #fdf6f0;
-            --white: #ffffff;
-            --soft-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            --bg: #ffb3ecff;
+            --card: #f5f0fa;
+            --primary: #2e1a2eff;
+            --text: #000000ff;
+            --highlight: #000000ff;
+            --shadow: 0 3px 10px rgba(0,0,0,0.08);
         }
 
         body {
             font-family: 'Poppins', sans-serif;
             margin: 0;
-            background: var(--cream);
-            color: #333;
+            background: var(--bg);
             display: flex;
+            color: var(--text);
         }
 
         /* Sidebar */
         .sidebar {
             width: 240px;
-            background: linear-gradient(180deg, var(--brown), #a0522d);
-            color: var(--white);
+            background: var(--primary);
+            color: #ffffff;
             height: 100vh;
             position: fixed;
             display: flex;
             flex-direction: column;
-            padding: 25px 20px;
-            box-shadow: var(--soft-shadow);
+            padding: 40px 20px;
+            box-shadow: var(--shadow);
         }
+
         .sidebar h2 {
             text-align: center;
-            font-weight: 600;
-            font-size: 22px;
+            font-weight: 700;
+            font-size: 30px;
             margin-bottom: 40px;
         }
+
         .sidebar a {
             display: block;
-            color: var(--white);
-            padding: 12px 18px;
+            color: #ffffff;
+            padding: 20px 18px;
             margin: 8px 0;
             text-decoration: none;
-            border-radius: 10px;
+            border-radius: 50px;
             transition: 0.3s;
         }
-        .sidebar a:hover, .sidebar a.active {
-            background: var(--light-brown);
-            transform: translateX(4px);
+
+        .sidebar a:hover {
+            background: var(--bg);
+            transform: translateX(3px);
         }
 
         /* Main */
@@ -88,124 +92,143 @@ $username = $user['username'];
             padding: 25px 35px;
         }
 
-        /* Top bar */
+        /* Top Bar */
         .top-bar {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 30px;
         }
+
         .welcome {
             font-size: 1.5rem;
-            font-weight: 600;
-            color: var(--brown);
+            font-weight: 700;
+            color: var(--primary);
         }
+
         .top-right {
             display: flex;
             align-items: center;
             gap: 15px;
         }
+
         .search-bar input {
             padding: 10px 14px;
             border: 1px solid #ddd;
             border-radius: 20px;
             width: 200px;
             transition: 0.3s;
+            background: #fff;
+            color: var(--text);
         }
+
         .search-bar input:focus {
-            border-color: var(--brown);
+            border-color: var(--primary);
             outline: none;
         }
+
         .notif {
             font-size: 20px;
             cursor: pointer;
         }
+
         #live-time {
             font-weight: 500;
-            color: #6d3f1a;
+            color: var(--highlight);
         }
 
-        /* Table Card */
+        /* Card */
         .card {
-            background: var(--white);
-            padding: 25px;
+            background: var(--card);
+            padding: 20px;
             border-radius: 16px;
-            box-shadow: var(--soft-shadow);
-            margin-top: 20px;
-        }
-        .card h3 {
-            color: var(--brown);
-            margin-bottom: 20px;
-            font-weight: 600;
-            text-align: center;
+            box-shadow: var(--shadow);
+            margin-bottom: 25px;
         }
 
+        .card h3 {
+            color: var(--highlight);
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+
+        /* Table */
         table {
             width: 100%;
             border-collapse: collapse;
-            background: white;
+            background: var(--bg);
             border-radius: 10px;
             overflow: hidden;
-        }
-        th, td {
-            padding: 14px;
-            text-align: center;
-            border-bottom: 1px solid #eee;
-        }
-        th {
-            background: var(--brown);
-            color: white;
-            font-weight: 500;
-        }
-        tr:hover {
-            background: #fff7ef;
+            box-shadow: var(--shadow);
+            color: var(--text);
         }
 
-        .status-available {
-            color: green;
+        th, td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #eee;
+            text-align: center;
+        }
+
+        th {
+            background: var(--primary);
+            color: #fff;
             font-weight: 600;
         }
-        .status-low {
-            color: #d2691e;
-            font-weight: 600;
+
+        tr:hover {
+            background: #f3eafa;
         }
-        .status-out {
-            color: red;
-            font-weight: 600;
+
+        .btn {
+            display: inline-block;
+            background: var(--primary);
+            color: white;
+            padding: 8px 14px;
+            border-radius: 10px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: 0.3s;
+        }
+
+        .btn:hover {
+            background: var(--highlight);
+        }
+
+        .low-stock {
+            background: #ffebee;
+            color: #b71c1c;
+            font-weight: bold;
+            border-radius: 8px;
+            padding: 4px 8px;
         }
 
         /* Pagination */
         .pagination {
-            text-align: center;
-            margin-top: 25px;
-        }
-        .pagination a {
-            display: inline-block;
-            padding: 8px 14px;
-            margin: 0 4px;
-            background: var(--brown);
-            color: white;
-            text-decoration: none;
-            border-radius: 6px;
-            font-size: 14px;
-            transition: 0.3s;
-        }
-        .pagination a.active {
-            background: var(--light-brown);
-            font-weight: 600;
-        }
-        .pagination a:hover {
-            background: var(--light-brown);
+            display: flex;
+            justify-content: center;
+            margin-top: 15px;
+            gap: 8px;
         }
 
-        @media (max-width: 768px) {
-            .main {
-                margin-left: 0;
-                padding: 20px;
-            }
-            .sidebar {
-                display: none;
-            }
+        .pagination a {
+            background: var(--bg);
+            border: 1px solid #ccc;
+            padding: 8px 14px;
+            border-radius: 6px;
+            text-decoration: none;
+            color: var(--primary);
+            transition: 0.3s;
+        }
+
+        .pagination a:hover {
+            background: var(--highlight);
+            color: white;
+        }
+
+        .pagination .active {
+            background: var(--primary);
+            color: white;
+            font-weight: bold;
         }
     </style>
 </head>
@@ -213,12 +236,11 @@ $username = $user['username'];
 
 <!-- Sidebar -->
 <div class="sidebar">
-    <h2>🍞 SweetCrumb</h2>
-    <a href="home.php">🏠 Dashboard</a>
+    <h2>🌸 BloomLux Inventory 🌸</h2>
+    <a href="home.php">🌸 Back to Dashboard 🌸</a>
     <a href="supply.php">📦 Supply</a>
     <a href="production.php">🧁 Production</a>
-    <a href="my_requests.php">📋 My Requests</a>
-    <a href="inventory.php" class="active">📊 Inventory</a>
+    <a href="inventory.php">📊 Inventory</a>
     <a href="logout.php">🚪 Logout</a>
 </div>
 

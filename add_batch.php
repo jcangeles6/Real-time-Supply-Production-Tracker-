@@ -232,182 +232,204 @@ if ($new_qty > $available_stock) {
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Add / Edit Batch | SweetCrumb</title>
-    <style>
-        body {
-            font-family: 'Poppins', sans-serif;
-            background: linear-gradient(to bottom right, #fff7f3, #ffe9dc);
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Add / Edit Batch | BloomLux</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #ffb3ecff;          /* pink background */
+      --card: #f5f0fa;          /* soft lavender card */
+      --primary: #2e1a2eff;     /* dark lavender text/button */
+      --text: #000000ff;        /* base text color */
+      --shadow: 0 3px 12px rgba(0, 0, 0, 0.1);
+      --accent: #ff7dd8;        /* accent pink for buttons */
+    }
 
-        .form-box {
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-            width: 400px;
-            padding: 30px;
-            text-align: center;
-            animation: fadeIn 0.6s ease-in-out;
-        }
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: var(--bg);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin: 0;
+    }
 
-        h2 {
-            color: #7b3f00;
-            margin-bottom: 20px;
-        }
+    .form-box {
+      background: var(--card);
+      border-radius: 20px;
+      box-shadow: var(--shadow);
+      width: 420px;
+      padding: 35px;
+      text-align: center;
+      animation: fadeIn 0.6s ease-in-out;
+    }
 
-        label {
-            text-align: left;
-            display: brace;
-            margin-bottom: 5px;
-            font-weight: 500;
-            color: #5a2d0c;
-        }
+    h2 {
+      color: var(--primary);
+      margin-bottom: 25px;
+      font-weight: 700;
+    }
 
-        input,
-        select {
-            width: 93%;
-            padding: 10px 14px;
-            margin-bottom: 15px;
-            border: 1px solid #ddd;
-            border-radius: 10px;
-            font-size: 15px;
-            transition: border 0.2s;
-        }
+    label {
+      text-align: left;
+      display: block;
+      margin-bottom: 5px;
+      font-weight: 500;
+      color: var(--primary);
+    }
 
-        input:focus,
-        select:focus {
-            border: 1px solid #c47a3f;
-            outline: none;
-        }
+    input,
+    select {
+      width: 93%;
+      padding: 12px 15px;
+      margin-bottom: 15px;
+      border: 1px solid #ddd;
+      border-radius: 12px;
+      font-size: 15px;
+      background: white;
+      transition: 0.3s;
+      box-shadow: inset 0 2px 3px rgba(0, 0, 0, 0.05);
+    }
 
-        button {
-            width: 100%;
-            padding: 12px;
-            background: #c47a3f;
-            color: white;
-            font-weight: 600;
-            border: none;
-            border-radius: 40px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
+    input:focus,
+    select:focus {
+      border: 1px solid var(--accent);
+      outline: none;
+      box-shadow: 0 0 5px rgba(255, 125, 216, 0.4);
+    }
 
-        button:hover {
-            background: #9b5a26;
-            transform: scale(1.03);
-        }
+    button {
+      width: 100%;
+      padding: 12px;
+      background: var(--accent);
+      color: white;
+      font-weight: 600;
+      border: none;
+      border-radius: 50px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      letter-spacing: 0.5px;
+    }
 
-        .back-btn {
-            background: #7b3f00;
-            margin-bottom: 15px;
-            font-size: 14px;
-        }
+    button:hover {
+      background: #ff66c4;
+      transform: translateY(-2px);
+      box-shadow: var(--shadow);
+    }
 
-        .back-btn:hover {
-            background: #5a2d0c;
-        }
+    .back-btn {
+      background: var(--primary);
+      margin-bottom: 15px;
+      font-size: 14px;
+    }
 
-        .material-row {
-            margin-bottom: 10px;
-        }
+    .back-btn:hover {
+      background: #4b2a4b;
+    }
 
-        #addMaterialBtn {
-            margin-bottom: 15px;
-            background: #7b3f00;
-            width: 100%;
-        }
+    .material-row {
+      margin-bottom: 10px;
+    }
 
-        #addMaterialBtn:hover {
-            background: #5a2d0c;
-        }
+    #addMaterialBtn {
+      margin-bottom: 15px;
+      background: var(--primary);
+      width: 100%;
+    }
 
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 999;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.4);
-            backdrop-filter: blur(4px);
-        }
+    #addMaterialBtn:hover {
+      background: #4b2a4b;
+    }
 
-        .modal-content {
-            background: white;
-            border-radius: 15px;
-            padding: 25px;
-            max-width: 400px;
-            margin: 15% auto;
-            text-align: center;
-            animation: pop 0.3s ease-in-out;
-        }
+    /* Modal */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 999;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.3);
+      backdrop-filter: blur(4px);
+    }
 
-        .close-btn {
-            background: #7b3f00;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            padding: 10px 20px;
-            cursor: pointer;
-            margin-top: 15px;
-        }
+    .modal-content {
+      background: var(--card);
+      border-radius: 15px;
+      padding: 25px;
+      max-width: 400px;
+      margin: 12% auto;
+      text-align: center;
+      box-shadow: var(--shadow);
+      animation: pop 0.3s ease-in-out;
+    }
 
-        .success {
-            color: #2e8b57;
-            font-weight: 600;
-        }
+    .close-btn {
+      background: var(--accent);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 20px;
+      cursor: pointer;
+      margin-top: 15px;
+      transition: 0.3s;
+    }
 
-        .error {
-            color: #cc0000;
-            font-weight: 600;
-        }
+    .close-btn:hover {
+      background: #ff66c4;
+    }
 
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
+    .success {
+      color: #2e8b57;
+      font-weight: 600;
+    }
 
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
+    .error {
+      color: #b22222;
+      font-weight: 600;
+    }
 
-        @keyframes pop {
-            from {
-                transform: scale(0.9);
-                opacity: 0;
-            }
+    /* Animations */
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
 
-            to {
-                transform: scale(1);
-                opacity: 1;
-            }
-        }
+    @keyframes pop {
+      from {
+        transform: scale(0.9);
+        opacity: 0;
+      }
+      to {
+        transform: scale(1);
+        opacity: 1;
+      }
+    }
 
-        /* Highlight effect for newly loaded or updated materials */
-        .highlight {
-            animation: highlightAnim 1.5s ease-in-out;
-        }
+    /* Highlight animation */
+    .highlight {
+      animation: highlightAnim 1.5s ease-in-out;
+    }
 
-        @keyframes highlightAnim {
-            0% {
-                background-color: #fff3b0;
-            }
+    @keyframes highlightAnim {
+      0% {
+        background-color: #ffe6f5;
+      }
+      100% {
+        background-color: white;
+      }
+    }
 
-            /* soft yellow */
-            100% {
-                background-color: white;
-            }
-        }
-    </style>
+  </style>
 </head>
 
 <body>

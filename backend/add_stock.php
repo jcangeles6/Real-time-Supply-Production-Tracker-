@@ -12,240 +12,278 @@ if (!isset($_SESSION['user_id'])) {
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <title>Inventory - Bakery</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: #fdf6f0;
-            margin: 0;
-            padding: 0;
-        }
+  <meta charset="UTF-8">
+  <title>🌸 Inventory - BloomLux</title>
+  <style>
+    :root {
+      --bg: #ffb3ecff;          /* soft pink background */
+      --card: #f5f0fa;          /* light lavender card */
+      --primary: #2e1a2eff;     /* deep lavender */
+      --accent: #2e1a2eff;        /* vibrant pink */
+      --white: #ffffff;
+      --shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
 
-        .main {
-            padding: 20px 40px;
-            max-width: 1400px;
-            margin: 0 auto;
-        }
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: var(--bg);
+      margin: 0;
+      padding: 0;
+      color: var(--primary);
+    }
 
-        h1 {
-            color: #8b4513;
-            margin-bottom: 20px;
-            text-align: center;
-        }
+    .main {
+      padding: 30px 40px;
+      max-width: 1400px;
+      margin: 0 auto;
+      animation: fadeIn 0.5s ease-in-out;
+    }
 
-        .back-btn {
-            display: inline-block;
-            margin-bottom: 20px;
-            padding: 6px 12px;
-            background: #8b4513;
-            color: white;
-            text-decoration: none;
-            border-radius: 6px;
-            font-weight: bold;
-            font-size: 14px;
-        }
+    h1 {
+      color: var(--primary);
+      margin-bottom: 20px;
+      text-align: center;
+      font-weight: 700;
+    }
 
-        .back-btn:hover {
-            background: #5a2d0c;
-        }
+    /* Back button */
+    .back-btn {
+      display: inline-block;
+      margin-bottom: 20px;
+      padding: 8px 16px;
+      background: var(--accent);
+      color: var(--white);
+      text-decoration: none;
+      border-radius: 25px;
+      font-weight: 600;
+      font-size: 14px;
+      transition: all 0.3s ease;
+    }
 
-        .add-btn-container {
-            text-align: left;
-            margin-bottom: 15px;
-        }
+    .back-btn:hover {
+      background: var(--primary);
+      transform: scale(1.05);
+    }
 
-        .search-container {
-            text-align: right;
-            margin-bottom: 10px;
-        }
+    .add-btn-container {
+      text-align: left;
+      margin-bottom: 15px;
+    }
 
-        .form-box {
-            display: none;
-            background: white;
-            padding: 25px 30px;
-            border-radius: 12px;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-            margin: 0 auto 30px;
-            width: 100%;
-            max-width: 600px;
-            box-sizing: border-box;
-        }
+    .search-container {
+      text-align: right;
+      margin-bottom: 10px;
+    }
 
-        label {
-            display: block;
-            margin: 10px 0 5px;
-            font-weight: bold;
-        }
+    /* Form Box */
+    .form-box {
+      display: none;
+      background: var(--white);
+      padding: 25px 30px;
+      border-radius: 16px;
+      box-shadow: var(--shadow);
+      margin: 0 auto 30px;
+      width: 100%;
+      max-width: 600px;
+      box-sizing: border-box;
+      animation: fadeIn 0.4s ease;
+    }
 
-        input,
-        select,
-        button {
-            width: 100%;
-            padding: 12px;
-            margin-bottom: 15px;
-            border: 1px solid #ccc;
-            border-radius: 8px;
-            box-sizing: border-box;
-        }
+    label {
+      display: block;
+      margin: 10px 0 5px;
+      font-weight: 600;
+      color: var(--primary);
+    }
 
-        button {
-            background: #8b4513;
-            color: white;
-            font-weight: bold;
-            border: none;
-            cursor: pointer;
-        }
+    input, select, button {
+      width: 100%;
+      padding: 12px;
+      margin-bottom: 15px;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      box-sizing: border-box;
+      font-family: 'Poppins', sans-serif;
+    }
 
-        button:hover {
-            background: #5a2d0c;
-        }
+    button {
+      background: var(--accent);
+      color: white;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+      border-radius: 25px;
+      transition: 0.3s;
+    }
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            background: #fff8f0;
-            border-radius: 10px;
-            overflow: hidden;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-            margin-bottom: 50px;
-        }
+    button:hover {
+      background: var(--primary);
+      transform: scale(1.05);
+    }
 
-        th,
-        td {
-            padding: 12px 15px;
-            border-bottom: 1px solid #ddd;
-            text-align: center;
-            white-space: normal;
-        }
+    /* Table */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--white);
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      margin-bottom: 50px;
+    }
 
-        th {
-            background: #8b4513;
-            color: white;
-        }
+    th, td {
+      padding: 14px 15px;
+      border-bottom: 1px solid #eee;
+      text-align: center;
+      white-space: normal;
+    }
 
-        tr:hover {
-            background: #f1e3d3;
-        }
+    th {
+      background: var(--accent);
+      color: var(--white);
+      font-weight: 600;
+    }
 
-        .status-available {
-            color: green;
-            font-weight: bold;
-        }
+    tr:hover {
+      background: #ffe9f6;
+      transition: 0.2s;
+    }
 
-        .status-low {
-            color: orange;
-            font-weight: bold;
-        }
+    /* Status tags */
+    .status-available {
+      color: #2e8b57;
+      font-weight: 600;
+    }
 
-        .status-out {
-            color: red;
-            font-weight: bold;
-        }
+    .status-low {
+      color: #e4a11b;
+      font-weight: 600;
+    }
 
-        .success-msg {
-            color: green;
-            font-weight: bold;
-            text-align: center;
-            margin-bottom: 15px;
-        }
+    .status-out {
+      color: #d11a2a;
+      font-weight: 600;
+    }
 
-        .error-msg {
-            color: red;
-            font-weight: bold;
-            text-align: center;
-            margin-bottom: 15px;
-        }
+    .success-msg {
+      color: #2e8b57;
+      font-weight: bold;
+      text-align: center;
+      margin-bottom: 15px;
+    }
 
-        .btn,
-        .btn-delete {
-            display: inline-block;
-            padding: 6px 12px;
-            border-radius: 5px;
-            font-weight: bold;
-            cursor: pointer;
-            font-size: 14px;
-            text-decoration: none;
-            border: none;
-        }
+    .error-msg {
+      color: #d11a2a;
+      font-weight: bold;
+      text-align: center;
+      margin-bottom: 15px;
+    }
 
-        .btn {
-            background: #8b4513;
-            color: white;
-        }
+    /* Buttons */
+    .btn, .btn-delete {
+      display: inline-block;
+      padding: 8px 14px;
+      border-radius: 25px;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 14px;
+      text-decoration: none;
+      border: none;
+      transition: 0.3s;
+    }
 
-        .btn:hover {
-            background: #5a2d0c;
-        }
+    .btn {
+      background: var(--accent);
+      color: var(--white);
+    }
 
-        .btn-delete {
-            background: #b22222;
-            color: white;
-        }
+    .btn:hover {
+      background: var(--primary);
+      transform: scale(1.05);
+    }
 
-        .btn-delete:hover {
-            background: #8b0000;
-        }
+    .btn-delete {
+      background: #e85a8a;
+      color: white;
+    }
 
-        .pagination-btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            border: none;
-            background: #8b4513;
-            color: white;
-            font-weight: bold;
-            cursor: pointer;
-            margin: 0 3px;
-            transition: 0.2s;
-            font-size: 14px;
-        }
+    .btn-delete:hover {
+      background: #a12a5a;
+    }
 
-        .pagination-btn:hover {
-            background: #5a2d0c;
-        }
+    /* Pagination */
+    .pagination-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      border: none;
+      background: var(--accent);
+      color: var(--white);
+      font-weight: bold;
+      cursor: pointer;
+      margin: 0 3px;
+      transition: 0.3s;
+      font-size: 14px;
+    }
 
-        #pagination span {
-            font-size: 14px;
-            margin: 0 5px;
-        }
+    .pagination-btn:hover {
+      background: var(--primary);
+      transform: scale(1.1);
+    }
 
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-        }
+    #pagination span {
+      font-size: 14px;
+      margin: 0 5px;
+      color: var(--primary);
+    }
 
-        .modal {
-            background: #fff;
-            padding: 20px 30px;
-            border-radius: 12px;
-            width: 90%;
-            max-width: 400px;
-            text-align: center;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-        }
+    /* Modal */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
 
-        .modal h3 {
-            margin-bottom: 20px;
-        }
+    .modal {
+      background: var(--white);
+      padding: 20px 30px;
+      border-radius: 16px;
+      width: 90%;
+      max-width: 400px;
+      text-align: center;
+      box-shadow: var(--shadow);
+      animation: fadeIn 0.3s ease;
+    }
 
-        .modal button {
-            width: 45%;
-            margin: 5px;
-        }
-    </style>
+    .modal h3 {
+      margin-bottom: 20px;
+      color: var(--primary);
+    }
+
+    .modal button {
+      width: 45%;
+      margin: 5px;
+    }
+
+    /* Animation */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
 </head>
+
 
 <body>
     <div class="main">

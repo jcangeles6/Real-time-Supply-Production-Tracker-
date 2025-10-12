@@ -14,7 +14,7 @@ $result_requests = $conn->query("SELECT * FROM requests ORDER BY requested_at DE
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>🍞 SweetCrumb | Supply</title>
+    <title>🌸 BloomLux Supply 🌸</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -222,11 +222,10 @@ $result_requests = $conn->query("SELECT * FROM requests ORDER BY requested_at DE
 
 <!-- Sidebar -->
 <div class="sidebar">
-    <h2>🌸 BloomLux Production 🌸</h2>
-    <a href="home.php">🏠 Dashboard</a>
-    <a href="supply.php" style="background: var(--light-brown);">📦 Supply</a>
+    <h2>🌸 BloomLux Supply 🌸</h2>
+    <a href="home.php">🌸 Back to Dashboard 🌸</a>
+    <a href="supply.php">📦 Supply</a>
     <a href="production.php">🧁 Production</a>
-    <a href="my_requests.php">📋 My Requests</a>
     <a href="inventory.php">📊 Inventory</a>
     <a href="logout.php">🚪 Logout</a>
 </div>
@@ -252,28 +251,34 @@ $result_requests = $conn->query("SELECT * FROM requests ORDER BY requested_at DE
                 <th>Action</th>
             </tr>
             <tr>
-                <td>Flour</td>
-                <td>$20 / 25kg</td>
+                <td>Design</td>
+                <td>₱1000 / 100 PCS</td>
                 <td>ABC Mills</td>
                 <td><a href="request_form.php?ingredient=Flour" class="btn">Request</a></td>
             </tr>
             <tr>
-                <td>Sugar</td>
-                <td>$18 / 25kg</td>
+                <td>Paper</td>
+                <td>₱200 / 250 PCS</td>
                 <td>Sweet Co.</td>
                 <td><a href="request_form.php?ingredient=Sugar" class="btn">Request</a></td>
             </tr>
             <tr>
-                <td>Butter</td>
-                <td>$45 / 10kg</td>
+                <td>Ribbon</td>
+                <td>₱1500 / 100 PCS</td>
                 <td>Dairy Best</td>
                 <td><a href="request_form.php?ingredient=Butter" class="btn">Request</a></td>
             </tr>
             <tr>
-                <td>Yeast</td>
-                <td>$12 / 5kg</td>
+                <td>Rose</td>
+                <td>₱1000 / 160 PCS</td>
                 <td>BakePro</td>
                 <td><a href="request_form.php?ingredient=Yeast" class="btn">Request</a></td>
+            </tr>
+            <tr>
+                <td>Base</td>
+                <td>₱1300 / 50 PCS</td>
+                <td>ABC Mills</td>
+                <td><a href="request_form.php?ingredient=Flour" class="btn">Request</a></td>
             </tr>
         </table>
     </div>

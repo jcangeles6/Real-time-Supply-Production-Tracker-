@@ -68,36 +68,54 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['step'])) {
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>SweetCrumb | Forgot Password</title>
+    <title>🌸 BloomLux | Forgot Password</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --bg: #ffb3ecff;
+            --card: #f5f0fa;
+            --primary: #2e1a2eff;
+            --text: #000000ff;
+            --highlight: #000000ff;
+            --shadow: 0 3px 10px rgba(0,0,0,0.08);
+        }
+
         body {
             font-family: 'Poppins', sans-serif;
-            background: linear-gradient(180deg, #fff9f3 0%, #fce4cc 100%);
+            background: var(--bg);
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
             margin: 0;
+            color: var(--text);
         }
 
         .forgot-container {
-            background: #fffaf5;
+            background: var(--card);
             border-radius: 20px;
-            box-shadow: 0 6px 20px rgba(140, 85, 30, 0.15);
-            padding: 40px;
+            box-shadow: var(--shadow);
+            padding: 40px 35px;
             width: 100%;
-            max-width: 400px;
+            max-width: 420px;
             text-align: center;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .forgot-container:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(46, 26, 46, 0.15);
         }
 
         h2 {
-            color: #8b4513;
-            font-size: 26px;
-            margin-bottom: 20px;
+            color: var(--primary);
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 15px;
         }
 
         p {
-            color: #5a2d0c;
+            color: var(--text);
             font-size: 15px;
             margin-bottom: 25px;
         }
@@ -105,7 +123,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['step'])) {
         label {
             display: block;
             text-align: left;
-            color: #5a2d0c;
+            color: var(--primary);
             font-weight: 600;
             margin-bottom: 6px;
         }
@@ -113,36 +131,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['step'])) {
         input[type="email"],
         input[type="text"],
         input[type="password"] {
-            width: 100%;
+            width: 94%;
             padding: 12px;
-            border: 1px solid #dcbf9e;
+            border: 1px solid #ddd;
             border-radius: 10px;
             margin-bottom: 18px;
             font-size: 15px;
-            background: #fffdf9;
+            background: #fff;
+            transition: 0.3s;
         }
 
         input:focus {
             outline: none;
-            border-color: #c47f3e;
-            box-shadow: 0 0 6px rgba(196, 127, 62, 0.3);
+            border-color: var(--primary);
+            box-shadow: 0 0 6px rgba(46, 26, 46, 0.3);
         }
 
         button {
             width: 100%;
             padding: 12px;
-            background-color: #c47f3e;
+            background-color: var(--primary);
             border: none;
             color: #fff;
             font-size: 16px;
             border-radius: 10px;
             cursor: pointer;
             font-weight: 600;
-            transition: background 0.3s ease;
+            transition: background 0.3s ease, transform 0.2s ease;
         }
 
         button:hover {
-            background-color: #a6652a;
+            background-color: var(--highlight);
+            transform: scale(1.03);
         }
 
         .message {
@@ -150,37 +170,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['step'])) {
             font-weight: 500;
             padding: 10px;
             border-radius: 10px;
+            text-align: center;
         }
 
         .success {
-            background-color: #e6ffee;
-            color: #2e7d32;
-            border: 1px solid #9ccc65;
+            background-color: #e6ffed;
+            color: #137333;
         }
 
         .error {
-            background-color: #ffeaea;
-            color: #c62828;
-            border: 1px solid #ef9a9a;
+            background-color: #ffe6e9;
+            color: #b71c1c;
         }
 
         .back-login {
             display: inline-block;
             margin-top: 15px;
-            color: #c47f3e;
+            color: var(--primary);
             text-decoration: none;
             font-weight: 600;
+            transition: 0.3s;
         }
 
         .back-login:hover {
-            color: #a6652a;
+            color: var(--highlight);
+            text-decoration: underline;
         }
 
-        /* Sweet loading animation */
+        /* BloomLux loading animation */
         .loader {
             display: inline-block;
-            border: 3px solid #f3e2d2;
-            border-top: 3px solid #c47f3e;
+            border: 3px solid #f3d8f6;
+            border-top: 3px solid var(--primary);
             border-radius: 50%;
             width: 22px;
             height: 22px;
@@ -198,13 +219,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['step'])) {
                 width: 90%;
                 padding: 30px;
             }
+
+            h2 {
+                font-size: 22px;
+            }
         }
     </style>
 </head>
 <body>
 
 <div class="forgot-container">
-    <h2>🍰 Forgot Password</h2>
+    <h2>🌸 Forgot Password 🌸</h2>
 
     <?php if ($message): ?>
         <div class="message <?php echo strpos($message, '✅') !== false ? 'success' : 'error'; ?>">

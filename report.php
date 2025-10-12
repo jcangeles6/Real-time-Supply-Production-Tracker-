@@ -30,60 +30,60 @@ while ($row = $batches->fetch_assoc()) {
 
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
-    <title>🍞 SweetCrumb - Daily Report</title>
+    <title>🌸 BloomLux | Daily Report</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
         :root {
-            --brown: #8b4513;
-            --light-brown: #c3814a;
-            --cream: #fdf6f0;
+            --primary: #2e1a2eff;
+            --accent: #ffb3ecff;
+            --card-bg: #f5f0fa;
             --white: #ffffff;
-            --soft-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         }
 
         body {
             font-family: 'Poppins', sans-serif;
             margin: 0;
-            background: var(--cream);
-            color: #333;
+            background: var(--accent);
+            color: var(--primary);
             display: flex;
         }
 
         /* Sidebar */
         .sidebar {
             width: 240px;
-            background: linear-gradient(180deg, var(--brown), #a0522d);
+            background: linear-gradient(180deg, var(--primary), #4a2d4a);
             color: var(--white);
             height: 100vh;
             position: fixed;
-            padding: 25px 20px;
+            padding: 40px 20px;
             display: flex;
             flex-direction: column;
-            box-shadow: var(--soft-shadow);
+            box-shadow: var(--shadow);
         }
 
         .sidebar h2 {
             text-align: center;
             font-weight: 600;
-            font-size: 22px;
+            font-size: 30px;
             margin-bottom: 40px;
+            letter-spacing: 0.5px;
         }
 
         .sidebar a {
             display: block;
             color: var(--white);
-            padding: 12px 18px;
-            margin: 6px 0;
+            padding: 20px 18px;
+            margin: 8px 0;
             text-decoration: none;
-            border-radius: 10px;
-            transition: 0.3s;
+            border-radius: 50px;
+            transition: 0.3s ease;
         }
 
         .sidebar a:hover {
-            background: var(--light-brown);
+            background: #a87fbf;
             transform: translateX(4px);
         }
 
@@ -95,16 +95,19 @@ while ($row = $batches->fetch_assoc()) {
         }
 
         h1 {
-            color: var(--brown);
+            color: var(--primary);
             text-align: center;
             margin-bottom: 10px;
+            font-size: 28px;
+            font-weight: 700;
         }
 
         #clock {
             text-align: center;
-            color: #6d3f1a;
+            color: #3d2240;
             font-weight: 500;
             margin-bottom: 30px;
+            font-size: 15px;
         }
 
         /* Summary Cards */
@@ -117,49 +120,56 @@ while ($row = $batches->fetch_assoc()) {
         }
 
         .card {
-            background: var(--white);
+            background: var(--card-bg);
             padding: 20px;
-            border-radius: 16px;
-            width: 220px;
+            border-radius: 20px;
+            width: 230px;
             text-align: center;
-            box-shadow: var(--soft-shadow);
+            box-shadow: var(--shadow);
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(46, 26, 46, 0.2);
         }
 
         .card h2 {
             margin: 0;
-            color: var(--brown);
+            color: var(--primary);
+            font-size: 24px;
         }
 
         .card p {
             margin: 6px 0 0;
-            color: #5a2d0c;
+            color: #3d2240;
+            font-weight: 500;
         }
 
         /* Table */
         table {
             width: 100%;
             border-collapse: collapse;
-            background: var(--white);
-            border-radius: 16px;
+            background: var(--card-bg);
+            border-radius: 20px;
             overflow: hidden;
-            box-shadow: var(--soft-shadow);
+            box-shadow: var(--shadow);
         }
 
-        th,
-        td {
+        th, td {
             padding: 12px 14px;
             text-align: center;
-            border-bottom: 1px solid #eee;
+            border-bottom: 1px solid #e4d9ef;
         }
 
         th {
-            background: var(--brown);
+            background: var(--primary);
             color: var(--white);
             font-weight: 500;
         }
 
         tr:hover {
-            background: #fff5ea;
+            background: #f7ecfb;
         }
 
         /* Controls */
@@ -169,24 +179,35 @@ while ($row = $batches->fetch_assoc()) {
         }
 
         .btn {
-            background: var(--brown);
+            background: var(--primary);
             color: var(--white);
             padding: 10px 16px;
-            border-radius: 20px;
+            border-radius: 25px;
             text-decoration: none;
             margin: 0 8px;
             display: inline-block;
-            transition: 0.3s;
+            transition: 0.3s ease;
+            font-weight: 600;
         }
 
         .btn:hover {
-            background: var(--light-brown);
+            background: #4a2d4a;
+            transform: scale(1.05);
         }
 
         @media (max-width: 768px) {
             .summary {
                 flex-direction: column;
                 align-items: center;
+            }
+
+            .main {
+                margin-left: 0;
+                padding: 20px;
+            }
+
+            .sidebar {
+                display: none;
             }
         }
     </style>
@@ -231,10 +252,10 @@ while ($row = $batches->fetch_assoc()) {
 
 <body>
     <div class="sidebar">
-        <h2>🍞 SweetCrumb</h2>
-        <a href="home.php">🏠 Dashboard</a>
+        <h2>🌸 BloomLux Reports 🌸</h2>
+        <a href="home.php">🌸 Back to Dashboard 🌸</a>
+        <a href="supply.php">📦 Supply</a>
         <a href="production.php">🧁 Production</a>
-        <a href="my_requests.php">📋 My Requests</a>
         <a href="inventory.php">📦 Inventory</a>
         <a href="logout.php">🚪 Logout</a>
     </div>

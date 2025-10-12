@@ -23,7 +23,7 @@ if (!$batches) die("SQL Error: " . $conn->error);
 
 <head>
     <meta charset="UTF-8">
-    <title>🌸 BloomLux Production</title>
+    <title>🌸 BloomLux Production 🌸</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     <style>
@@ -386,10 +386,9 @@ if (!$batches) die("SQL Error: " . $conn->error);
 <body>
     <div class="sidebar">
         <h2>🌸 BloomLux Production 🌸</h2>
-        <a href="home.php">🏠 Dashboard</a>
+        <a href="home.php">🌸 Back to Dashboard 🌸</a>
         <a href="supply.php">📦 Supply</a>
         <a href="production.php">🧁 Production</a>
-        <a href="my_requests.php">📋 My Requests</a>
         <a href="inventory.php">📊 Inventory</a>
         <a href="logout.php">🚪 Logout</a>
     </div>

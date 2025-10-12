@@ -73,108 +73,145 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <title>Update Stock - Bakery</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: #fdf6f0;
-            margin: 0;
-            padding: 0;
-        }
+  <meta charset="UTF-8">
+  <title>🌸 Update Stock - BloomLux</title>
+  <style>
+    :root {
+      --bg: #ffb3ecff;          /* soft pink background */
+      --card: #f5f0fa;          /* light lavender card */
+      --primary: #2e1a2eff;     /* deep lavender */
+      --accent: #2e1a2eff;        /* bright pink */
+      --white: #ffffff;
+      --shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
 
-        .main {
-            padding: 20px;
-            max-width: 900px;
-            margin: 0 auto;
-        }
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: var(--bg);
+      margin: 0;
+      padding: 0;
+      color: var(--primary);
+    }
 
-        h1 {
-            color: #8b4513;
-            margin-bottom: 20px;
-            text-align: center;
-        }
+    .main {
+      padding: 30px;
+      max-width: 900px;
+      margin: 0 auto;
+      animation: fadeIn 0.5s ease;
+    }
 
-        .back-btn {
-            display: inline-block;
-            margin-bottom: 20px;
-            padding: 6px 12px;
-            background: #8b4513;
-            color: white;
-            text-decoration: none;
-            border-radius: 6px;
-            font-weight: bold;
-            font-size: 14px;
-        }
+    h1 {
+      color: var(--primary);
+      margin-bottom: 25px;
+      text-align: center;
+      font-weight: 700;
+    }
 
-        .back-btn:hover {
-            background: #5a2d0c;
-        }
+    /* Back Button */
+    .back-btn {
+      display: inline-block;
+      margin-bottom: 20px;
+      padding: 8px 16px;
+      background: var(--accent);
+      color: var(--white);
+      text-decoration: none;
+      border-radius: 25px;
+      font-weight: 600;
+      font-size: 14px;
+      transition: 0.3s ease;
+    }
 
-        .form-box {
-            background: white;
-            padding: 25px 30px;
-            border-radius: 12px;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-            margin: 0 auto 30px;
-            width: 100%;
-            max-width: 600px;
-            box-sizing: border-box;
-        }
+    .back-btn:hover {
+      background: var(--primary);
+      transform: scale(1.05);
+    }
 
-        label {
-            display: block;
-            margin: 10px 0 5px;
-            font-weight: bold;
-        }
+    /* Form Box */
+    .form-box {
+      background: var(--white);
+      padding: 25px 30px;
+      border-radius: 16px;
+      box-shadow: var(--shadow);
+      margin: 0 auto 30px;
+      width: 100%;
+      max-width: 600px;
+      box-sizing: border-box;
+      animation: fadeIn 0.4s ease;
+    }
 
-        input,
-        select,
-        button {
-            width: 100%;
-            padding: 12px;
-            margin-bottom: 15px;
-            border: 1px solid #ccc;
-            border-radius: 8px;
-            box-sizing: border-box;
-        }
+    label {
+      display: block;
+      margin: 10px 0 5px;
+      font-weight: 600;
+      color: var(--primary);
+    }
 
-        button {
-            background: #8b4513;
-            color: white;
-            font-weight: bold;
-            border: none;
-            cursor: pointer;
-        }
+    input,
+    select,
+    button {
+      width: 100%;
+      padding: 12px;
+      margin-bottom: 15px;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      box-sizing: border-box;
+      font-family: 'Poppins', sans-serif;
+    }
 
-        button:hover {
-            background: #5a2d0c;
-        }
+    input:focus,
+    select:focus {
+      border-color: var(--accent);
+      outline: none;
+      box-shadow: 0 0 6px rgba(255, 125, 216, 0.5);
+    }
 
-        .success-msg {
-            color: green;
-            font-weight: bold;
-            text-align: center;
-            margin-bottom: 15px;
-        }
+    button {
+      background: var(--accent);
+      color: white;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+      border-radius: 25px;
+      transition: 0.3s;
+    }
 
-        .status-display {
-            font-weight: bold;
-            margin-bottom: 15px;
-        }
+    button:hover {
+      background: var(--primary);
+      transform: scale(1.05);
+    }
 
-        .status-available {
-            color: green;
-        }
+    /* Status */
+    .status-display {
+      font-weight: 600;
+      margin-bottom: 15px;
+      text-align: center;
+    }
 
-        .status-low {
-            color: orange;
-        }
+    .status-available {
+      color: #2e8b57;
+    }
 
-        .status-out {
-            color: red;
-        }
-    </style>
+    .status-low {
+      color: #e4a11b;
+    }
+
+    .status-out {
+      color: #d11a2a;
+    }
+
+    .success-msg {
+      color: #2e8b57;
+      font-weight: 600;
+      text-align: center;
+      margin-bottom: 15px;
+    }
+
+    /* Animation */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
 </head>
 
 <body>

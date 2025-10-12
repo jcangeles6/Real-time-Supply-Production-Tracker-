@@ -41,88 +41,98 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
-    <title>Register - Bakery System</title>
+    <title>🌸 BloomLux | Register</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --bg: #ffb3ecff;
+            --card: #f5f0fa;
+            --primary: #2e1a2eff;
+            --text: #000000ff;
+            --highlight: #000000ff;
+            --shadow: 0 3px 10px rgba(0,0,0,0.08);
+        }
+
         body {
             font-family: 'Poppins', sans-serif;
-            background-color: #fdf6f0;
-            /* soft cream background */
+            background: var(--bg);
+            margin: 0;
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
-            margin: 0;
+            color: var(--text);
         }
 
         .register-container {
-            background-color: #fff8f0;
-            /* warm beige */
-            border-radius: 15px;
-            box-shadow: 0 6px 15px rgba(139, 69, 19, 0.2);
-            padding: 40px;
+            background: var(--card);
+            border-radius: 20px;
+            box-shadow: var(--shadow);
+            padding: 40px 35px;
             width: 100%;
-            max-width: 400px;
-            border: 2px solid #f0d9b5;
-            transition: transform 0.3s ease;
+            max-width: 420px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
 
         .register-container:hover {
-            transform: scale(1.03);
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(46, 26, 46, 0.15);
         }
 
         h2 {
             text-align: center;
-            color: #8b4513;
-            /* warm brown */
-            margin-bottom: 25px;
+            color: var(--primary);
+            font-weight: 700;
             font-size: 28px;
+            margin-bottom: 25px;
         }
 
         label {
             display: block;
-            font-weight: bold;
-            margin-bottom: 8px;
-            color: #5a3e2b;
+            font-weight: 500;
+            margin-bottom: 6px;
+            color: var(--primary);
         }
 
         input[type="text"],
         input[type="email"],
         input[type="password"],
         select {
-            width: 100%;
+            width: 94%;
             padding: 12px;
             margin-bottom: 18px;
-            border: 1px solid #d2b48c;
-            border-radius: 8px;
-            background-color: #fffaf5;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            background: #fff;
             font-size: 15px;
+            transition: all 0.3s ease;
         }
 
         input:focus,
         select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 6px rgba(46, 26, 46, 0.3);
             outline: none;
-            border-color: #c68642;
-            box-shadow: 0 0 5px rgba(198, 134, 66, 0.4);
         }
 
         button {
             width: 100%;
             padding: 12px;
-            background-color: #8b4513;
+            background: var(--primary);
             color: white;
             border: none;
-            border-radius: 8px;
-            font-size: 18px;
+            border-radius: 10px;
+            font-size: 17px;
             cursor: pointer;
-            font-weight: bold;
-            transition: background-color 0.3s;
+            font-weight: 600;
+            transition: background 0.3s ease, transform 0.2s;
         }
 
         button:hover {
-            background-color: #a0522d;
+            background: var(--highlight);
+            transform: scale(1.02);
         }
 
         .message {
@@ -130,48 +140,50 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             font-size: 15px;
             margin-bottom: 15px;
             padding: 10px;
-            border-radius: 6px;
+            border-radius: 10px;
         }
 
         .message.success {
-            background-color: #dff0d8;
-            color: #3c763d;
+            background-color: #e6ffed;
+            color: #137333;
         }
 
         .message.error {
-            background-color: #f8d7da;
-            color: #a94442;
+            background-color: #ffe6e9;
+            color: #b71c1c;
         }
 
         p {
             text-align: center;
             margin-top: 15px;
             font-size: 14px;
-            color: #5a3e2b;
+            color: var(--text);
         }
 
         a {
-            color: #c68642;
+            color: var(--primary);
             text-decoration: none;
-            font-weight: bold;
+            font-weight: 600;
+            transition: 0.3s;
         }
 
         a:hover {
+            color: var(--highlight);
             text-decoration: underline;
         }
 
         small {
-            color: #7b6651;
+            color: #6c4675;
             font-size: 12px;
             display: block;
-            margin-top: -10px;
+            margin-top: -8px;
             margin-bottom: 10px;
         }
 
         @media (max-width: 480px) {
             .register-container {
                 width: 90%;
-                padding: 25px;
+                padding: 30px 25px;
             }
 
             h2 {
@@ -184,7 +196,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <body>
 
     <div class="register-container">
-        <h2>🍞 Bakery Registration</h2>
+        <h2>🌸 Bloomlux Register 🌸</h2>
 
         <?php if ($message): ?>
             <div class="message <?php echo strpos($message, '✅') !== false ? 'success' : 'error'; ?>">
