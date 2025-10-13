@@ -15,9 +15,14 @@ while ($row = $result->fetch_assoc()) {
     ")->fetch_assoc()['total_reserved'] ?? 0;
 
     $available = $row['quantity'] - $reserved;
+
+    // Get threshold for this item
+    $threshold = $conn->query("SELECT threshold FROM stock_thresholds WHERE item_id = {$row['id']}")->fetch_assoc()['threshold'] ?? 0;
+
     $items[$row['id']] = [
         'name' => $row['item_name'],
-        'quantity' => $available
+        'quantity' => $available,
+        'threshold' => intval($threshold)
     ];
 }
 

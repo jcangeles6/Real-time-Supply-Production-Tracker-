@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>All Notifications</title>
+<style>
+    body { font-family: 'Poppins', sans-serif; padding: 30px; background: #f9f6ff; }
+    h1 { margin-bottom: 10px; color: #2e1a2e; display: inline-block; }
+    .back-btn { display: inline-block; padding: 8px 12px; background: #2e1a2e; color: #fff; border-radius: 5px; text-decoration: none; margin-bottom: 20px; transition: background 0.2s; }
+    .back-btn:hover { background: #452b45; }
+
+    #notifications-container { max-width: 600px; margin: auto; background: #fff; border-radius: 10px; padding: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); max-height: 70vh; overflow-y: auto; }
+
+    /* Global Mark All Button */
+    #global-mark-all { display: flex; justify-content: flex-end; margin-bottom: 10px; }
+    #global-mark-all button { padding: 6px 12px; background: #4CAF50; color: #fff; border: none; border-radius: 5px; cursor: pointer; font-size: 0.9em; transition: background 0.2s; }
+    #global-mark-all button:hover { background: #45a049; }
+
+    .notif-section { margin-bottom: 20px; }
+    .notif-list { list-style: none; padding-left: 0; margin: 0; }
+    .notif-list li { padding: 12px 15px; margin-bottom: 8px; border-radius: 8px; background: #fdfdfd; box-shadow: 0 1px 4px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; transition: background 0.2s, transform 0.2s; cursor: pointer; }
+    .notif-list li:hover { background: #f0f0ff; transform: translateX(2px); }
+
+    .low-stock { border-left: 5px solid #FF3B3B; }       /* Red */
+    .scheduled { border-left: 5px solid #2196F3; }      /* Blue */
+    .in-progress { border-left: 5px solid #FF9800; }    /* Orange */
+    .completed { border-left: 5px solid #4CAF50; }      /* Green */
+
+    .notif-content { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .timestamp { font-size: 0.85rem; color: #555; margin-left: auto; white-space: nowrap; }
+    .divider { text-align: center; font-weight: 600; color: #888; font-size: 0.95em; margin: 10px 0; }
+
+    /* Unread dot with animation */
+    .unread-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: #ff3b3b;
+        animation: pulse 1.2s infinite;
+    }
+
+    @keyframes pulse {
+        0% { transform: scale(1); opacity: 1; }
+        50% { transform: scale(1.4); opacity: 0.6; }
+        100% { transform: scale(1); opacity: 1; }
+    }
+
+    .older { opacity: 0.7; }
+</style>
+</head>
+<body>
+
+<a href="#" class="back-btn" onclick="history.back(); return false;">← Back</a>
+<h1>All Notifications</h1>
+<div id="notifications-container"></div>
+
+<script>
+function timeAgo(timestamp) {
+    const now = new Date();
+    const notifDate = new Date(timestamp);
+    const diffMs = now - notifDate;
+    const diffMins = Math.floor(diffMs / 60000);
+
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins} mins ago`;
+    const diffHours = Math.floor(diffMins / 60);
+    if (diffHours < 24) return `${diffHours} hrs ago`;
+
+    if (notifDate.toDateString() === new Date(Date.now() - 86400000).toDateString()) {
+        return `Yesterday ${notifDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`;
+    }
+    return notifDate.toLocaleString([], {month: 'short', day: 'numeric', hour:'2-digit', minute:'2-digit'});
+}
+
+let allNotifications = [];
+
+async function fetchNotifications() {
+    try {
+        const [stockRes, prodRes] = await Promise.all([
+            fetch('get_stock.php'),
+            fetch('get_production.php')
+        ]);
+        const stockData = await stockRes.json();
+        const prodData = await prodRes.json();
+        const allNotifs = [];
+
+        Object.values(stockData.items || []).forEach(item => {
+            if(item.quantity <= item.threshold) {
+                const id = `stock-${item.id}`;
+                allNotifs.push({
+                    id,
+                    type: 'low-stock',
+                    text: `⚠️ ${item.name} stock is low! (Available: ${item.quantity})`,
+                    timestamp: new Date().toISOString(),
+                    link: 'supply.php'
+                });
+            }
+        });
+
+        prodData.forEach(batch => {
+            const status = batch.status.toLowerCase();
+            let type;
+            if (status.includes('created') || status.includes('scheduled')) type = 'scheduled';
+            else if (status.includes('started') || status.includes('in_progress')) type = 'in-progress';
+            else if (status.includes('completed')) type = 'completed';
+            else type = 'scheduled';
+
+            const id = `batch-${batch.id}`;
+            allNotifs.push({
+                id,
+                type,
+                text: `${batch.product_name} - ${batch.status.replace('_',' ')}`,
+                timestamp: batch.timestamp,
+                link: 'production.php'
+            });
+        });
+
+        allNotifications = allNotifs;
+        displayNotifications(allNotifs);
+    } catch (err) {
+        console.error('Error fetching notifications:', err);
+    }
+}
+
+function displayNotifications(notifs) {
+    const container = document.getElementById('notifications-container');
+    const today = new Date();
+    const yesterday = new Date();
+    yesterday.setDate(today.getDate() - 1);
+
+    const sections = { Today: [], Yesterday: [], Older: [] };
+    notifs.forEach(n => {
+        const notifDate = new Date(n.timestamp);
+        if (notifDate.toDateString() === today.toDateString()) sections.Today.push(n);
+        else if (notifDate.toDateString() === yesterday.toDateString()) sections.Yesterday.push(n);
+        else sections.Older.push(n);
+    });
+
+    container.innerHTML = '';
+
+    // --- Global Mark All as Read Button ---
+    if(allNotifications.length > 0) {
+        const globalBtnDiv = document.createElement('div');
+        globalBtnDiv.id = 'global-mark-all';
+
+        const globalBtn = document.createElement('button');
+        globalBtn.textContent = 'Mark All as Read';
+        globalBtn.addEventListener('click', () => {
+            allNotifications.forEach(n => localStorage.setItem(n.id, 'read'));
+            displayNotifications(allNotifications);
+        });
+
+        globalBtnDiv.appendChild(globalBtn);
+        container.appendChild(globalBtnDiv);
+    }
+
+    const renderSection = (title, list) => {
+        if(!list.length) return;
+        const sectionDiv = document.createElement('div');
+        sectionDiv.classList.add('notif-section');
+        if(title === 'Older') sectionDiv.classList.add('older');
+
+        const h2 = document.createElement('h2');
+        h2.textContent = `📅 ${title}`;
+        sectionDiv.appendChild(h2);
+
+        const ul = document.createElement('ul');
+        ul.classList.add('notif-list');
+
+        const types = [...new Set(list.map(n => n.type))];
+        types.forEach(type => {
+            const typeItems = list.filter(n => n.type === type);
+            const divider = document.createElement('li');
+            divider.classList.add('divider');
+            if(type === 'low-stock') divider.textContent = 'Stock Alerts';
+            else if(type === 'scheduled') divider.textContent = 'Scheduled/Created';
+            else if(type === 'in-progress') divider.textContent = 'In Progress';
+            else if(type === 'completed') divider.textContent = 'Completed';
+            ul.appendChild(divider);
+
+            typeItems.forEach(n => {
+                const li = document.createElement('li');
+                li.classList.add(n.type);
+
+                const contentDiv = document.createElement('div');
+                contentDiv.classList.add('notif-content');
+
+                const isRead = localStorage.getItem(n.id) === 'read';
+                if(!isRead) {
+                    const dot = document.createElement('span');
+                    dot.classList.add('unread-dot');
+                    contentDiv.appendChild(dot);
+                }
+
+                const textSpan = document.createElement('span');
+                textSpan.textContent = n.text;
+                contentDiv.appendChild(textSpan);
+                li.appendChild(contentDiv);
+
+                const timeSpan = document.createElement('span');
+                timeSpan.classList.add('timestamp');
+                timeSpan.textContent = timeAgo(n.timestamp);
+                li.appendChild(timeSpan);
+
+                li.addEventListener('click', () => {
+                    localStorage.setItem(n.id, 'read');
+                    displayNotifications(allNotifications);
+                    if(n.link) window.location.href = n.link;
+                });
+
+                ul.appendChild(li);
+            });
+        });
+
+        sectionDiv.appendChild(ul);
+        container.appendChild(sectionDiv);
+    };
+
+    renderSection('Today', sections.Today);
+    renderSection('Yesterday', sections.Yesterday);
+    renderSection('Older', sections.Older);
+}
+
+fetchNotifications();
+setInterval(fetchNotifications, 5000);
+</script>
+</body>
+</html>

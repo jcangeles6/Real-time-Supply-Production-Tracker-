@@ -117,29 +117,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
             // --- MATERIALS HANDLING ---
-foreach ($materials as $mat) {
-    $stock_id = intval($mat['id']);
-    $new_qty = intval($mat['quantity']);
-    if ($new_qty <= 0) throw new Exception("Invalid quantity for material");
+            foreach ($materials as $mat) {
+                $stock_id = intval($mat['id']);
+                $new_qty = intval($mat['quantity']);
+                if ($new_qty <= 0) throw new Exception("Invalid quantity for material");
 
-    // Lock inventory row
-    $stmt = $conn->prepare("SELECT quantity, item_name FROM inventory WHERE id = ? FOR UPDATE");
-    $stmt->bind_param("i", $stock_id);
-    $stmt->execute();
-    $stockData = $stmt->get_result()->fetch_assoc();
-    $stmt->close();
-    if (!$stockData) throw new Exception("Material not found");
+                // Lock inventory row
+                $stmt = $conn->prepare("SELECT quantity, item_name FROM inventory WHERE id = ? FOR UPDATE");
+                $stmt->bind_param("i", $stock_id);
+                $stmt->execute();
+                $stockData = $stmt->get_result()->fetch_assoc();
+                $stmt->close();
+                if (!$stockData) throw new Exception("Material not found");
 
-    // Old quantity
-    $old_qty = 0;
-    if ($is_edit) {
-        foreach ($oldMaterials as $oMat) {
-            if ($oMat['stock_id'] == $stock_id) $old_qty = $oMat['quantity_used'];
-        }
-    }
+                // Old quantity
+                $old_qty = 0;
+                if ($is_edit) {
+                    foreach ($oldMaterials as $oMat) {
+                        if ($oMat['stock_id'] == $stock_id) $old_qty = $oMat['quantity_used'];
+                    }
+                }
 
-    // Reserved stock in other batches
-    $reservedSum = $conn->query("
+                // Reserved stock in other batches
+                $reservedSum = $conn->query("
         SELECT SUM(bm.quantity_reserved) as total_reserved
         FROM batch_materials bm
         JOIN batches b ON bm.batch_id = b.id
@@ -148,42 +148,42 @@ foreach ($materials as $mat) {
         AND b.is_deleted = 0
     ")->fetch_assoc()['total_reserved'] ?? 0;
 
- $available_stock = $stockData['quantity'] - $reservedSum;
+                $available_stock = $stockData['quantity'] - $reservedSum;
 
-if ($is_edit) {
-    // Add back the old quantity for this batch
-    $available_stock += $old_qty;
-}
+                if ($is_edit) {
+                    // Add back the old quantity for this batch
+                    $available_stock += $old_qty;
+                }
 
-if ($new_qty > $available_stock) {
-    throw new Exception("⚠️ Not enough stock for '{$stockData['item_name']}'. Needed: {$new_qty}, Available: {$available_stock}");
-}
+                if ($new_qty > $available_stock) {
+                    throw new Exception("⚠️ Not enough stock for '{$stockData['item_name']}'. Needed: {$new_qty}, Available: {$available_stock}");
+                }
 
 
-    // Adjust inventory if in-progress
-    if ($old_status === 'in_progress') {
-        $diff = $new_qty - $old_qty;
-        if ($diff != 0) {
-            $stmt = $conn->prepare("UPDATE inventory SET quantity = quantity - ? WHERE id = ?");
-            $stmt->bind_param("ii", $diff, $stock_id);
-            $stmt->execute();
-            $stmt->close();
-        }
-    }
+                // Adjust inventory if in-progress
+                if ($old_status === 'in_progress') {
+                    $diff = $new_qty - $old_qty;
+                    if ($diff != 0) {
+                        $stmt = $conn->prepare("UPDATE inventory SET quantity = quantity - ? WHERE id = ?");
+                        $stmt->bind_param("ii", $diff, $stock_id);
+                        $stmt->execute();
+                        $stmt->close();
+                    }
+                }
 
-    // Reserved quantity
-    $reserved_qty = ($old_status === 'in_progress') ? 0 : $new_qty;
+                // Reserved quantity
+                $reserved_qty = ($old_status === 'in_progress') ? 0 : $new_qty;
 
-    // Insert/update
-    $stmt = $conn->prepare("
+                // Insert/update
+                $stmt = $conn->prepare("
         INSERT INTO batch_materials (batch_id, stock_id, quantity_used, quantity_reserved)
         VALUES (?, ?, ?, ?)
         ON DUPLICATE KEY UPDATE quantity_used = VALUES(quantity_used), quantity_reserved = VALUES(quantity_reserved)
     ");
-    $stmt->bind_param("iiii", $batch_id, $stock_id, $new_qty, $reserved_qty);
-    $stmt->execute();
-    $stmt->close();
-}
+                $stmt->bind_param("iiii", $batch_id, $stock_id, $new_qty, $reserved_qty);
+                $stmt->execute();
+                $stmt->close();
+            }
 
 
 
@@ -232,204 +232,11 @@ if ($new_qty > $available_stock) {
 <html lang="en">
 
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Add / Edit Batch | BloomLux</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
-  <style>
-    :root {
-      --bg: #ffb3ecff;          /* pink background */
-      --card: #f5f0fa;          /* soft lavender card */
-      --primary: #2e1a2eff;     /* dark lavender text/button */
-      --text: #000000ff;        /* base text color */
-      --shadow: 0 3px 12px rgba(0, 0, 0, 0.1);
-      --accent: #ff7dd8;        /* accent pink for buttons */
-    }
-
-    body {
-      font-family: 'Poppins', sans-serif;
-      background: var(--bg);
-      min-height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      margin: 0;
-    }
-
-    .form-box {
-      background: var(--card);
-      border-radius: 20px;
-      box-shadow: var(--shadow);
-      width: 420px;
-      padding: 35px;
-      text-align: center;
-      animation: fadeIn 0.6s ease-in-out;
-    }
-
-    h2 {
-      color: var(--primary);
-      margin-bottom: 25px;
-      font-weight: 700;
-    }
-
-    label {
-      text-align: left;
-      display: block;
-      margin-bottom: 5px;
-      font-weight: 500;
-      color: var(--primary);
-    }
-
-    input,
-    select {
-      width: 93%;
-      padding: 12px 15px;
-      margin-bottom: 15px;
-      border: 1px solid #ddd;
-      border-radius: 12px;
-      font-size: 15px;
-      background: white;
-      transition: 0.3s;
-      box-shadow: inset 0 2px 3px rgba(0, 0, 0, 0.05);
-    }
-
-    input:focus,
-    select:focus {
-      border: 1px solid var(--accent);
-      outline: none;
-      box-shadow: 0 0 5px rgba(255, 125, 216, 0.4);
-    }
-
-    button {
-      width: 100%;
-      padding: 12px;
-      background: var(--accent);
-      color: white;
-      font-weight: 600;
-      border: none;
-      border-radius: 50px;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      letter-spacing: 0.5px;
-    }
-
-    button:hover {
-      background: #ff66c4;
-      transform: translateY(-2px);
-      box-shadow: var(--shadow);
-    }
-
-    .back-btn {
-      background: var(--primary);
-      margin-bottom: 15px;
-      font-size: 14px;
-    }
-
-    .back-btn:hover {
-      background: #4b2a4b;
-    }
-
-    .material-row {
-      margin-bottom: 10px;
-    }
-
-    #addMaterialBtn {
-      margin-bottom: 15px;
-      background: var(--primary);
-      width: 100%;
-    }
-
-    #addMaterialBtn:hover {
-      background: #4b2a4b;
-    }
-
-    /* Modal */
-    .modal {
-      display: none;
-      position: fixed;
-      z-index: 999;
-      left: 0;
-      top: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.3);
-      backdrop-filter: blur(4px);
-    }
-
-    .modal-content {
-      background: var(--card);
-      border-radius: 15px;
-      padding: 25px;
-      max-width: 400px;
-      margin: 12% auto;
-      text-align: center;
-      box-shadow: var(--shadow);
-      animation: pop 0.3s ease-in-out;
-    }
-
-    .close-btn {
-      background: var(--accent);
-      color: white;
-      border: none;
-      border-radius: 8px;
-      padding: 10px 20px;
-      cursor: pointer;
-      margin-top: 15px;
-      transition: 0.3s;
-    }
-
-    .close-btn:hover {
-      background: #ff66c4;
-    }
-
-    .success {
-      color: #2e8b57;
-      font-weight: 600;
-    }
-
-    .error {
-      color: #b22222;
-      font-weight: 600;
-    }
-
-    /* Animations */
-    @keyframes fadeIn {
-      from {
-        opacity: 0;
-        transform: translateY(20px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    @keyframes pop {
-      from {
-        transform: scale(0.9);
-        opacity: 0;
-      }
-      to {
-        transform: scale(1);
-        opacity: 1;
-      }
-    }
-
-    /* Highlight animation */
-    .highlight {
-      animation: highlightAnim 1.5s ease-in-out;
-    }
-
-    @keyframes highlightAnim {
-      0% {
-        background-color: #ffe6f5;
-      }
-      100% {
-        background-color: white;
-      }
-    }
-
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add / Edit Batch | BloomLux</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/add_batch.css">
 </head>
 
 <body>
@@ -583,13 +390,19 @@ if ($new_qty > $available_stock) {
             const closeBtn = messageModal.querySelector('.close-btn');
             closeBtn.addEventListener('click', () => {
                 messageModal.style.display = 'none';
+
+                // Redirect to production page after success
+                <?php if ($messageType === 'success'): ?>
+                    window.location.href = 'production.php';
+                <?php endif; ?>
             });
 
+            // Show modal when message exists
             <?php if (!empty($message) && $messageType === 'success'): ?>
                 messageModal.style.display = 'block';
-                resetBatchForm(); // Refresh form after success
             <?php endif; ?>
-            <?php if (!empty($message)): ?>
+
+            <?php if (!empty($message) && $messageType === 'error'): ?>
                 messageModal.style.display = 'block';
             <?php endif; ?>
         });

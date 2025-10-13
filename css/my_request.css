@@ -1,0 +1,384 @@
+
+    :root {
+      --bg: #ffb3ecff;
+      /* soft pink background */
+      --card: #f5f0fa;
+      /* lavender card */
+      --primary: #2e1a2eff;
+      /* dark lavender text/button */
+      --accent: #ff7dd8;
+      /* bright pink accent */
+      --text: #000000ff;
+      /* standard text */
+      --shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: var(--bg);
+      margin: 0;
+      color: var(--text);
+      display: flex;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: 240px;
+      background: var(--primary);
+      color: #fff;
+      height: 100vh;
+      position: fixed;
+      display: flex;
+      flex-direction: column;
+      padding: 30px 20px;
+      box-shadow: var(--shadow);
+    }
+
+    .sidebar h2 {
+      text-align: center;
+      font-weight: 700;
+      font-size: 24px;
+      margin-bottom: 40px;
+    }
+
+    .sidebar a {
+      display: block;
+      color: #fff;
+      padding: 14px 18px;
+      margin: 8px 0;
+      text-decoration: none;
+      border-radius: 30px;
+      transition: 0.3s;
+    }
+
+    .sidebar a:hover {
+      background: var(--accent);
+      transform: translateX(5px);
+    }
+
+    /* Main area */
+    .main {
+      margin-left: 260px;
+      flex-grow: 1;
+      padding: 35px 45px;
+    }
+
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 25px;
+    }
+
+    .title {
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: var(--primary);
+    }
+
+    #live-time {
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    /* Card container */
+    .card {
+      background: var(--card);
+      padding: 25px;
+      border-radius: 20px;
+      box-shadow: var(--shadow);
+      animation: fadeIn 0.6s ease-in-out;
+    }
+
+    .card h3 {
+      color: var(--primary);
+      margin-bottom: 20px;
+      font-weight: 600;
+    }
+
+    /* Table styling */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+    }
+
+    th,
+    td {
+      padding: 12px 15px;
+      border-bottom: 1px solid #eee;
+      text-align: center;
+    }
+
+    th {
+      background: var(--accent);
+      color: white;
+      font-weight: 600;
+    }
+
+    tr:hover {
+      background: #ffe9f6;
+      transition: 0.2s;
+    }
+
+    /* Status badges */
+    .status {
+      font-weight: 600;
+      padding: 6px 12px;
+      border-radius: 10px;
+      display: inline-block;
+    }
+
+    .pending {
+      background: #fff3cd;
+      color: #8a6d3b;
+    }
+
+    .done {
+      background: #d4edda;
+      color: #155724;
+    }
+
+    .cancelled {
+      background: #f8d7da;
+      color: #721c24;
+    }
+
+    /* Cancel button */
+    .btn-cancel {
+      background: var(--primary);
+      color: white;
+      padding: 6px 14px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    .btn-cancel:hover {
+      background: var(--accent);
+      transform: scale(1.05);
+      box-shadow: var(--shadow);
+    }
+
+    .empty {
+      color: var(--primary);
+      text-align: center;
+      padding: 20px 0;
+      font-weight: 500;
+    }
+
+    /* Animation */
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Responsive */
+    @media (max-width: 992px) {
+      .main {
+        margin-left: 0;
+        padding: 20px;
+      }
+
+      .sidebar {
+        display: none;
+      }
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 999;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.35);
+      backdrop-filter: blur(5px);
+    }
+
+    .modal-content {
+      background: linear-gradient(135deg, #ffd6ec, #f0e6ff);
+      /* soft pink → lavender */
+      border-radius: 25px;
+      padding: 35px 25px;
+      max-width: 480px;
+      margin: 10% auto;
+      text-align: center;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
+      animation: pop 0.3s ease-in-out, shake 0.6s ease-in-out infinite;
+      position: relative;
+    }
+
+    .modal-content h3 {
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: #d63384;
+      margin-bottom: 20px;
+      position: relative;
+      text-shadow: 1px 1px 3px rgba(255, 200, 230, 0.6);
+      /* soft pink glow */
+      background: linear-gradient(90deg, #ffd6ec, #f0e6ff);
+      /* subtle gradient */
+      padding: 10px 20px;
+      border-radius: 20px;
+      display: inline-block;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Optional: small flower icon before text */
+    .modal-content h3::before {
+      content: "🌸 ";
+      margin-right: 8px;
+    }
+
+    #lowStockList {
+      list-style: none;
+      padding-left: 0;
+      margin: 0;
+    }
+
+    #lowStockList li {
+  margin: 12px 0;
+  padding: 12px 15px;
+  border-radius: 15px;
+  background: linear-gradient(120deg, #ffe6f5, #fff0ff);
+  font-weight: 600;
+  display: flex;
+  justify-content: space-between; /* keeps Available/Threshold on the right */
+  align-items: center;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.15);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+#lowStockList li:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.25);
+}
+
+/* Item name + spacing */
+#lowStockList li .item-name {
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: #d63384;
+  margin-right: 6px; /* small gap between icon & name */
+}
+
+/* Available/Threshold span */
+#lowStockList li .stock-info {
+  margin-left: 15px; /* gap between name & stock details */
+  font-weight: 500;
+  color: #555;
+}
+
+/* Qty & threshold inside stock-info */
+#lowStockList li .qty {
+  font-weight: 700;
+  color: #ff3399;
+  margin-left: 2px;
+}
+
+#lowStockList li .threshold {
+  font-weight: 500;
+  color: #a63d7c;
+  margin-left: 2px;
+}
+
+/* Warning icon */
+#lowStockList li::before {
+  content: "⚠️";
+  margin-right: 4px; /* close to item name */
+}
+
+    .close-btn {
+      margin-top: 20px;
+      padding: 10px 25px;
+      border-radius: 12px;
+      border: none;
+      background: #ff7dd8;
+      color: white;
+      font-weight: 600;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    .close-btn:hover {
+      background: #ff66c4;
+      transform: scale(1.05);
+    }
+
+    /* Animations */
+    @keyframes pop {
+      from {
+        transform: scale(0.9);
+        opacity: 0;
+      }
+
+      to {
+        transform: scale(1);
+        opacity: 1;
+      }
+    }
+
+    @keyframes shake {
+
+      0%,
+      100% {
+        transform: translateX(0);
+      }
+
+      25% {
+        transform: translateX(-3px);
+      }
+
+      50% {
+        transform: translateX(3px);
+      }
+
+      75% {
+        transform: translateX(-3px);
+      }
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        transform: scale(1);
+        color: #d63384;
+      }
+
+      50% {
+        transform: scale(1.05);
+        color: #ff3399;
+      }
+    }
+
+    @keyframes flash {
+
+      0%,
+      50%,
+      100% {
+        background-color: #ff7dd8;
+      }
+
+      25%,
+      75% {
+        background-color: #ff66c4;
+      }
+    }
+
+    .flash-btn {
+      animation: flash 1s infinite;
+    }
