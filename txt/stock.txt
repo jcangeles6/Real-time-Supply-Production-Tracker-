@@ -110,7 +110,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     ]);
     exit;
 }
-
 // POST → add new stock
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $data = getJsonInput();
@@ -125,16 +124,54 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $quantity = intval($data['quantity']);
     $unit = $data['unit'];
     $status = $data['status'];
+    $threshold = isset($data['threshold']) ? intval($data['threshold']) : 10;
 
+    // ✅ Check if item already exists
+    $check_stmt = $conn->prepare("SELECT id FROM inventory WHERE item_name = ?");
+    $check_stmt->bind_param("s", $item_name);
+    $check_stmt->execute();
+    $result = $check_stmt->get_result();
+    $existing_item = $result->fetch_assoc();
+    $check_stmt->close();
+
+    if ($existing_item) {
+        // Item exists → do NOT update quantity
+        echo json_encode([
+            'success' => false,
+            'message' => "Item '{$item_name}' already exists. Use Update Stock to add quantity."
+        ]);
+        exit();
+    }
+
+    // Item does not exist → insert new stock
     $stmt = $conn->prepare("INSERT INTO inventory (item_name, quantity, unit, status) VALUES (?, ?, ?, ?)");
     $stmt->bind_param("siss", $item_name, $quantity, $unit, $status);
 
     if ($stmt->execute()) {
-        echo json_encode(['success' => true]);
+        $new_item_id = $stmt->insert_id;
+
+        // ✅ Save threshold for new item
+        $thresh_stmt = $conn->prepare("
+            INSERT INTO stock_thresholds (item_id, threshold, created_at, updated_at)
+            VALUES (?, ?, NOW(), NOW())
+        ");
+        $thresh_stmt->bind_param("ii", $new_item_id, $threshold);
+        $thresh_stmt->execute();
+        $thresh_stmt->close();
+
+        // Notification for new product
+        $notif_message = "📦 New product {$item_name} ({$quantity} {$unit}) has been added to the inventory!";
+        $notif_stmt = $conn->prepare("INSERT INTO notifications (message, created_at) VALUES (?, NOW())");
+        $notif_stmt->bind_param("s", $notif_message);
+        $notif_stmt->execute();
+        $notif_stmt->close();
+
+        echo json_encode(['success' => true, 'message' => $notif_message]);
     } else {
         http_response_code(500);
         echo json_encode(['error' => 'Failed to add stock']);
     }
+
     $stmt->close();
     exit;
 }
@@ -165,4 +202,3 @@ if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
 // Method not allowed
 http_response_code(405);
 echo json_encode(['error' => 'Method Not Allowed']);
-    

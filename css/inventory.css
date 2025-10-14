@@ -363,3 +363,13 @@
     color: #888;
     padding: 4px 0;
 }
+#notif-feed li.replenished {
+    background-color: #e0f7ff;    
+    border-left: 5px solid #00bfff; 
+    color: #005f87;               
+}
+#notif-feed li.new-stock {
+    background-color: #835a0e;     
+    border-left: 5px solid #39250d; 
+    color: #eeeeed;                 
+}

@@ -56,12 +56,15 @@ if (!isset($_SESSION['user_id'])) {
         <label>Quantity</label>
         <input type="number" name="quantity" min="1" required>
 
+        <label>Threshold</label>
+        <input type="number" name="threshold" min="1" required>
+
         <label>Unit</label>
         <select name="unit" required>
           <option value="kg">Kilograms (kg)</option>
           <option value="g">Grams (g)</option>
           <option value="L">Liters (L)</option>
-          <option value="ml">Milliliters (ml)</option>
+          <option value="m">Meters (M)</option>
           <option value="pcs">Pieces</option>
         </select>
 

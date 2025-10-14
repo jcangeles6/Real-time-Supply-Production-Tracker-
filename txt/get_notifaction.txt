@@ -1,0 +1,27 @@
+<?php
+header('Content-Type: application/json');
+session_start();
+include '../db.php';
+
+$user_id = $_SESSION['user_id'] ?? 0;
+if (!$user_id) {
+    echo json_encode(['notifications' => []]);
+    exit;
+}
+
+// Fetch the latest 20 notifications
+$result = $conn->query("SELECT n.id, n.type, n.message, n.created_at, 
+    IF(un.id IS NULL, 0, 1) AS is_read
+    FROM notifications n
+    LEFT JOIN user_notifications un 
+        ON n.id = un.notification_id AND un.user_id = $user_id
+    ORDER BY n.created_at DESC
+    LIMIT 20");
+
+$notifications = [];
+while ($row = $result->fetch_assoc()) {
+    $notifications[] = $row;
+}
+
+echo json_encode(['notifications' => $notifications]);
+?>

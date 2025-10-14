@@ -5,7 +5,8 @@ $user_id = $_SESSION['user_id'] ?? null;
 
 if (!isset($_GET['id'], $_GET['status'])) {
     $_SESSION['batch_error'] = "⚠️ Missing parameters.";
-    header("Location: production.php"); exit();
+    header("Location: production.php");
+    exit();
 }
 
 $id = intval($_GET['id']);
@@ -14,7 +15,8 @@ $allowed = ['scheduled', 'in_progress', 'completed'];
 
 if (!in_array($status, $allowed)) {
     $_SESSION['batch_error'] = "❌ Invalid status value.";
-    header("Location: production.php"); exit();
+    header("Location: production.php");
+    exit();
 }
 
 try {
@@ -87,15 +89,58 @@ try {
             $stmt->close();
         }
     }
+    // --- Notifications for batch start/completion ---
+    $batch_info = $conn->query("SELECT product_name FROM batches WHERE id=$id")->fetch_assoc();
+    $product_name = $batch_info['product_name'];
+
+    if ($status === 'in_progress' || $status === 'completed') {
+        $notif_type = $status; // 'in_progress' or 'completed'
+        $notif_message = $status === 'completed'
+            ? "✔️ $product_name - Batch Completed"
+            : "🛠️ $product_name - Batch Started";
+
+        // Check if this exact message and type already exist (avoid duplicates entirely)
+        $checkStmt = $conn->prepare("
+        SELECT id FROM notifications 
+        WHERE message = ? 
+        AND type = ? 
+        LIMIT 1
+    ");
+        $checkStmt->bind_param("ss", $notif_message, $notif_type);
+        $checkStmt->execute();
+        $checkResult = $checkStmt->get_result();
+        $existing = $checkResult->fetch_assoc();
+        $checkStmt->close();
+
+        if ($existing) {
+            $notification_id = $existing['id'];
+        } else {
+            // Insert new unique notification
+            $stmt = $conn->prepare("INSERT INTO notifications (type, message, created_at) VALUES (?, ?, NOW())");
+            $stmt->bind_param("ss", $notif_type, $notif_message);
+            $stmt->execute();
+            $notification_id = $stmt->insert_id;
+            $stmt->close();
+        }
+
+        // Assign to all users (ignore duplicates safely)
+        $stmt2 = $conn->prepare("
+        INSERT IGNORE INTO user_notifications (user_id, notification_id, is_read)
+        SELECT id, ?, 0 FROM users
+    ");
+        $stmt2->bind_param("i", $notification_id);
+        $stmt2->execute();
+        $stmt2->close();
+    }
+
+
 
     $conn->commit();
     header("Location: production.php");
     exit();
-
 } catch (Exception $e) {
     $conn->rollback();
     $_SESSION['batch_error'] = "❌ Error: " . $e->getMessage();
     header("Location: production.php");
     exit();
 }
-?>
