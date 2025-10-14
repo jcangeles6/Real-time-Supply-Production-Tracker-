@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Oct 13, 2025 at 11:49 PM
+-- Generation Time: Oct 14, 2025 at 07:51 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -18,8 +18,33 @@ SET time_zone = "+00:00";
 /*!40101 SET NAMES utf8mb4 */;
 
 --
--- Database: `hotwheels`
+-- Database: `flowershop`
 --
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `backup_ingredients`
+--
+
+CREATE TABLE `backup_ingredients` (
+  `id` int(11) NOT NULL,
+  `name` varchar(100) NOT NULL,
+  `price` decimal(10,2) DEFAULT 0.00,
+  `unit` enum('pcs','kg','g','L','ml') NOT NULL DEFAULT 'pcs',
+  `supplier` varchar(100) DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `backup_ingredients`
+--
+
+INSERT INTO `backup_ingredients` (`id`, `name`, `price`, `unit`, `supplier`, `created_at`) VALUES
+(1, 'Flour', 20.00, 'pcs', 'ABC Mills', '2025-09-28 14:17:31'),
+(2, 'Sugar	', 18.00, 'pcs', 'Sweet Co.', '2025-09-28 14:17:31'),
+(3, 'Butter', 45.00, 'pcs', 'Dairy Best', '2025-09-28 14:17:31'),
+(4, 'Yeast', 12.00, 'pcs', 'BakePro', '2025-09-28 14:17:31');
 
 -- --------------------------------------------------------
 
@@ -37,21 +62,6 @@ CREATE TABLE `batches` (
   `is_deleted` tinyint(1) DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Dumping data for table `batches`
---
-
-INSERT INTO `batches` (`id`, `product_name`, `quantity`, `status`, `scheduled_at`, `completed_at`, `is_deleted`) VALUES
-(639, 'Kai sotto', 1, 'in_progress', '2025-10-13 15:03:29', NULL, 1),
-(662, 'Test 1', 2, 'scheduled', '2025-10-13 21:19:58', NULL, 0),
-(663, 'Test 2', 1, 'scheduled', '2025-10-13 21:20:05', NULL, 0),
-(664, 'Test 3', 4, 'scheduled', '2025-10-13 21:20:11', NULL, 0),
-(665, 'Test 4', 4, 'scheduled', '2025-10-13 21:20:20', NULL, 0),
-(666, 'Test 5', 5, 'scheduled', '2025-10-13 21:20:48', NULL, 0),
-(667, 'Test 6', 6, 'scheduled', '2025-10-13 21:20:55', NULL, 0),
-(668, 'Test 7', 7, 'scheduled', '2025-10-13 21:21:03', NULL, 0),
-(671, 'Test 8', 8, 'in_progress', '2025-10-13 21:21:31', NULL, 0);
-
 -- --------------------------------------------------------
 
 --
@@ -65,18 +75,6 @@ CREATE TABLE `batch_log` (
   `action` varchar(255) NOT NULL,
   `timestamp` datetime DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Dumping data for table `batch_log`
---
-
-INSERT INTO `batch_log` (`id`, `batch_id`, `user_id`, `action`, `timestamp`) VALUES
-(1603, 665, 7, 'Batch Created', '2025-10-14 05:20:20'),
-(1604, 666, 7, 'Batch Created', '2025-10-14 05:20:48'),
-(1605, 667, 7, 'Batch Created', '2025-10-14 05:20:55'),
-(1606, 668, 7, 'Batch Created', '2025-10-14 05:21:03'),
-(1607, 671, 7, 'Batch Created', '2025-10-14 05:21:31'),
-(1608, 671, 7, 'Batch Started', '2025-10-14 05:39:30');
 
 -- --------------------------------------------------------
 
@@ -92,20 +90,6 @@ CREATE TABLE `batch_materials` (
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `quantity_reserved` int(11) DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Dumping data for table `batch_materials`
---
-
-INSERT INTO `batch_materials` (`id`, `batch_id`, `stock_id`, `quantity_used`, `created_at`, `quantity_reserved`) VALUES
-(910, 662, 67, 1, '2025-10-13 21:19:58', 1),
-(911, 663, 68, 1, '2025-10-13 21:20:05', 1),
-(912, 664, 69, 1, '2025-10-13 21:20:11', 1),
-(913, 665, 71, 1, '2025-10-13 21:20:20', 1),
-(914, 666, 71, 1, '2025-10-13 21:20:48', 1),
-(915, 667, 69, 1, '2025-10-13 21:20:55', 1),
-(916, 668, 68, 1, '2025-10-13 21:21:03', 1),
-(917, 671, 67, 1, '2025-10-13 21:21:31', 0);
 
 -- --------------------------------------------------------
 
@@ -153,10 +137,51 @@ CREATE TABLE `inventory` (
 --
 
 INSERT INTO `inventory` (`id`, `item_name`, `quantity`, `unit`, `status`, `updated_at`, `created_at`) VALUES
+(112, 'Stitch', 10, 'kg', 'available', '2025-10-14 17:39:46', '2025-10-14 17:26:58'),
+(113, 'Lilo', 10, 'kg', 'available', '2025-10-14 17:50:40', '2025-10-14 17:27:02'),
+(114, 'Megamind', 1, 'kg', 'available', '2025-10-14 17:38:08', '2025-10-14 17:27:07'),
+(115, 'Sigbin', 1, 'kg', 'available', '2025-10-14 17:38:09', '2025-10-14 17:27:12'),
+(116, 'IShowspeed', 4, 'm', 'available', '2025-10-14 17:39:06', '2025-10-14 17:39:06'),
+(117, 'KC3', 5, 'kg', 'available', '2025-10-14 17:39:24', '2025-10-14 17:39:24');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `inventory_backup`
+--
+
+CREATE TABLE `inventory_backup` (
+  `id` int(11) NOT NULL DEFAULT 0,
+  `item_name` varchar(100) NOT NULL,
+  `quantity` int(11) NOT NULL DEFAULT 0,
+  `unit` varchar(50) NOT NULL,
+  `status` enum('available','low','out') DEFAULT 'available',
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `inventory_backup`
+--
+
+INSERT INTO `inventory_backup` (`id`, `item_name`, `quantity`, `unit`, `status`, `updated_at`, `created_at`) VALUES
 (67, 'Paper', 4, 'pcs', 'available', '2025-10-13 21:39:30', '2025-10-08 05:04:30'),
 (68, 'Ribbon', 5, 'pcs', 'available', '2025-10-13 21:18:53', '2025-10-08 05:04:38'),
 (69, 'Vase', 5, 'pcs', 'available', '2025-10-13 21:18:56', '2025-10-08 05:04:44'),
 (71, 'Rose', 5, 'pcs', 'available', '2025-10-13 21:18:57', '2025-10-11 00:04:26');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `notifications`
+--
+
+CREATE TABLE `notifications` (
+  `id` int(11) NOT NULL,
+  `type` varchar(50) NOT NULL,
+  `message` text NOT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -214,10 +239,12 @@ CREATE TABLE `stock_thresholds` (
 --
 
 INSERT INTO `stock_thresholds` (`id`, `item_id`, `threshold`, `created_at`, `updated_at`) VALUES
-(1, 67, 5, '2025-10-13 03:13:56', '2025-10-13 03:28:38'),
-(2, 68, 5, '2025-10-13 03:13:56', '2025-10-13 06:09:26'),
-(3, 69, 5, '2025-10-13 03:13:56', '2025-10-13 03:28:33'),
-(4, 71, 5, '2025-10-13 03:13:56', '2025-10-13 03:13:56');
+(43, 112, 5, '2025-10-14 17:26:58', '2025-10-14 17:26:58'),
+(44, 113, 5, '2025-10-14 17:27:02', '2025-10-14 17:27:02'),
+(45, 114, 5, '2025-10-14 17:27:07', '2025-10-14 17:27:07'),
+(46, 115, 5, '2025-10-14 17:27:12', '2025-10-14 17:27:12'),
+(47, 116, 5, '2025-10-14 17:39:06', '2025-10-14 17:39:06'),
+(48, 117, 4, '2025-10-14 17:39:24', '2025-10-14 17:39:24');
 
 -- --------------------------------------------------------
 
@@ -248,12 +275,32 @@ INSERT INTO `users` (`id`, `username`, `email`, `password`, `reset_token`, `is_a
 (3, 'jcangeles6', 'jcangeles6@gmail.com', '$2y$10$0zqLhTIwC1RidG4EeUDsAOPAG0C8z06IjqAUZL5FjXQ/VNMQQjdZi', NULL, 1, 0, 'ano nickname ko?', '$2y$10$ghXoLBM3f6/KgeXIEhfrP.cByINiZVGWtOuDeRNfl6pMcnXqMfOVy', 0, NULL),
 (5, 'jcang22', 'jcang22@gmail.com', '$2y$10$AoPoJbpmGNBimUZR815Vpu4pz1j03jYj0QLYMoJtLJ7fj.Dl423w6', NULL, 0, 0, 'What is your first pet\'s name?', '$2y$10$rexNf6YnuEhhHbuwCNHv.umtCXtXKC2EOp8dIldkU6nHsgjl9Ed2.', 0, NULL),
 (6, 'alex', 'alexjagonoy@gmail.com', '$2y$10$jIhk9V.npnLu5M9v6t8FlefplkL6TL.p2Rs2bQ/JX7qnr8kac5.se', NULL, 0, 0, 'What is your favorite color?', '$2y$10$NrPNJJjvE4jdW6./U2gji.2icWbkeZ1p87k4UbqQw.Kghj3tsB0u6', 0, NULL),
-(7, 'pitoy', 'keanoivanpitoy@gmail.com', '$2y$10$Gb.EdZ1HKB8fsHaViYwf2ehKvvPPXP4tJ4ZLIY0IuPJ0vdDetK4La', NULL, 1, 0, 'What is your favorite color?', '$2y$10$fkkqM0o/8aLWOxWb7rCgLuAjNUjDZ.XamXcxtiSByHxgXxEER20QW', 0, NULL),
+(7, 'pitoy', 'keanoivanpitoy@gmail.com', '$2y$10$Gb.EdZ1HKB8fsHaViYwf2ehKvvPPXP4tJ4ZLIY0IuPJ0vdDetK4La', NULL, 0, 0, 'What is your favorite color?', '$2y$10$fkkqM0o/8aLWOxWb7rCgLuAjNUjDZ.XamXcxtiSByHxgXxEER20QW', 0, NULL),
 (14, 'ivan', 'peanutsfriedrice@gmail.com', '$2y$10$t39rU9mpLZWMuGsLIMb/Oe9OGcJgzmRqOAtD.0tz/jnXi0vTF5IYC', NULL, 0, 0, 'What is your favorite color?', '$2y$10$ZQBlvrJmhH/deGzk68m/G.w8YhnCYhWuEcLcOxG1Vl6V6358POzOq', 0, NULL);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `user_notifications`
+--
+
+CREATE TABLE `user_notifications` (
+  `id` int(11) NOT NULL,
+  `user_id` int(11) NOT NULL,
+  `notification_id` int(11) NOT NULL,
+  `is_read` tinyint(1) DEFAULT 0,
+  `read_at` datetime DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Indexes for dumped tables
 --
+
+--
+-- Indexes for table `backup_ingredients`
+--
+ALTER TABLE `backup_ingredients`
+  ADD PRIMARY KEY (`id`);
 
 --
 -- Indexes for table `batches`
@@ -288,6 +335,12 @@ ALTER TABLE `inventory`
   ADD PRIMARY KEY (`id`);
 
 --
+-- Indexes for table `notifications`
+--
+ALTER TABLE `notifications`
+  ADD PRIMARY KEY (`id`);
+
+--
 -- Indexes for table `requests`
 --
 ALTER TABLE `requests`
@@ -308,26 +361,41 @@ ALTER TABLE `users`
   ADD UNIQUE KEY `username` (`username`);
 
 --
+-- Indexes for table `user_notifications`
+--
+ALTER TABLE `user_notifications`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `user_notification_unique` (`user_id`,`notification_id`),
+  ADD UNIQUE KEY `unique_user_notif` (`user_id`,`notification_id`),
+  ADD KEY `notification_id` (`notification_id`);
+
+--
 -- AUTO_INCREMENT for dumped tables
 --
+
+--
+-- AUTO_INCREMENT for table `backup_ingredients`
+--
+ALTER TABLE `backup_ingredients`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `batches`
 --
 ALTER TABLE `batches`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=672;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=730;
 
 --
 -- AUTO_INCREMENT for table `batch_log`
 --
 ALTER TABLE `batch_log`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1609;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1779;
 
 --
 -- AUTO_INCREMENT for table `batch_materials`
 --
 ALTER TABLE `batch_materials`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=918;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=978;
 
 --
 -- AUTO_INCREMENT for table `ingredients`
@@ -339,7 +407,13 @@ ALTER TABLE `ingredients`
 -- AUTO_INCREMENT for table `inventory`
 --
 ALTER TABLE `inventory`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=74;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=118;
+
+--
+-- AUTO_INCREMENT for table `notifications`
+--
+ALTER TABLE `notifications`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=140;
 
 --
 -- AUTO_INCREMENT for table `requests`
@@ -351,13 +425,19 @@ ALTER TABLE `requests`
 -- AUTO_INCREMENT for table `stock_thresholds`
 --
 ALTER TABLE `stock_thresholds`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=49;
 
 --
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
+
+--
+-- AUTO_INCREMENT for table `user_notifications`
+--
+ALTER TABLE `user_notifications`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1428;
 
 --
 -- Constraints for dumped tables
@@ -375,6 +455,13 @@ ALTER TABLE `batch_materials`
 --
 ALTER TABLE `stock_thresholds`
   ADD CONSTRAINT `stock_thresholds_ibfk_1` FOREIGN KEY (`item_id`) REFERENCES `inventory` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `user_notifications`
+--
+ALTER TABLE `user_notifications`
+  ADD CONSTRAINT `user_notifications_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`),
+  ADD CONSTRAINT `user_notifications_ibfk_2` FOREIGN KEY (`notification_id`) REFERENCES `notifications` (`id`);
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
