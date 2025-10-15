@@ -55,36 +55,40 @@
                             <p>Completed Orders</p>
                         </div>
                     </div>
-
-                    <div class="card">
-                        <h3>📈 Inventory Trends</h3>
-                        <img src="https://via.placeholder.com/600x200?text=Flower+Stock+Graph" alt="Stock Trends" style="width:100%; border-radius:10px;">
+                    <div class="card" style="width: 450px; height: 350px;">
+                        <h3>🏆 Top-Selling Products</h3>
+                        <canvas id="topSellingChart"></canvas>
                     </div>
-                </div>
 
-                <div>
-                    <div class="card notifications">
-                        <h3>🔔 Notifications</h3>
-                        <div class="notif-scroll">
-                            <ul id="notifications-list"></ul>
+
+                    <div>
+                        <div class="card" style="width: 600px; height: 250px;">
+                            <h3>🔔 Notifications</h3>
+                            <div class="notif-scroll">
+                                <ul id="notifications-list"></ul>
+                            </div>
                         </div>
-                    </div>
 
-                    <div class="card">
-                        <h3>💰 Sales Trends</h3>
-                        <img src="https://via.placeholder.com/300x120?text=Sales+Graph" alt="Sales Trends" style="width:100%; border-radius:10px;">
-                    </div>
-                    <div id="production-schedule-container">
-                        <div id="production-schedule-header">
-                            <h3>🗓 Production Schedule</h3>
-                            <button id="viewProductionBtn">Check Here</button>
+                        <div class="card" style="width: 600px; height: 350px;">
+                            <h3>📊 Sales Trend</h3>
+                            <canvas id="salesTrendChart"></canvas>
                         </div>
-                        <ul id="production-schedule-list"></ul>
+
+                        <div id="production-schedule-container">
+                            <div id="production-schedule-header">
+                                <h3>🗓 Production Schedule</h3>
+                                <button id="viewProductionBtn">Check Here</button>
+                            </div>
+                            <ul id="production-schedule-list"></ul>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
+            <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+            <script src="js/inventory-overview.js"></script>
+            <script src="js/sales-trend.js"></script>
+            <script src="js/dashboard.js"></script>
+            <script src="js/time.js"></script>
     </body>
-    <script src="js/dashboard.js"></script>
-    <script src="js/time.js"></script>
+
     </html>
