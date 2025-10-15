@@ -68,41 +68,37 @@ while ($row = $batches->fetch_assoc()) {
         </div>
 
         <table>
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Product</th>
-                    <th>Quantity</th>
-                    <th>Materials Used</th>
-                    <th>Completed At</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php if (!empty($data)): ?>
-                    <?php foreach ($data as $row): ?>
-                        <tr>
-                            <td><?php echo $row['id']; ?></td>
-                            <td><?php echo htmlspecialchars($row['product_name']); ?></td>
-                            <td><?php echo $row['quantity']; ?></td>
-                            <td style="text-align: left;">
-                                <?php
-                                if (!empty($row['materials'])) {
-                                    $materials = explode(', ', $row['materials']);
-                                    echo implode('<br>', array_map('htmlspecialchars', $materials));
-                                } else {
-                                    echo "None";
-                                }
-                                ?>
-                            </td>
-                            <td><?php echo date("M d, Y h:i A", strtotime($row['completed_at'])); ?></td>
-                        </tr>
-                    <?php endforeach; ?>
-                <?php else: ?>
+            <tr>
+                <th>ID</th>
+                <th>Product</th>
+                <th>Quantity</th>
+                <th>Materials Used</th>
+                <th>Completed At</th>
+            </tr>
+            <?php if (!empty($data)): ?>
+                <?php foreach ($data as $row): ?>
                     <tr>
-                        <td colspan="5">No batches completed today.</td>
+                        <td><?php echo $row['id']; ?></td>
+                        <td><?php echo htmlspecialchars($row['product_name']); ?></td>
+                        <td><?php echo $row['quantity']; ?></td>
+                        <td style="text-align: left;">
+                            <?php
+                            if (!empty($row['materials'])) {
+                                $materials = explode(', ', $row['materials']);
+                                echo implode('<br>', array_map('htmlspecialchars', $materials));
+                            } else {
+                                echo "None";
+                            }
+                            ?>
+                        </td>
+                        <td><?php echo date("M d, Y h:i A", strtotime($row['completed_at'])); ?></td>
                     </tr>
-                <?php endif; ?>
-            </tbody>
+                <?php endforeach; ?>
+            <?php else: ?>
+                <tr>
+                    <td colspan="5">No batches completed today.</td>
+                </tr>
+            <?php endif; ?>
         </table>
     </div>
 
