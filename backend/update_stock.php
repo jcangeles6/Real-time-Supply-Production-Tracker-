@@ -103,6 +103,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
   $success = true;
 
+  // Refresh stock data after update
+$stmt = $conn->prepare("SELECT * FROM inventory WHERE id = ?");
+$stmt->bind_param("i", $id);
+$stmt->execute();
+$result = $stmt->get_result();
+$stock = $result->fetch_assoc();
+
   // Return JSON response if request came from API
   if (isset($_SERVER['CONTENT_TYPE']) && str_contains($_SERVER['CONTENT_TYPE'], 'application/json')) {
     echo json_encode(['success' => true]);
