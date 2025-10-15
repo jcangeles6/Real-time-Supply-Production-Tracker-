@@ -1,5 +1,3 @@
-// report.js
-
 // Update clock every second
 function updateClock() {
     const now = new Date();
@@ -43,18 +41,9 @@ async function fetchDailyReport() {
         document.querySelector('.summary .card:nth-child(1) h2').innerText = data.total_completed;
         document.querySelector('.summary .card:nth-child(2) h2').innerText = data.total_quantity;
 
-        // Update table
-        const table = document.querySelector("table");
-        const tbody = table.querySelector("tbody") || table;
-        let html = `
-            <tr>
-                <th>ID</th>
-                <th>Product</th>
-                <th>Quantity</th>
-                <th>Materials Used</th>
-                <th>Completed At</th>
-            </tr>
-        `;
+        // Update table body only
+        const tbody = document.querySelector("table tbody");
+        let html = "";
 
         if (data.batches.length > 0) {
             data.batches.forEach(row => {
@@ -63,20 +52,20 @@ async function fetchDailyReport() {
                         <td>${row.id}</td>
                         <td>${row.product_name}</td>
                         <td>${row.quantity}</td>
-                        <td>${row.materials}</td>
+                        <td style="text-align: left;">${row.materials}</td>
                         <td>${new Date(row.completed_at).toLocaleString()}</td>
                     </tr>
                 `;
             });
         } else {
-            html += `
+            html = `
                 <tr>
                     <td colspan="5">No batches completed today.</td>
                 </tr>
             `;
         }
 
-        table.innerHTML = html;
+        tbody.innerHTML = html;
 
     } catch (err) {
         console.error('Failed to fetch daily report:', err);
@@ -88,7 +77,3 @@ fetchDailyReport();
 
 // Auto refresh every 30 seconds
 setInterval(fetchDailyReport, 30000);
-
-
-// Uncomment to enable auto-refresh
-// autoRefreshTable();

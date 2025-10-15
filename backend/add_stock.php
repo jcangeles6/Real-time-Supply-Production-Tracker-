@@ -25,6 +25,7 @@ if (!isset($_SESSION['user_id'])) {
 
     <div class="add-btn-container">
       <button class="btn" onclick="toggleForm()">➕ Add Stock</button>
+      <button class="btn" onclick="window.location.href='admin_reports.php'">📊 View Daily Report</button>
     </div>
 
     <!-- Search filters -->
