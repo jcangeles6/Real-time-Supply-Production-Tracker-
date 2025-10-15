@@ -1,4 +1,3 @@
-// js/notifications-feed.js
 document.addEventListener('DOMContentLoaded', () => {
     const notifFeed = document.querySelector('#notif-feed');
     const notifBadge = document.querySelector('#notif-badge');
@@ -6,153 +5,189 @@ document.addEventListener('DOMContentLoaded', () => {
     const notifIcon = document.querySelector('#notif-icon');
 
     let readNotifications = JSON.parse(localStorage.getItem('readNotifications') || '[]');
+    let timeSpans = [];
 
     async function updateNotifications() {
-        try {
-            const allNotifs = [];
+    try {
+        const allNotifs = [];
 
-            // --- Low stock / out of stock notifications
-            const stockRes = await fetch('backend/check_stock_notification.php');
-            const stockData = stockRes.ok ? await stockRes.json() : { items: [] };
+        // --- Low stock / out of stock (local only)
+        const stockRes = await fetch('backend/check_stock_notification.php');
+        const stockData = stockRes.ok ? await stockRes.json() : { items: [] };
 
-            Object.values(stockData.items || []).forEach(item => {
-                const name = item.name || 'Unknown Item';
-                const quantity = item.quantity ?? 0;
-                const status = item.status ?? (quantity === 0 ? 'out' : (quantity <= item.threshold ? 'low' : 'ok'));
+        Object.values(stockData.items || []).forEach(item => {
+            const name = item.name || 'Unknown Item';
+            const quantity = item.quantity ?? 0;
+            const threshold = item.threshold ?? 0;
+            const status = quantity === 0 ? 'out' : (quantity <= threshold ? 'low' : 'ok');
 
-                if (status === 'out') allNotifs.push({ text: `❌ ${name} is out of stock!`, timestamp: new Date().toISOString(), type: 'low-stock' });
-                else if (status === 'low') allNotifs.push({ text: `⚠️ ${name} stock is low! (Available: ${quantity})`, timestamp: new Date().toISOString(), type: 'low-stock' });
-            });
-
-            // --- Notifications from DB
-            const notifRes = await fetch('backend/get_notification.php');
-            const notifData = notifRes.ok ? await notifRes.json() : { notifications: [] };
-            const batchMap = new Map(); // deduplicate by batch_id
-
-            notifData.notifications.forEach(n => {
-                if (n.type === 'deleted') return;
-
-                if (n.batch_id) {
-                    const key = n.batch_id;
-                    if (!batchMap.has(key) || new Date(n.created_at) > new Date(batchMap.get(key).timestamp)) {
-                        batchMap.set(key, {
-                            text: n.message,
-                            timestamp: n.created_at,
-                            type: n.type,
-                            id: n.id,
-                            batchId: n.batch_id
-                        });
-                    }
-                } else {
-                    allNotifs.push({ text: n.message, timestamp: n.created_at, type: n.type, id: n.id, batchId: n.batch_id });
-                }
-            });
-
-            batchMap.forEach(v => allNotifs.push(v));
-
-            // --- Sort and take latest 10 ---
-            allNotifs.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-            const latestNotifs = allNotifs.slice(0, 10);
-
-            // --- Build notification feed ---
-            notifFeed.innerHTML = '';
-
-            const todayHeader = document.createElement('li');
-            todayHeader.classList.add('notif-header');
-            todayHeader.dataset.date = 'Today';
-
-            const headerSpan = document.createElement('span');
-            headerSpan.textContent = 'TODAY';
-            todayHeader.appendChild(headerSpan);
-
-            const viewAllBtn = document.createElement('button');
-            viewAllBtn.textContent = 'View All';
-            viewAllBtn.classList.add('view-all-btn');
-            viewAllBtn.style.cssText = `
-                background: #ff4d4d;
-                color: #fff;
-                border: none;
-                border-radius: 5px;
-                padding: 2px 8px;
-                cursor: pointer;
-                font-size: 0.75rem;
-                margin-left: 10px;
-            `;
-            viewAllBtn.addEventListener('click', () => window.location.href = 'notification.html');
-            todayHeader.appendChild(viewAllBtn);
-            notifFeed.appendChild(todayHeader);
-
-            let productionDividerAdded = false;
-            const productionDivider = document.createElement('li');
-            productionDivider.classList.add('notif-divider', 'production-update');
-            productionDivider.style.cssText = `
-                text-align: center;
-                color: #888;
-                font-weight: 600;
-                font-size: 0.8rem;
-                padding: 5px 0;
-            `;
-            productionDivider.textContent = 'Production Update';
-
-            latestNotifs.forEach(n => {
-                const li = document.createElement('li');
-                li.dataset.batchId = n.batchId || '';
-                li.dataset.id = n.id || '';
-                li.textContent = n.text;
-
-                if (n.type === 'low-stock') li.classList.add('low-stock');
-                else if (n.type === 'new-stock') li.classList.add('new-stock');
-                else if (n.type === 'replenished') li.classList.add('replenished');
-                else if (n.type === 'in_progress') li.classList.add('notif-in_progress');
-                else if (n.type === 'completed') li.classList.add('notif-completed');
-
-                if (!readNotifications.includes(n.text)) li.classList.add('new-notif');
-
-                if (n.type === 'low-stock') notifFeed.appendChild(li);
-                else {
-                    if (!productionDividerAdded) {
-                        notifFeed.appendChild(productionDivider);
-                        productionDividerAdded = true;
-                    }
-                    notifFeed.appendChild(li);
-                }
-            });
-
-            // --- Update badge ---
-            const totalUnread = notifFeed.querySelectorAll('li.new-notif').length;
-            if (totalUnread > 0) {
-                notifBadge.style.display = 'inline-block';
-                notifBadge.textContent = totalUnread > 99 ? '99+' : totalUnread;
-                notifBadge.classList.remove('pulse');
-                void notifBadge.offsetWidth;
-                notifBadge.classList.add('pulse');
-            } else {
-                notifBadge.style.display = 'none';
+            if (status === 'out' || status === 'low') {
+                const notifTimestamp = item.updated_at || new Date().toISOString(); // persistent timestamp
+                allNotifs.push({
+                    text: status === 'out' ? `❌ ${name} is out of stock!` : `⚠️ ${name} stock is low! (Available: ${quantity})`,
+                    timestamp: notifTimestamp,
+                    type: 'low-stock',
+                    id: `stock-${name}`,
+                    isUnread: true
+                });
             }
+        });
 
-        } catch (err) {
-            console.error('Error updating notifications:', err);
+        // --- Notifications from DB
+        const notifRes = await fetch('backend/get_notification.php');
+        const notifData = notifRes.ok ? await notifRes.json() : { notifications: [] };
+        const batchMap = new Map();
+
+        notifData.notifications.forEach(n => {
+            if (n.type === 'deleted') return;
+
+            const userNotifId = n.user_notification_id;
+            const isUnread = n.is_read == 0;
+
+            if (n.batch_id) {
+                const key = n.batch_id;
+                if (!batchMap.has(key) || new Date(n.created_at) > new Date(batchMap.get(key).timestamp)) {
+                    batchMap.set(key, {
+                        text: n.message,
+                        timestamp: n.created_at,
+                        type: n.type,
+                        id: userNotifId,
+                        batchId: n.batch_id,
+                        isUnread
+                    });
+                }
+            } else {
+                allNotifs.push({
+                    text: n.message,
+                    timestamp: n.created_at,
+                    type: n.type,
+                    id: userNotifId,
+                    batchId: n.batch_id,
+                    isUnread
+                });
+            }
+        });
+
+        batchMap.forEach(v => allNotifs.push(v));
+
+        // --- Sort latest 10
+        allNotifs.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+        const latestNotifs = allNotifs.slice(0, 10);
+
+        // --- Build feed
+notifFeed.innerHTML = '';
+timeSpans = [];
+
+// Header
+const todayHeader = document.createElement('li');
+todayHeader.classList.add('notif-header');
+todayHeader.dataset.date = 'Today';
+todayHeader.innerHTML = `<span>TODAY</span>
+    <button class="view-all-btn" style="
+        background: #ff4d4d; color: #fff; border: none; border-radius: 5px;
+        padding: 2px 8px; cursor: pointer; font-size: 0.75rem; margin-left: 10px;">
+        View All
+    </button>`;
+todayHeader.querySelector('button').addEventListener('click', () => window.location.href = 'notification.html');
+notifFeed.appendChild(todayHeader);
+
+// --- Append low-stock / out-of-stock notifications first
+latestNotifs.filter(n => n.type === 'low-stock').forEach(n => {
+    const li = document.createElement('li');
+    li.dataset.id = n.id;
+
+    li.textContent = n.text;
+    li.classList.add('low-stock');
+
+    const timeSpan = document.createElement('span');
+    timeSpan.textContent = getRelativeTime(new Date(n.timestamp));
+    timeSpan.dataset.timestamp = n.timestamp;
+    timeSpan.style.cssText = 'font-size: 0.7rem; color: #888; float: right;';
+    li.appendChild(timeSpan);
+    timeSpans.push(timeSpan);
+
+    if (n.isUnread && !readNotifications.includes(n.id)) li.classList.add('new-notif');
+
+    notifFeed.appendChild(li);
+});
+
+// --- Production divider
+const productionDivider = document.createElement('li');
+productionDivider.classList.add('notif-divider', 'production-update');
+productionDivider.style.cssText = 'text-align:center;color:#888;font-weight:600;font-size:0.8rem;padding:5px 0;';
+productionDivider.textContent = 'Production Update';
+notifFeed.appendChild(productionDivider);
+
+// --- Append production/other notifications
+latestNotifs.filter(n => n.type !== 'low-stock').forEach(n => {
+    const li = document.createElement('li');
+    li.dataset.batchId = n.batchId || '';
+    li.dataset.id = n.id || '';
+
+    li.textContent = n.text;
+
+    const typeClass = n.type === 'new-stock' ? 'new-stock' :
+                      n.type === 'replenished' ? 'replenished' :
+                      n.type === 'in_progress' ? 'notif-in_progress' :
+                      n.type === 'completed' ? 'notif-completed' : '';
+    if (typeClass) li.classList.add(typeClass);
+
+    const timeSpan = document.createElement('span');
+    timeSpan.textContent = getRelativeTime(new Date(n.timestamp));
+    timeSpan.dataset.timestamp = n.timestamp;
+    timeSpan.style.cssText = 'font-size: 0.7rem; color: #888; float: right;';
+    li.appendChild(timeSpan);
+    timeSpans.push(timeSpan);
+
+    if (n.isUnread && !readNotifications.includes(n.id)) li.classList.add('new-notif');
+
+    notifFeed.appendChild(li);
+});
+        // --- Update badge
+        const totalUnread = notifFeed.querySelectorAll('li.new-notif').length;
+        notifBadge.style.display = totalUnread ? 'inline-block' : 'none';
+        notifBadge.textContent = totalUnread > 99 ? '99+' : totalUnread;
+        if (totalUnread) {
+            notifBadge.classList.remove('pulse');
+            void notifBadge.offsetWidth;
+            notifBadge.classList.add('pulse');
         }
+
+    } catch (err) {
+        console.error('Error updating notifications:', err);
     }
+}
 
     updateNotifications();
-    setInterval(updateNotifications, 5000);
+    setInterval(updateNotifications, 3000);
 
+    // --- Auto-update timestamps every minute
+    setInterval(() => {
+        timeSpans.forEach(span => {
+            const date = new Date(span.dataset.timestamp);
+            span.textContent = getRelativeTime(date);
+        });
+    }, 60000);
+
+    // --- Mark notifications read & update database on dropdown open
     notifIcon.addEventListener('click', () => {
         const isVisible = notifDropdown.style.display === 'block';
         notifDropdown.style.display = isVisible ? 'none' : 'block';
 
         if (!isVisible) {
             const visibleNotifs = Array.from(notifFeed.querySelectorAll('li.new-notif'));
-            visibleNotifs.forEach(li => li.classList.remove('new-notif'));
-
             const notifIds = visibleNotifs.map(li => li.dataset.id).filter(id => id);
 
-            readNotifications = Array.from(new Set([...readNotifications, ...visibleNotifs.map(li => li.textContent)]));
+            // Mark read locally
+            visibleNotifs.forEach(li => li.classList.remove('new-notif'));
+
+            readNotifications = Array.from(new Set([...readNotifications, ...notifIds]));
             localStorage.setItem('readNotifications', JSON.stringify(readNotifications));
 
+            // Hide badge
             notifBadge.style.display = 'none';
 
+            // --- Update DB
             if (notifIds.length > 0) {
                 fetch('backend/mark_notification_read.php', {
                     method: 'POST',
@@ -165,4 +200,15 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
     });
+
+    // --- Friendly timestamp helper
+    function getRelativeTime(date) {
+        const now = new Date();
+        const diff = Math.floor((now - date) / 1000);
+
+        if (diff < 60) return 'Just now';
+        if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+        if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+        return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
 });

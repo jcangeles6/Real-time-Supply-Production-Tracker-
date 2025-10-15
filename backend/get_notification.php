@@ -9,9 +9,16 @@ if (!$user_id) {
     exit;
 }
 
-// Fetch the latest 20 notifications for this user, without grouping
+// Fetch latest 20 notifications for this user
 $stmt = $conn->prepare("
-    SELECT n.id AS notification_id, n.batch_id, n.type, n.message, n.created_at, un.is_read
+    SELECT 
+        n.id AS notification_id,
+        un.id AS user_notification_id,
+        n.batch_id,
+        n.type,
+        n.message,
+        n.created_at,
+        un.is_read
     FROM user_notifications un
     JOIN notifications n ON un.notification_id = n.id
     WHERE un.user_id = ?
@@ -24,7 +31,7 @@ $result = $stmt->get_result();
 
 $notifications = [];
 while ($row = $result->fetch_assoc()) {
-    $row['is_read'] = (int)$row['is_read'];
+    $row['is_read'] = (int)$row['is_read']; // ensure consistency
     $notifications[] = $row;
 }
 

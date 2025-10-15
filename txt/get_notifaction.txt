@@ -9,19 +9,23 @@ if (!$user_id) {
     exit;
 }
 
-// Fetch the latest 20 notifications
-$result = $conn->query("SELECT n.id, n.type, n.message, n.created_at, 
-    IF(un.id IS NULL, 0, 1) AS is_read
-    FROM notifications n
-    LEFT JOIN user_notifications un 
-        ON n.id = un.notification_id AND un.user_id = $user_id
+// Fetch the latest 20 notifications for this user, without grouping
+$stmt = $conn->prepare("
+    SELECT n.id AS notification_id, n.batch_id, n.type, n.message, n.created_at, un.is_read
+    FROM user_notifications un
+    JOIN notifications n ON un.notification_id = n.id
+    WHERE un.user_id = ?
     ORDER BY n.created_at DESC
-    LIMIT 20");
+    LIMIT 20
+");
+$stmt->bind_param("i", $user_id);
+$stmt->execute();
+$result = $stmt->get_result();
 
 $notifications = [];
 while ($row = $result->fetch_assoc()) {
+    $row['is_read'] = (int)$row['is_read'];
     $notifications[] = $row;
 }
 
 echo json_encode(['notifications' => $notifications]);
-?>
