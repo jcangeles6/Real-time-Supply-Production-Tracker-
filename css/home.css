@@ -453,3 +453,29 @@ body {
     border-left: 5px solid #39250d; 
     color: #eeeeed;                 
 }
+
+.notif-scroll {
+    max-height: 200px;        /* fixed height */
+    overflow-y: auto;         /* enable vertical scroll */
+    scroll-behavior: smooth;  /* smooth scrolling */
+    padding-right: 5px;       /* avoid content hiding behind scrollbar */
+}
+
+#notifications-list li {
+    margin-bottom: 6px;       /* spacing between items */
+}
+
+
+
+.notif-time {
+    margin-left: 6px;        /* space from the main text */
+    color: #2e2c2c;             /* lighter gray */
+    font-size: 14px;       /* smaller text */
+    font-style: bold;      /* optional, makes it subtle */
+}
+.prod-time {
+    margin-left: 6px;      /* space from the main text */
+    color: #777;           /* lighter gray */
+    font-size: 0.8em;      /* slightly smaller text */
+    font-style: italic;    /* optional, subtle look */
+}
