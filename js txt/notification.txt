@@ -6,33 +6,51 @@ document.addEventListener('DOMContentLoaded', () => {
     const notifIcon = document.querySelector('#notif-icon');
 
     let readNotifications = JSON.parse(localStorage.getItem('readNotifications') || '[]');
+    let lastStatuses = {}; // Keep previous item statuses between updates
 
     async function updateNotifications() {
         try {
             const allNotifs = [];
 
-            // --- Low stock / out of stock notifications
-            const stockRes = await fetch('backend/check_stock_notification.php');
-            const stockData = stockRes.ok ? await stockRes.json() : { items: [] };
 
-            Object.values(stockData.items || []).forEach(item => {
-                const name = item.name || 'Unknown Item';
-                const quantity = item.quantity ?? 0;
-                const status = item.status ?? (quantity === 0 ? 'out' : (quantity <= item.threshold ? 'low' : 'ok'));
+// --- Low stock / out of stock (deduplicate by item_name)
+const stockRes = await fetch('backend/check_stock_notification.php');
+const stockData = stockRes.ok ? await stockRes.json() : { items: [] };
 
-                if (status === 'out') allNotifs.push({ text: `❌ ${name} is out of stock!`, timestamp: new Date().toISOString(), type: 'low-stock' });
-                else if (status === 'low') allNotifs.push({ text: `⚠️ ${name} stock is low! (Available: ${quantity})`, timestamp: new Date().toISOString(), type: 'low-stock' });
-            });
+Object.values(stockData.items || []).forEach(item => {
+    const name = item.name || 'Unknown Item';
+    const quantity = item.quantity ?? 0;
+    const threshold = item.threshold ?? 0;
 
-            // --- Notifications from DB
+    let status = 'ok';
+    if (quantity === 0) status = 'out';
+    else if (quantity <= threshold) status = 'low';
+
+    if (status === 'out') {
+        allNotifs.push({
+            text: `❌ ${name} is out of stock!`,
+            timestamp: new Date().toISOString(),
+            type: 'low-stock'
+        });
+    } else if (status === 'low') {
+        allNotifs.push({
+            text: `⚠️ ${name} stock is low! (Available: ${quantity})`,
+            timestamp: new Date().toISOString(),
+            type: 'low-stock'
+        });
+    }
+});
+
+
+            // --- Notifications from DB ---
             const notifRes = await fetch('backend/get_notification.php');
             const notifData = notifRes.ok ? await notifRes.json() : { notifications: [] };
-            const batchMap = new Map(); // deduplicate by batch_id
+            const batchMap = new Map(); // deduplicate by batch_id only
 
             notifData.notifications.forEach(n => {
                 if (n.type === 'deleted') return;
 
-                if (n.batch_id) {
+                if (n.batch_id) { 
                     const key = n.batch_id;
                     if (!batchMap.has(key) || new Date(n.created_at) > new Date(batchMap.get(key).timestamp)) {
                         batchMap.set(key, {
@@ -43,8 +61,14 @@ document.addEventListener('DOMContentLoaded', () => {
                             batchId: n.batch_id
                         });
                     }
-                } else {
-                    allNotifs.push({ text: n.message, timestamp: n.created_at, type: n.type, id: n.id, batchId: n.batch_id });
+                } else { 
+                    allNotifs.push({
+                        text: n.message,
+                        timestamp: n.created_at,
+                        type: n.type,
+                        id: n.id,
+                        batchId: n.batch_id
+                    });
                 }
             });
 
@@ -69,27 +93,27 @@ document.addEventListener('DOMContentLoaded', () => {
             viewAllBtn.textContent = 'View All';
             viewAllBtn.classList.add('view-all-btn');
             viewAllBtn.style.cssText = `
-                background: #ff4d4d;
-                color: #fff;
-                border: none;
-                border-radius: 5px;
-                padding: 2px 8px;
-                cursor: pointer;
-                font-size: 0.75rem;
+                background: #ff4d4d; 
+                color: #fff; 
+                border: none; 
+                border-radius: 5px; 
+                padding: 2px 8px; 
+                cursor: pointer; 
+                font-size: 0.75rem; 
                 margin-left: 10px;
             `;
             viewAllBtn.addEventListener('click', () => window.location.href = 'notification.html');
             todayHeader.appendChild(viewAllBtn);
             notifFeed.appendChild(todayHeader);
 
-            let productionDividerAdded = false;
+            let lowStockDividerAdded = false;
             const productionDivider = document.createElement('li');
             productionDivider.classList.add('notif-divider', 'production-update');
             productionDivider.style.cssText = `
-                text-align: center;
-                color: #888;
-                font-weight: 600;
-                font-size: 0.8rem;
+                text-align: center; 
+                color: #888; 
+                font-weight: 600; 
+                font-size: 0.8rem; 
                 padding: 5px 0;
             `;
             productionDivider.textContent = 'Production Update';
@@ -108,11 +132,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 if (!readNotifications.includes(n.text)) li.classList.add('new-notif');
 
-                if (n.type === 'low-stock') notifFeed.appendChild(li);
-                else {
-                    if (!productionDividerAdded) {
+                if (n.type === 'low-stock') {
+                    notifFeed.appendChild(li);
+                } else {
+                    if (!lowStockDividerAdded) {
                         notifFeed.appendChild(productionDivider);
-                        productionDividerAdded = true;
+                        lowStockDividerAdded = true;
                     }
                     notifFeed.appendChild(li);
                 }
@@ -148,7 +173,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const notifIds = visibleNotifs.map(li => li.dataset.id).filter(id => id);
 
-            readNotifications = Array.from(new Set([...readNotifications, ...visibleNotifs.map(li => li.textContent)]));
+            readNotifications = Array.from(new Set([
+                ...readNotifications,
+                ...visibleNotifs.map(li => li.textContent)
+            ]));
             localStorage.setItem('readNotifications', JSON.stringify(readNotifications));
 
             notifBadge.style.display = 'none';
@@ -160,7 +188,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     body: JSON.stringify({ notification_ids: notifIds })
                 })
                 .then(res => res.json())
-                .then(data => { if (!data.success) console.error('Failed to mark notifications as read'); })
+                .then(data => {
+                    if (!data.success) console.error('Failed to mark notifications as read');
+                })
                 .catch(err => console.error(err));
             }
         }
