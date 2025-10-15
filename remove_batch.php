@@ -1,13 +1,8 @@
 <?php
 include 'backend/init.php';
 
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
-
-if (!isset($_GET['id']) || !isset($_SESSION['user_id'])) {
-    die("Unauthorized or missing batch ID.");
-}
+if (session_status() === PHP_SESSION_NONE) session_start();
+if (!isset($_GET['id']) || !isset($_SESSION['user_id'])) die("Unauthorized or missing batch ID.");
 
 $batch_id = intval($_GET['id']);
 $user_id = $_SESSION['user_id'];
@@ -21,10 +16,9 @@ try {
     $batchQuery->execute();
     $batch = $batchQuery->get_result()->fetch_assoc();
     $batchQuery->close();
-
     if (!$batch) throw new Exception("Batch not found.");
 
-    // 2️⃣ Restore stock if batch was in_progress
+    // 2️⃣ Restore stock if in_progress
     if ($batch['status'] === 'in_progress' && $batch['stock_id']) {
         $stockQuery = $conn->prepare("SELECT quantity FROM inventory WHERE id = ?");
         $stockQuery->bind_param("i", $batch['stock_id']);
@@ -54,12 +48,20 @@ try {
     $log->execute();
     $log->close();
 
+    // 5️⃣ Hide related notifications using batch_id
+    $updateNotif = $conn->prepare("
+        UPDATE notifications
+        SET type = 'deleted', message = CONCAT(message, ' (Canceled)')
+        WHERE batch_id = ?
+    ");
+    $updateNotif->bind_param("i", $batch_id);
+    $updateNotif->execute();
+    $updateNotif->close();
+
     $conn->commit();
     header("Location: production.php");
     exit();
-
 } catch (Exception $e) {
     $conn->rollback();
     echo "Error: " . $e->getMessage();
 }
-?>

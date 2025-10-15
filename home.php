@@ -36,13 +36,6 @@
                 <div class="top-right">
                     <div id="live-time">⏰ Loading time...</div>
                     <div class="search-bar"><input type="text" placeholder="Search..."></div>
-                    <div class="notif" id="notif-icon">
-                        🔔
-                        <span id="notif-badge" style="background:red;color:white;font-size:0.75rem;border-radius:50%;padding:2px 6px;position:absolute;top:-5px;right:-5px;display:none;">0</span>
-                    </div>
-                    <div id="notif-dropdown" style="display:none;position:absolute;right:35px;top:50px;width:300px;max-height:400px;overflow-y:auto;background:#fff;border-radius:10px;box-shadow:0 4px 12px rgba(0,0,0,0.2);z-index:100;">
-                        <ul id="notif-feed" style="list-style:none;padding:10px;margin:0;"></ul>
-                    </div>
                 </div>
             </div>
 
@@ -94,5 +87,4 @@
     </body>
     <script src="js/dashboard.js"></script>
     <script src="js/time.js"></script>
-    <script src="js/notification.js"></script>
     </html>

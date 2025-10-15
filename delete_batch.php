@@ -2,7 +2,6 @@
 include 'db.php';
 session_start();
 $user_id = $_SESSION['user_id'] ?? null;
-
 if (!isset($_GET['id'])) die("⚠️ Missing batch ID.");
 
 $batch_id = intval($_GET['id']);
@@ -20,9 +19,9 @@ try {
     if (!$batch) throw new Exception("❌ Batch not found.");
     if ($batch['status'] === 'completed') throw new Exception("⚠️ Completed batches cannot be deleted.");
 
-    // Fetch batch materials (lock rows)
+    // Fetch batch materials
     $stmt = $conn->prepare("
-        SELECT bm.stock_id, bm.quantity_used, bm.quantity_reserved
+        SELECT bm.stock_id, bm.quantity_used
         FROM batch_materials bm
         WHERE bm.batch_id = ? FOR UPDATE
     ");
@@ -31,7 +30,7 @@ try {
     $materials = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
     $stmt->close();
 
-    // --- Refund only if in_progress ---
+    // Refund stock if in_progress
     foreach ($materials as $mat) {
         $refund_qty = ($batch['status'] === 'in_progress') ? $mat['quantity_used'] : 0;
         if ($refund_qty > 0) {
@@ -49,19 +48,28 @@ try {
     $stmt->close();
 
     // Mark batch deleted
-    $stmt = $conn->prepare("UPDATE batches SET is_deleted = 1 WHERE id = ? AND is_deleted = 0");
+    $stmt = $conn->prepare("UPDATE batches SET is_deleted = 1 WHERE id = ?");
     $stmt->bind_param("i", $batch_id);
     $stmt->execute();
 
-    // Only log if batch was actually marked deleted
+    // Log deletion
     if ($stmt->affected_rows > 0 && $user_id) {
         $log = $conn->prepare("INSERT INTO batch_log (batch_id, user_id, action, timestamp) VALUES (?, ?, 'Batch Deleted', NOW())");
         $log->bind_param("ii", $batch_id, $user_id);
         $log->execute();
         $log->close();
     }
-
     $stmt->close();
+
+    // Hide related notifications using batch_id
+    $updateNotif = $conn->prepare("
+        UPDATE notifications
+        SET type = 'deleted', message = CONCAT(message, ' (Canceled)')
+        WHERE batch_id = ?
+    ");
+    $updateNotif->bind_param("i", $batch_id);
+    $updateNotif->execute();
+    $updateNotif->close();
 
     $conn->commit();
     header("Location: production.php");

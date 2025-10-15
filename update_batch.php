@@ -89,6 +89,7 @@ try {
             $stmt->close();
         }
     }
+
     // --- Notifications for batch start/completion ---
     $batch_info = $conn->query("SELECT product_name FROM batches WHERE id=$id")->fetch_assoc();
     $product_name = $batch_info['product_name'];
@@ -99,38 +100,39 @@ try {
             ? "✔️ $product_name - Batch Completed"
             : "🛠️ $product_name - Batch Started";
 
-        // Check if this exact message and type already exist (avoid duplicates entirely)
-        $checkStmt = $conn->prepare("
+        // --- Check if a notification exists for this exact batch and type ---
+        $stmt = $conn->prepare("
         SELECT id FROM notifications 
-        WHERE message = ? 
-        AND type = ? 
+        WHERE batch_id = ? AND type = ? 
         LIMIT 1
     ");
-        $checkStmt->bind_param("ss", $notif_message, $notif_type);
-        $checkStmt->execute();
-        $checkResult = $checkStmt->get_result();
-        $existing = $checkResult->fetch_assoc();
-        $checkStmt->close();
+        $stmt->bind_param("is", $id, $notif_type);
+        $stmt->execute();
+        $existing = $stmt->get_result()->fetch_assoc();
+        $stmt->close();
 
         if ($existing) {
             $notification_id = $existing['id'];
         } else {
-            // Insert new unique notification
-            $stmt = $conn->prepare("INSERT INTO notifications (type, message, created_at) VALUES (?, ?, NOW())");
-            $stmt->bind_param("ss", $notif_type, $notif_message);
+            // Insert new notification linked to this batch
+            $stmt = $conn->prepare("
+            INSERT INTO notifications (batch_id, type, message, created_at) 
+            VALUES (?, ?, ?, NOW())
+        ");
+            $stmt->bind_param("iss", $id, $notif_type, $notif_message);
             $stmt->execute();
             $notification_id = $stmt->insert_id;
             $stmt->close();
         }
 
-        // Assign to all users (ignore duplicates safely)
-        $stmt2 = $conn->prepare("
+        // --- Assign to all users without duplicates ---
+        $stmt = $conn->prepare("
         INSERT IGNORE INTO user_notifications (user_id, notification_id, is_read)
         SELECT id, ?, 0 FROM users
     ");
-        $stmt2->bind_param("i", $notification_id);
-        $stmt2->execute();
-        $stmt2->close();
+        $stmt->bind_param("i", $notification_id);
+        $stmt->execute();
+        $stmt->close();
     }
 
 

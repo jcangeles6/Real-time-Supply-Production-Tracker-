@@ -10,8 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
     async function updateNotifications() {
         try {
             const allNotifs = [];
-            const batchMap = new Map(); // Track latest batch status per product
-
+            
             // --- Low stock ---
             const stockRes = await fetch('get_stock.php');
             const stockData = stockRes.ok ? await stockRes.json() : { items: [] };
@@ -22,40 +21,32 @@ document.addEventListener('DOMContentLoaded', () => {
                     type: 'low-stock'
                 }));
 
-            // --- Notifications from DB ---
-            const notifRes = await fetch('backend/get_notification.php');
-            const notifData = notifRes.ok ? await notifRes.json() : { notifications: [] };
+// --- Notifications from DB ---
+const notifRes = await fetch('backend/get_notification.php');
+const notifData = notifRes.ok ? await notifRes.json() : { notifications: [] };
 
-            notifData.notifications.forEach(n => {
-                const msg = n.message;
-                const match = msg.match(/[\w\s]+ - Batch (Started|Completed)/i);
+const batchMap = new Map(); // key: batchId only
 
-                if (match) {
-                    const productName = msg.split(' - ')[0].replace(/[✔️🛠️]/g, '').trim();
-                    const existing = batchMap.get(productName);
+notifData.notifications.forEach(n => {
+    if (n.type === 'deleted') return; // skip canceled batches
 
-                    // Keep only the latest timestamped status
-                    if (!existing || new Date(n.created_at) > new Date(existing.timestamp)) {
-                        batchMap.set(productName, {
-                            text: msg,
-                            timestamp: n.created_at,
-                            type: n.type,
-                            id: n.id
-                        });
-                    }
-                } else {
-                    allNotifs.push({
-                        text: msg,
-                        timestamp: n.created_at,
-                        type: n.type,
-                        id: n.id
-                    });
-                }
-            });
+    const key = n.batch_id; // unique per batch
+    // keep the latest notification regardless of status
+    if (!batchMap.has(key) || new Date(n.created_at) > new Date(batchMap.get(key).timestamp)) {
+        batchMap.set(key, {
+            text: n.message,
+            timestamp: n.created_at,
+            type: n.type,
+            id: n.id,
+            batchId: n.batch_id
+        });
+    }
+});
 
-            // --- Add only latest batch notifications ---
-            batchMap.forEach(v => allNotifs.push(v));
+// Add deduplicated notifications to the feed
+batchMap.forEach(v => allNotifs.push(v));
 
+    
             // --- Sort and take latest 10 ---
             allNotifs.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
             const latestNotifs = allNotifs.slice(0, 10);

@@ -9,14 +9,12 @@ if (!$user_id) {
     exit;
 }
 
-// Fetch the latest 20 unique notifications for this user
+// Fetch the latest 20 notifications for this user, without grouping
 $stmt = $conn->prepare("
-    SELECT n.id, n.type, n.message, n.created_at, un.is_read
-    FROM notifications n
-    INNER JOIN user_notifications un 
-        ON n.id = un.notification_id
+    SELECT n.id AS notification_id, n.batch_id, n.type, n.message, n.created_at, un.is_read
+    FROM user_notifications un
+    JOIN notifications n ON un.notification_id = n.id
     WHERE un.user_id = ?
-    GROUP BY n.id  -- ✅ Ensure uniqueness by notification ID
     ORDER BY n.created_at DESC
     LIMIT 20
 ");
@@ -26,10 +24,6 @@ $result = $stmt->get_result();
 
 $notifications = [];
 while ($row = $result->fetch_assoc()) {
-    // Treat "New product" notifications as 'new-stock'
-    if (strpos($row['message'], '📦 New product') !== false) {
-        $row['type'] = 'new-stock';
-    }
     $row['is_read'] = (int)$row['is_read'];
     $notifications[] = $row;
 }

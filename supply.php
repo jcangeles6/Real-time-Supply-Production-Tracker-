@@ -32,21 +32,22 @@ $result_requests = $conn->query("SELECT * FROM requests ORDER BY requested_at DE
         <a href="logout.php">🚪 Logout</a>
     </div>
 
+
     <!-- Main -->
     <div class="main">
         <div class="top-bar">
             <div class="welcome">📦 Supply Management</div>
             <div class="top-right">
                 <div id="live-time">⏰ Loading...</div>
-                <div class="search-bar"><input type="text" placeholder="Search ingredient..."></div>
-                <div class="notif" id="notif-icon" style="position:relative;cursor:pointer;">
-                    🔔
-                    <span id="notif-badge"></span>
+                <div class="search-bar">
+                    <input type="text" placeholder="Search items...">
                 </div>
-                <div id="notif-dropdown" style="display:none;position:absolute;right:20px;top:50px;width:300px;max-height:400px;overflow-y:auto;background:#fff;border-radius:10px;box-shadow:0 4px 12px rgba(0,0,0,0.2);z-index:100;">
-                    <ul id="notif-feed" style="list-style:none;padding:10px;margin:0;">
-                        <!-- Notifications will be dynamically inserted here -->
-                    </ul>
+                <div class="notif" id="notif-icon">
+                    🔔
+                    <span id="notif-badge" style="background:red;color:white;font-size:0.75rem;border-radius:50%;padding:2px 6px;position:absolute;top:-5px;right:-5px;display:none;">0</span>
+                </div>
+                <div id="notif-dropdown">
+                    <ul id="notif-feed"></ul>
                 </div>
             </div>
         </div>
