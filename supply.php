@@ -187,51 +187,52 @@ $count_denied = $conn->query("SELECT COUNT(*) as c FROM requests WHERE status='d
             </div>
         </div>
     </div>
-    <script>
-        const toggleBtn = document.getElementById('toggleApproved');
+  <script>
+    const toggleBtn = document.getElementById('toggleApproved');
 
-        // Load state from localStorage
-        let hidden = localStorage.getItem('hideApproved') === 'true';
+    // Load state from localStorage
+    let hidden = localStorage.getItem('hideApproved') === 'true';
 
-        const updateRows = () => {
-            document.querySelectorAll('tr.approved').forEach(row => {
-                row.style.display = hidden ? 'none' : '';
-            });
-            toggleBtn.textContent = hidden ? 'Show Approved Requests ▼' : 'Hide Approved Requests ▼';
-        }
-
-        // Initialize on page load
-        updateRows();
-
-        toggleBtn.addEventListener('click', () => {
-            hidden = !hidden;
-            localStorage.setItem('hideApproved', hidden);
-            updateRows();
+    const updateRows = () => {
+        document.querySelectorAll('tr.approved').forEach(row => {
+            row.style.display = hidden ? 'none' : '';
         });
+        toggleBtn.textContent = hidden ? 'Show Approved Requests ▼' : 'Hide Approved Requests ▼';
+    }
 
-        const invTableBody = document.querySelector('.table-container table');
+    // Initialize on page load
+    updateRows();
 
-        const fetchInventory = async () => {
-            try {
-                const res = await fetch('backend/get_inventory.php'); // your JSON endpoint
-                const data = await res.json();
+    toggleBtn.addEventListener('click', () => {
+        hidden = !hidden;
+        localStorage.setItem('hideApproved', hidden);
+        updateRows();
+    });
 
-                // Clear old rows except header
-                invTableBody.querySelectorAll('tr:not(:first-child)').forEach(r => r.remove());
+    // --- Inventory ---
+    const invTableBody = document.querySelector('.table-container table');
 
-                data.forEach(item => {
-                    let quantity = parseInt(item.quantity);
-                    let status = item.status.toLowerCase();
+    const fetchInventory = async () => {
+        try {
+            const res = await fetch('backend/get_inventory.php');
+            const data = await res.json();
 
-                    // Determine display status
-                    let displayStatus = status;
-                    if (status === 'available' && quantity <= 5) displayStatus = 'low';
+            // Clear old rows except header
+            invTableBody.querySelectorAll('tr:not(:first-child)').forEach(r => r.remove());
 
-                    // Requestable if quantity > 0
-                    let isRequestable = quantity > 0;
+            data.forEach(item => {
+                let quantity = parseInt(item.quantity);
+                let status = item.status.toLowerCase();
 
-                    const tr = document.createElement('tr');
-                    tr.innerHTML = `
+                // Determine display status
+                let displayStatus = status;
+                if (status === 'available' && quantity <= 5) displayStatus = 'low';
+
+                // Requestable if quantity > 0
+                let isRequestable = quantity > 0;
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
                     <td>${item.item_name}</td>
                     <td>${item.quantity}</td>
                     <td>${item.unit}</td>
@@ -240,17 +241,66 @@ $count_denied = $conn->query("SELECT COUNT(*) as c FROM requests WHERE status='d
                     </span></td>
                     <td>${isRequestable ? `<a href="request_form.php?ingredient=${encodeURIComponent(item.item_name)}" class="btn">Request</a>` : '<span style="color:#8b4513;">Out of Stock</span>'}</td>
                 `;
-                    invTableBody.appendChild(tr);
-                });
-            } catch (err) {
-                console.error('Failed to fetch inventory:', err);
-            }
+                invTableBody.appendChild(tr);
+            });
+        } catch (err) {
+            console.error('Failed to fetch inventory:', err);
         }
+    }
 
-        // Fetch every 5 seconds
-        setInterval(fetchInventory, 5000);
-        fetchInventory(); // initial load
-    </script>
+    // --- Requests ---
+    const requestTableBody = document.querySelector('.request-table');
+    const summaryDiv = document.querySelector('.summary');
+
+    const fetchRequests = async () => {
+        try {
+            const res = await fetch('backend/get_request.php');
+            const data = await res.json();
+            if (!data.success) return;
+
+            const requests = data.requests || [];
+
+            // Update summary
+            summaryDiv.textContent = `Pending: ${data.summary.pending} | Approved: ${data.summary.approved} | Denied: ${data.summary.denied}`;
+
+            // Clear old table rows except header
+            requestTableBody.querySelectorAll('tr:not(:first-child)').forEach(r => r.remove());
+
+            // Populate table
+            requests.forEach(row => {
+                const status = row.status.toLowerCase();
+                const tr = document.createElement('tr');
+                tr.classList.add(status); // for approved toggle
+                tr.innerHTML = `
+                    <td>${row.id}</td>
+                    <td>${row.ingredient_name}</td>
+                    <td>${row.quantity}</td>
+                    <td>${row.unit}</td>
+                    <td><span class="badge ${status}">${status.charAt(0).toUpperCase() + status.slice(1)}</span></td>
+                    <td>${row.requested_at}</td>
+                `;
+                requestTableBody.appendChild(tr);
+            });
+
+            // Update approved toggle visibility
+            document.querySelectorAll('tr.approved').forEach(row => {
+                row.style.display = hidden ? 'none' : '';
+            });
+
+        } catch (err) {
+            console.error('Error fetching requests:', err);
+        }
+    }
+
+    // Poll every 5 seconds
+    setInterval(fetchInventory, 5000);
+    setInterval(fetchRequests, 5000);
+
+    // Initial load
+    fetchInventory();
+    fetchRequests();
+</script>
+
     <script src="js/time.js"></script>
     <script src="js/notification.js"></script>
 </body>

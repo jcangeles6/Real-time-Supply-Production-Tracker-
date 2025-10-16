@@ -199,8 +199,8 @@ $inv_result = $conn->query("
             <div class="warning-note" id="warningNote" style="color:red;font-size:13px;margin-bottom:10px;"></div>
 
             <label>Notes / Priority</label>
-            <textarea name="notes" id="notes" placeholder="Optional: urgent, special instructions..." rows="3" maxlength="200"></textarea>
-            <div style="font-size:12px;color:#555;">Max 200 characters</div>
+            <textarea name="notes" id="notes" placeholder="Optional: urgent, special instructions..." rows="3" maxlength="100"></textarea>
+            <div style="font-size:12px;color:#555;">Max 100 characters</div>
 
 
             <!-- Hidden unit input -->
