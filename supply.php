@@ -7,8 +7,22 @@ $result = $conn->query("SELECT username FROM users WHERE id = $user_id");
 $user = $result->fetch_assoc();
 $username = $user['username'];
 
-// Fetch ingredient requests
-$result_requests = $conn->query("SELECT * FROM requests ORDER BY requested_at DESC");
+// Pagination setup
+$limit = 10; // 10 requests per page
+$page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
+$offset = ($page - 1) * $limit;
+
+// Count total requests
+$total_requests = $conn->query("SELECT COUNT(*) as c FROM requests")->fetch_assoc()['c'];
+$total_pages = ceil($total_requests / $limit);
+
+// Fetch requests for current page, newest first
+$result_requests = $conn->query("SELECT * FROM requests ORDER BY requested_at DESC LIMIT $limit OFFSET $offset");
+
+// Count requests by status for summary
+$count_pending = $conn->query("SELECT COUNT(*) as c FROM requests WHERE status='pending'")->fetch_assoc()['c'];
+$count_approved = $conn->query("SELECT COUNT(*) as c FROM requests WHERE status='approved'")->fetch_assoc()['c'];
+$count_denied = $conn->query("SELECT COUNT(*) as c FROM requests WHERE status='denied'")->fetch_assoc()['c'];
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -18,6 +32,32 @@ $result_requests = $conn->query("SELECT * FROM requests ORDER BY requested_at DE
     <title>🌸 BloomLux Supply 🌸</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/supply.css">
+    <style>
+        .summary {
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .collapse-toggle {
+            cursor: pointer;
+            color: var(--primary);
+            font-size: 14px;
+            margin-bottom: 10px;
+            display: inline-block;
+        }
+
+        .pagination a {
+            margin: 0 5px;
+            text-decoration: none;
+            color: var(--primary);
+            font-weight: 500;
+        }
+
+        .pagination a.active {
+            font-weight: 700;
+            text-decoration: underline;
+        }
+    </style>
 </head>
 
 <body>
@@ -31,7 +71,6 @@ $result_requests = $conn->query("SELECT * FROM requests ORDER BY requested_at DE
         <a href="inventory.php">📊 Inventory</a>
         <a href="logout.php">🚪 Logout</a>
     </div>
-
 
     <!-- Main -->
     <div class="main">
@@ -53,50 +92,63 @@ $result_requests = $conn->query("SELECT * FROM requests ORDER BY requested_at DE
         </div>
 
         <div class="card">
-            <h3>🥖 Available Ingredients</h3>
-            <table>
-                <tr>
-                    <th>Ingredient</th>
-                    <th>Price</th>
-                    <th>Supplier</th>
-                    <th>Action</th>
-                </tr>
-                <tr>
-                    <td>Design</td>
-                    <td>₱1000 / 100 PCS</td>
-                    <td>ABC Mills</td>
-                    <td><a href="request_form.php?ingredient=Flour" class="btn">Request</a></td>
-                </tr>
-                <tr>
-                    <td>Paper</td>
-                    <td>₱200 / 250 PCS</td>
-                    <td>Sweet Co.</td>
-                    <td><a href="request_form.php?ingredient=Sugar" class="btn">Request</a></td>
-                </tr>
-                <tr>
-                    <td>Ribbon</td>
-                    <td>₱1500 / 100 PCS</td>
-                    <td>Dairy Best</td>
-                    <td><a href="request_form.php?ingredient=Butter" class="btn">Request</a></td>
-                </tr>
-                <tr>
-                    <td>Rose</td>
-                    <td>₱1000 / 160 PCS</td>
-                    <td>BakePro</td>
-                    <td><a href="request_form.php?ingredient=Yeast" class="btn">Request</a></td>
-                </tr>
-                <tr>
-                    <td>Base</td>
-                    <td>₱1300 / 50 PCS</td>
-                    <td>ABC Mills</td>
-                    <td><a href="request_form.php?ingredient=Flour" class="btn">Request</a></td>
-                </tr>
-            </table>
+            <h3>📦 Available Materials</h3>
+            <div class="table-container">
+                <table>
+                    <tr>
+                        <th>Ingredient</th>
+                        <th>Quantity</th>
+                        <th>Unit</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                    <?php
+                    $inv_result = $conn->query("SELECT * FROM inventory ORDER BY item_name ASC");
+                    if ($inv_result->num_rows > 0):
+                        while ($item = $inv_result->fetch_assoc()):
+                            $isAvailable = strtolower($item['status']) === 'available' && intval($item['quantity']) > 0;
+                    ?>
+                            <tr>
+                                <td><?= htmlspecialchars($item['item_name']); ?></td>
+                                <td><?= htmlspecialchars($item['quantity']); ?></td>
+                                <td><?= htmlspecialchars($item['unit']); ?></td>
+                                <td>
+                                    <span class="badge <?= strtolower($item['status']); ?>">
+                                        <?= ucfirst($item['status']); ?>
+                                    </span>
+                                </td>
+                                <td>
+                                    <?php if ($isAvailable): ?>
+                                        <a href="request_form.php?ingredient=<?= urlencode($item['item_name']); ?>" class="btn">Request</a>
+                                    <?php else: ?>
+                                        <span style="color:#8b4513;">Out of Stock</span>
+                                    <?php endif; ?>
+                                </td>
+                            </tr>
+                        <?php
+                        endwhile;
+                    else:
+                        ?>
+                        <tr>
+                            <td colspan="5" style="color:#8b4513;">No items found in inventory.</td>
+                        </tr>
+                    <?php endif; ?>
+                </table>
+            </div>
         </div>
 
         <div class="card">
-            <h3>📋 Ingredient Requests</h3>
-            <table>
+            <h3>📋Request Materials</h3>
+
+            <!-- Compact summary -->
+            <div class="summary">
+                Pending: <?= $count_pending ?> | Approved: <?= $count_approved ?> | Denied: <?= $count_denied ?>
+            </div>
+
+            <!-- Collapse toggle for approved requests -->
+            <div class="collapse-toggle" id="toggleApproved">Hide Approved Requests ▼</div>
+
+            <table class="request-table">
                 <tr>
                     <th>ID</th>
                     <th>Ingredient</th>
@@ -107,7 +159,7 @@ $result_requests = $conn->query("SELECT * FROM requests ORDER BY requested_at DE
                 </tr>
                 <?php if ($result_requests->num_rows > 0): ?>
                     <?php while ($row = $result_requests->fetch_assoc()): ?>
-                        <tr>
+                        <tr class="<?= strtolower($row['status']); ?>">
                             <td><?= $row['id']; ?></td>
                             <td><?= htmlspecialchars($row['ingredient_name']); ?></td>
                             <td><?= htmlspecialchars($row['quantity']); ?></td>
@@ -127,13 +179,69 @@ $result_requests = $conn->query("SELECT * FROM requests ORDER BY requested_at DE
                 <?php endif; ?>
             </table>
 
+            <!-- Pagination links -->
             <div class="pagination">
-                <a href="#" class="active">1</a>
-                <a href="#">2</a>
-                <a href="#">3</a>
+                <?php for ($i = 1; $i <= $total_pages; $i++): ?>
+                    <a href="?page=<?= $i ?>" class="<?= $i == $page ? 'active' : '' ?>"><?= $i ?></a>
+                <?php endfor; ?>
             </div>
         </div>
     </div>
+
+    <script>
+        const toggleBtn = document.getElementById('toggleApproved');
+
+        // Load state from localStorage
+        let hidden = localStorage.getItem('hideApproved') === 'true';
+
+        const updateRows = () => {
+            document.querySelectorAll('tr.approved').forEach(row => {
+                row.style.display = hidden ? 'none' : '';
+            });
+            toggleBtn.textContent = hidden ? 'Show Approved Requests ▼' : 'Hide Approved Requests ▼';
+        }
+
+        // Initialize on page load
+        updateRows();
+
+        toggleBtn.addEventListener('click', () => {
+            hidden = !hidden;
+            localStorage.setItem('hideApproved', hidden);
+            updateRows();
+        });
+
+        const invTableBody = document.querySelector('.table-container table');
+
+        const fetchInventory = async () => {
+            try {
+                const res = await fetch('backend/get_inventory.php'); // create this PHP file to return inventory JSON
+                const data = await res.json();
+
+                // Clear old rows except header
+                invTableBody.querySelectorAll('tr:not(:first-child)').forEach(r => r.remove());
+
+                data.forEach(item => {
+                    const isAvailable = item.status.toLowerCase() === 'available' && parseInt(item.quantity) > 0;
+                    const tr = document.createElement('tr');
+
+                    tr.innerHTML = `
+                <td>${item.item_name}</td>
+                <td>${item.quantity}</td>
+                <td>${item.unit}</td>
+                <td><span class="badge ${item.status.toLowerCase()}">${item.status}</span></td>
+                <td>${isAvailable ? `<a href="request_form.php?ingredient=${encodeURIComponent(item.item_name)}" class="btn">Request</a>` : '<span style="color:#8b4513;">Out of Stock</span>'}</td>
+            `;
+                    invTableBody.appendChild(tr);
+                });
+            } catch (err) {
+                console.error('Failed to fetch inventory:', err);
+            }
+        }
+
+        // Fetch every 5 seconds
+        setInterval(fetchInventory, 5000);
+        fetchInventory(); // initial load
+    </script>
     <script src="js/time.js"></script>
     <script src="js/notification.js"></script>
 </body>

@@ -2,27 +2,46 @@
 include 'backend/init.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $ingredient = $_POST['ingredient_name'];
+    $ingredient_name = $_POST['ingredient_name'];
     $quantity = $_POST['quantity'];
     $unit = $_POST['unit'];
+    $notes = $_POST['notes'] ?? '';
+    $user_id = $_SESSION['user_id'];
 
-    $stmt = $conn->prepare("INSERT INTO requests (ingredient_name, quantity, unit, status) VALUES (?, ?, ?, 'pending')");
-    $stmt->bind_param("sis", $ingredient, $quantity, $unit);
+    // Get the ingredient ID and available quantity from inventory
+    $stmt = $conn->prepare("SELECT id, quantity FROM inventory WHERE item_name = ? LIMIT 1");
+    $stmt->bind_param("s", $ingredient_name);
     $stmt->execute();
+    $res = $stmt->get_result();
+    $ingredient = $res->fetch_assoc();
+    $ingredient_id = $ingredient['id'];
+    $available_qty = intval($ingredient['quantity']);
 
-    header("Location: supply.php"); // after request, go to supply list
+    // Insert request (no limit on quantity for restock requests)
+    $stmt2 = $conn->prepare("INSERT INTO requests (ingredient_id, user_id, ingredient_name, quantity, unit, notes, status) VALUES (?, ?, ?, ?, ?, ?, 'pending')");
+    $stmt2->bind_param("iissss", $ingredient_id, $user_id, $ingredient_name, $quantity, $unit, $notes);
+    $stmt2->execute();
+
+    header("Location: supply.php");
     exit();
 }
-?>
 
+// Fetch inventory with thresholds
+$inv_result = $conn->query("
+    SELECT i.id as item_id, i.item_name, i.unit, i.quantity, t.threshold 
+    FROM inventory i
+    LEFT JOIN stock_thresholds t ON i.id = t.item_id
+    ORDER BY t.threshold ASC
+");
+?>
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🌸 BloomLux Request Material 🌸</title>
+    <title>🌸 BloomLux Restock Request 🌸</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
-
     <style>
         :root {
             --bg: #ffb3ecff;
@@ -81,18 +100,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             margin-top: 10px;
         }
 
-        input, select {
+        input,
+        select,
+        textarea {
             width: 94%;
             padding: 12px;
             border: 1px solid #ddd;
             border-radius: 10px;
-            margin-bottom: 18px;
+            margin-bottom: 8px;
             font-size: 15px;
             background-color: #fff;
             transition: 0.3s;
         }
 
-        input:focus, select:focus {
+        input:focus,
+        select:focus,
+        textarea:focus {
             outline: none;
             border-color: var(--primary);
             box-shadow: 0 0 6px rgba(46, 26, 46, 0.3);
@@ -133,6 +156,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             color: #fff;
         }
 
+        .max-note {
+            font-size: 13px;
+            color: #555;
+            margin-bottom: 15px;
+        }
+
         @media (max-width: 500px) {
             .form-box {
                 width: 90%;
@@ -145,32 +174,80 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     </style>
 </head>
+
 <body>
     <div class="form-box">
         <div class="emoji">🌸</div>
-        <h2>Request Ingredient</h2>
-        <form method="POST">
+        <h2>Restock Request</h2>
+        <form method="POST" id="requestForm">
             <label>Material Name</label>
-            <input type="text" name="ingredient_name" placeholder="e.g. Paper" required>
-
-            <label>Quantity</label>
-            <input type="number" name="quantity" min="1" placeholder="e.g. 5" required>
-
-            <label>Unit</label>
-            <select name="unit" required>
-                <option value="">Select Unit</option>
-                <option value="kg">Kilograms (kg)</option>
-                <option value="g">Grams (g)</option>
-                <option value="L">Liters (L)</option>
-                <option value="ml">Milliliters (ml)</option>
-                <option value="pcs">Pieces</option>
+            <select name="ingredient_name" id="ingredient" required>
+                <option value="">Select Material</option>
+                <?php while ($item = $inv_result->fetch_assoc()): ?>
+                    <option value="<?= htmlspecialchars($item['item_name']); ?>"
+                        data-unit="<?= htmlspecialchars($item['unit']); ?>"
+                        data-qty="<?= $item['quantity']; ?>"
+                        data-threshold="<?= $item['threshold']; ?>">
+                        <?= htmlspecialchars($item['item_name']); ?> (Available: <?= $item['quantity']; ?>, Threshold: <?= $item['threshold']; ?>)
+                    </option>
+                <?php endwhile; ?>
             </select>
+
+            <label>Quantity to Request</label>
+            <input type="number" name="quantity" id="quantity" min="1" placeholder="Enter quantity" required>
+            <div class="max-note" id="maxNote">Available: -</div>
+            <div class="warning-note" id="warningNote" style="color:red;font-size:13px;margin-bottom:10px;"></div>
+
+            <label>Notes / Priority</label>
+            <textarea name="notes" id="notes" placeholder="Optional: urgent, special instructions..." rows="3" maxlength="200"></textarea>
+            <div style="font-size:12px;color:#555;">Max 200 characters</div>
+
+
+            <!-- Hidden unit input -->
+            <input type="hidden" name="unit" id="unit">
 
             <button type="submit">Submit Request</button>
         </form>
 
-        <!-- Back to Home Button -->
         <a href="supply.php" class="back-btn">⬅ Back to Supply</a>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const ingredientSelect = document.getElementById('ingredient');
+            const unitInput = document.getElementById('unit');
+            const quantityInput = document.getElementById('quantity');
+            const maxNote = document.getElementById('maxNote');
+            const warningNote = document.getElementById('warningNote');
+
+            let currentThreshold = 0; // Will update based on selected material
+
+            ingredientSelect.addEventListener('change', function() {
+                const selectedOption = this.options[this.selectedIndex];
+                unitInput.value = selectedOption.dataset.unit || '';
+                const availableQty = selectedOption.dataset.qty || '-';
+                currentThreshold = parseInt(selectedOption.dataset.threshold) || 0; // dynamic threshold
+                maxNote.textContent = `Available: ${availableQty}, Threshold: ${currentThreshold}`;
+
+                // Reset warning and border when changing material
+                warningNote.textContent = '';
+                quantityInput.style.borderColor = '#ddd';
+            });
+
+            quantityInput.addEventListener('input', function() {
+                const val = parseInt(this.value);
+                if (val > currentThreshold) {
+                    warningNote.textContent = `⚠️ Admin will review requests exceeding ${currentThreshold} units.`;
+                    quantityInput.style.borderColor = 'red';
+                } else {
+                    warningNote.textContent = '';
+                    quantityInput.style.borderColor = '#ddd';
+                }
+            });
+        });
+    </script>
+
+
 </body>
+
 </html>
