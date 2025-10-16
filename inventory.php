@@ -69,7 +69,7 @@ $username = $user['username'];
 
 
         <div class="card">
-            <h3>🍰 Bakery Inventory List</h3>
+            <h3>🍰 Materials Inventory List</h3>
             <table>
                 <tr>
                     <th>ID</th>
