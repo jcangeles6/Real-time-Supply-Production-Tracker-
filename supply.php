@@ -187,7 +187,6 @@ $count_denied = $conn->query("SELECT COUNT(*) as c FROM requests WHERE status='d
             </div>
         </div>
     </div>
-
     <script>
         const toggleBtn = document.getElementById('toggleApproved');
 
@@ -214,23 +213,33 @@ $count_denied = $conn->query("SELECT COUNT(*) as c FROM requests WHERE status='d
 
         const fetchInventory = async () => {
             try {
-                const res = await fetch('backend/get_inventory.php'); // create this PHP file to return inventory JSON
+                const res = await fetch('backend/get_inventory.php'); // your JSON endpoint
                 const data = await res.json();
 
                 // Clear old rows except header
                 invTableBody.querySelectorAll('tr:not(:first-child)').forEach(r => r.remove());
 
                 data.forEach(item => {
-                    const isAvailable = item.status.toLowerCase() === 'available' && parseInt(item.quantity) > 0;
-                    const tr = document.createElement('tr');
+                    let quantity = parseInt(item.quantity);
+                    let status = item.status.toLowerCase();
 
+                    // Determine display status
+                    let displayStatus = status;
+                    if (status === 'available' && quantity <= 5) displayStatus = 'low';
+
+                    // Requestable if quantity > 0
+                    let isRequestable = quantity > 0;
+
+                    const tr = document.createElement('tr');
                     tr.innerHTML = `
-                <td>${item.item_name}</td>
-                <td>${item.quantity}</td>
-                <td>${item.unit}</td>
-                <td><span class="badge ${item.status.toLowerCase()}">${item.status}</span></td>
-                <td>${isAvailable ? `<a href="request_form.php?ingredient=${encodeURIComponent(item.item_name)}" class="btn">Request</a>` : '<span style="color:#8b4513;">Out of Stock</span>'}</td>
-            `;
+                    <td>${item.item_name}</td>
+                    <td>${item.quantity}</td>
+                    <td>${item.unit}</td>
+                    <td><span class="badge ${displayStatus}">
+                        ${displayStatus.charAt(0).toUpperCase() + displayStatus.slice(1)}
+                    </span></td>
+                    <td>${isRequestable ? `<a href="request_form.php?ingredient=${encodeURIComponent(item.item_name)}" class="btn">Request</a>` : '<span style="color:#8b4513;">Out of Stock</span>'}</td>
+                `;
                     invTableBody.appendChild(tr);
                 });
             } catch (err) {

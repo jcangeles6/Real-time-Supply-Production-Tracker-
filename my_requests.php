@@ -181,7 +181,7 @@ if ($result->num_rows > 0) {
   <!-- Low Stock Modal -->
   <div id="lowStockModal" class="modal">
     <div class="modal-content">
-      <h3>⚠️ Low Stock Alert 🌸</h3>
+      <h3>⚠️Stock Alert 🌸</h3>
       <ul id="lowStockList"></ul>
       <button class="close-btn flash-btn" onclick="closeLowStockModal()">OK</button>
     </div>
