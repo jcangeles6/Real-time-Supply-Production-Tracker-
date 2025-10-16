@@ -89,6 +89,25 @@
             <script src="js/sales-trend.js"></script>
             <script src="js/dashboard.js"></script>
             <script src="js/time.js"></script>
+            <script>
+                async function updateHomeStats() {
+                    try {
+                        const res = await fetch('backend/get_home_stats.php');
+                        const data = await res.json();
+                        if (!data.success) return;
+
+                        document.querySelectorAll('.stat-box')[0].querySelector('h3').textContent = data.materials;
+                        document.querySelectorAll('.stat-box')[1].querySelector('h3').textContent = data.inProduction;
+                        document.querySelectorAll('.stat-box')[2].querySelector('h3').textContent = data.completed;
+                    } catch (err) {
+                        console.error('Failed to fetch home stats:', err);
+                    }
+                }
+
+                // Initial load + auto refresh every 10s
+                updateHomeStats();
+                setInterval(updateHomeStats, 10000);
+            </script>
     </body>
 
     </html>
