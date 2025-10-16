@@ -8,11 +8,12 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 $user_id = $_SESSION['user_id'];
+echo "Logged in user_id: " . $user_id;
 
-// Handle cancel request
+// Handle cancel request (mark as denied)
 if (isset($_POST['cancel_id'])) {
   $cancel_id = intval($_POST['cancel_id']);
-  $stmt = $conn->prepare("UPDATE requests SET status = 'cancelled' WHERE id = ? AND status = 'pending'");
+  $stmt = $conn->prepare("UPDATE requests SET status = 'denied' WHERE id = ? AND status = 'pending'");
   $stmt->bind_param("i", $cancel_id);
   $stmt->execute();
   $stmt->close();
@@ -20,6 +21,16 @@ if (isset($_POST['cancel_id'])) {
   exit();
 }
 
+// Handle approve request
+if (isset($_POST['approve_id'])) {
+  $approve_id = intval($_POST['approve_id']);
+  $stmt = $conn->prepare("UPDATE requests SET status = 'approved' WHERE id = ? AND status = 'pending'");
+  $stmt->bind_param("i", $approve_id);
+  $stmt->execute();
+  $stmt->close();
+  header("Location: my_requests.php");
+  exit();
+}
 
 // Fetch current stock + thresholds
 $stockResult = $conn->query("
@@ -28,185 +39,145 @@ $stockResult = $conn->query("
     LEFT JOIN stock_thresholds st ON i.id = st.item_id
 ") or die($conn->error);
 
-$lowStockItems = [];
-while ($row = $stockResult->fetch_assoc()) {
-  $available = intval($row['quantity']);
-  $threshold = intval($row['threshold']);
-  if ($available <= $threshold) {
-    $lowStockItems[] = [
-      'name' => $row['item_name'],
-      'quantity' => $available,
-      'threshold' => $threshold
-    ];
-  }
-}
-
-
-// Fetch requests
-$sql = "SELECT id, ingredient_name, quantity, status, requested_at FROM requests ORDER BY requested_at DESC";
+// Admin: fetch all requests
+$sql = "SELECT id, user_id, ingredient_name, quantity, notes, unit, status, requested_at 
+        FROM requests 
+        ORDER BY requested_at DESC";
 $stmt = $conn->prepare($sql);
 $stmt->execute();
 $result = $stmt->get_result();
 $stmt->close();
+
+// Prepare summary counts
+$total_requests = $pending = $approved = $denied = 0;
+if ($result->num_rows > 0) {
+  foreach ($result as $r) {
+    $total_requests++;
+    switch (strtolower($r['status'])) {
+      case 'pending':
+        $pending++;
+        break;
+      case 'approved':
+        $approved++;
+        break;
+      case 'denied':
+        $denied++;
+        break;
+    }
+  }
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
   <meta charset="UTF-8">
-  <title>🌸 BloomLux | My Requests</title>
+  <title>🌸 BloomLux | All Requests</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/my_request.css">
+  <link rel="stylesheet" href="css/my_request_form.css">
 </head>
 
 <body>
   <audio id="lowStockSound" src="alert.mp3" preload="auto"></audio>
 
-
-
   <div class="sidebar">
     <h2>🌸 BloomLux Requests 🌸</h2>
     <a href="admin_dashboard.php">🌸 Back to Dashboard 🌸</a>
-    <a href="my_requests.php">📋 My Requests</a>
+    <a href="my_requests.php">📋 All Requests</a>
     <a href="backend/add_stock.php">📦 Add Stock</a>
     <a href="logout.php">🚪 Logout</a>
   </div>
 
   <div class="main">
     <div class="top-bar">
-      <div class="title">📋 My Ingredient Requests</div>
+      <div class="title">📋 Materials Requests</div>
       <div id="live-time">⏰ Loading...</div>
     </div>
 
     <div class="card">
+      <!-- Summary -->
+      <div class="summary">
+        Total Requests: <?= $total_requests ?> | Pending: <?= $pending ?> | Approved: <?= $approved ?> | Denied: <?= $denied ?>
+      </div>
+      <!-- Toggle approved -->
+      <div class="toggle-approved" onclick="toggleApproved()">⬆️ Toggle Approved Requests</div>
+
       <?php if ($result->num_rows > 0): ?>
-        <table>
+        <table id="requestsTable">
           <tr>
+            <th>User ID</th>
             <th>Ingredient</th>
             <th>Quantity</th>
+            <th>Unit</th>
+            <th>Notes</th>
             <th>Status</th>
             <th>Date Requested</th>
             <th>Action</th>
           </tr>
-          <?php while ($row = $result->fetch_assoc()): ?>
-            <?php
+          <?php foreach ($result as $row):
             $status = strtolower($row['status']);
-            $status_label = '';
+
+            // Handle cancel request (mark as denied)
+            if (isset($_POST['cancel_id'])) {
+              $cancel_id = intval($_POST['cancel_id']);
+              $stmt = $conn->prepare("UPDATE requests SET status = 'denied' WHERE id = ? AND status = 'pending'");
+              $stmt->bind_param("i", $cancel_id);
+              $stmt->execute();
+              $stmt->close();
+              header("Location: my_requests.php");
+              exit();
+            }
+
+
             $status_class = '';
+            $status_label = '';
 
             if ($status == 'pending') {
               $status_label = 'Pending';
               $status_class = 'pending';
+            } elseif ($status == 'approved') {
+              $status_label = 'Approved';
+              $status_class = 'approved';
             } elseif ($status == 'cancelled') {
               $status_label = 'Cancelled';
               $status_class = 'cancelled';
-            } elseif ($status == 'approved' || $status == 'completed') {
-              $status_label = 'Done';
-              $status_class = 'done';
+            } elseif ($status == 'denied') {
+              $status_label = 'Denied';
+              $status_class = 'denied';
             } else {
               $status_label = ucfirst($status);
-              $status_class = 'done';
+              $status_class = $status;
             }
-            ?>
-            <tr>
+          ?>
+            <tr class="<?= $status == 'approved' ? 'approved-row' : '' ?>">
+              <td><?= htmlspecialchars($row['user_id']); ?></td>
               <td><?= htmlspecialchars($row['ingredient_name']); ?></td>
               <td><?= htmlspecialchars($row['quantity']); ?></td>
+              <td><?= htmlspecialchars($row['unit']); ?></td>
+              <td><?= htmlspecialchars($row['notes']); ?></td>
               <td><span class="status <?= $status_class; ?>"><?= $status_label; ?></span></td>
               <td><?= htmlspecialchars($row['requested_at']); ?></td>
               <td>
                 <?php if ($status == 'pending'): ?>
-                  <form method="POST" style="margin:0;" onsubmit="return confirmCancel();">
-                    <input type="hidden" name="cancel_id" value="<?= $row['id']; ?>">
-                    <button type="submit" class="btn-cancel">Cancel</button>
-                  </form>
+                  <button class="btn-cancel" data-id="<?= $row['id']; ?>">Cancel</button>
+                  <button class="btn-approve" data-id="<?= $row['id']; ?>">Approve</button>
                 <?php else: ?>
                   -
                 <?php endif; ?>
               </td>
             </tr>
-          <?php endwhile; ?>
+          <?php endforeach; ?>
+
         </table>
       <?php else: ?>
-        <p class="empty">You have not made any requests yet.</p>
+        <p class="empty">No requests have been made yet.</p>
       <?php endif; ?>
     </div>
   </div>
 
-  <script>
-    function updateTime() {
-      const now = new Date();
-      const options = {
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-        weekday: 'short',
-        month: 'short',
-        day: 'numeric'
-      };
-      document.getElementById("live-time").innerHTML = "⏰ " + now.toLocaleString('en-US', options);
-    }
-    setInterval(updateTime, 1000);
-    updateTime();
+  <script src="js/my-request-form.js"></script>
 
-    function confirmCancel() {
-      return confirm("⚠️ Are you sure you want to cancel this request?");
-    }
-
-    function closeLowStockModal() {
-      document.getElementById('lowStockModal').style.display = 'none';
-    }
-
-    async function checkLowStock() {
-      try {
-        const res = await fetch('get_stock.php');
-        const data = await res.json();
-        if (!data.success) return;
-
-        const list = document.getElementById('lowStockList');
-        list.innerHTML = ''; // clear previous
-
-        const lowStockItems = Object.values(data.items || []).filter(item => item.quantity <= item.threshold);
-
-        if (lowStockItems.length > 0) {
-          lowStockItems.forEach(item => {
-            const li = document.createElement('li');
-            li.innerHTML = `
-          <span class="item-name">${item.name}</span>
-          <span class="stock-info">Available: <span class="qty">${item.quantity}</span> / Threshold: <span class="threshold">${item.threshold}</span></span>
-        `;
-            list.appendChild(li);
-          });
-
-          // Show modal
-          const modal = document.getElementById('lowStockModal');
-          modal.style.display = 'block';
-
-          // Crescendo alert sound
-          const sound = document.getElementById('lowStockSound');
-          let playCount = 0;
-          let volume = 0.2; // start soft
-          sound.volume = volume;
-          sound.currentTime = 0;
-
-          const playInterval = setInterval(() => {
-            sound.volume = Math.min(volume, 1); // cap at 1
-            sound.play();
-            volume += 0.2;
-            playCount++;
-            if (playCount >= 3) clearInterval(playInterval);
-          }, 1200);
-        }
-      } catch (err) {
-        console.error('Error fetching stock:', err);
-      }
-    }
-
-
-    // Run check on page load
-    document.addEventListener('DOMContentLoaded', () => {
-      checkLowStock();
-    });
-  </script>
   <!-- Low Stock Modal -->
   <div id="lowStockModal" class="modal">
     <div class="modal-content">
@@ -215,6 +186,8 @@ $stmt->close();
       <button class="close-btn flash-btn" onclick="closeLowStockModal()">OK</button>
     </div>
   </div>
+
+
 </body>
 
 </html>
