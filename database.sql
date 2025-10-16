@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Oct 15, 2025 at 11:19 PM
+-- Generation Time: Oct 16, 2025 at 12:30 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -67,7 +67,8 @@ CREATE TABLE `batches` (
 --
 
 INSERT INTO `batches` (`id`, `product_name`, `quantity`, `status`, `scheduled_at`, `completed_at`, `is_deleted`) VALUES
-(858, 'Ashton Hall', 2, 'completed', '2025-10-15 21:19:10', '2025-10-15 21:19:25', 0);
+(861, '123', 1, 'completed', '2025-10-16 10:22:34', '2025-10-16 10:22:36', 0),
+(862, '123', 2, 'in_progress', '2025-10-16 10:22:45', NULL, 1);
 
 -- --------------------------------------------------------
 
@@ -88,9 +89,12 @@ CREATE TABLE `batch_log` (
 --
 
 INSERT INTO `batch_log` (`id`, `batch_id`, `user_id`, `action`, `timestamp`) VALUES
-(2150, 858, 14, 'Batch Created', '2025-10-16 05:19:10'),
-(2151, 858, 14, 'Batch Started', '2025-10-16 05:19:16'),
-(2152, 858, 14, 'Batch Completed', '2025-10-16 05:19:25');
+(2159, 861, 14, 'Batch Created', '2025-10-16 18:22:34'),
+(2160, 861, 14, 'Batch Started', '2025-10-16 18:22:35'),
+(2161, 861, 14, 'Batch Completed', '2025-10-16 18:22:36'),
+(2162, 862, 14, 'Batch Created', '2025-10-16 18:22:45'),
+(2163, 862, 14, 'Batch Started', '2025-10-16 18:22:48'),
+(2164, 862, 14, 'Batch Deleted', '2025-10-16 18:24:11');
 
 -- --------------------------------------------------------
 
@@ -112,7 +116,7 @@ CREATE TABLE `batch_materials` (
 --
 
 INSERT INTO `batch_materials` (`id`, `batch_id`, `stock_id`, `quantity_used`, `created_at`, `quantity_reserved`) VALUES
-(1124, 858, 171, 1, '2025-10-15 21:19:10', 0);
+(1127, 861, 171, 1, '2025-10-16 10:22:34', 0);
 
 -- --------------------------------------------------------
 
@@ -160,7 +164,13 @@ CREATE TABLE `inventory` (
 --
 
 INSERT INTO `inventory` (`id`, `item_name`, `quantity`, `unit`, `status`, `updated_at`, `created_at`) VALUES
-(171, 'Rose', 4, 'kg', 'available', '2025-10-15 21:19:16', '2025-10-15 21:18:54');
+(171, 'Rose', 5, 'kg', 'available', '2025-10-16 10:22:35', '2025-10-15 21:18:54'),
+(172, 'Sunflower', 6, 'kg', 'available', '2025-10-16 10:24:11', '2025-10-16 06:24:36'),
+(173, 'Ribbon', 6, 'kg', 'available', '2025-10-16 09:55:45', '2025-10-16 06:24:44'),
+(174, 'Tulips', 6, 'kg', 'available', '2025-10-16 09:55:51', '2025-10-16 06:24:48'),
+(175, 'Daisy', 10, 'kg', 'available', '2025-10-16 06:24:52', '2025-10-16 06:24:52'),
+(177, 'Soil', 10, 'kg', 'available', '2025-10-16 06:36:21', '2025-10-16 06:36:21'),
+(178, 'Ribbonn', 6, 'kg', 'available', '2025-10-16 09:55:35', '2025-10-16 07:41:52');
 
 -- --------------------------------------------------------
 
@@ -207,9 +217,9 @@ CREATE TABLE `notifications` (
 --
 
 INSERT INTO `notifications` (`id`, `batch_id`, `type`, `message`, `created_at`) VALUES
-(509, NULL, '', '📦 New product Rose (5 kg) has been added to the inventory!', '2025-10-15 21:18:54'),
-(510, 858, 'in_progress', '🛠️ Ashton Hall - Batch Started', '2025-10-15 21:19:16'),
-(511, 858, 'completed', '✔️ Ashton Hall - Batch Completed', '2025-10-15 21:19:25');
+(534, 861, 'in_progress', '🛠️ 123 - Batch Started', '2025-10-16 10:22:35'),
+(535, 861, 'completed', '✔️ 123 - Batch Completed', '2025-10-16 10:22:36'),
+(536, 862, 'deleted', '🛠️ 123 - Batch Started (Canceled)', '2025-10-16 10:22:48');
 
 -- --------------------------------------------------------
 
@@ -225,28 +235,9 @@ CREATE TABLE `requests` (
   `quantity` int(11) NOT NULL,
   `notes` text DEFAULT NULL,
   `unit` varchar(50) DEFAULT NULL,
-  `status` enum('pending','approved','completed') DEFAULT 'pending',
+  `status` enum('pending','approved','completed','denied') NOT NULL DEFAULT 'pending',
   `requested_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Dumping data for table `requests`
---
-
-INSERT INTO `requests` (`id`, `ingredient_id`, `user_id`, `ingredient_name`, `quantity`, `notes`, `unit`, `status`, `requested_at`) VALUES
-(1, 0, 0, 'flour', 30, NULL, 'kg', '', '2025-09-28 13:49:02'),
-(2, 0, 0, 'flour', 123, NULL, 'kg', '', '2025-09-28 16:51:51'),
-(3, 0, 0, 'yeast', 400, NULL, 'kg', '', '2025-09-28 19:52:10'),
-(4, 0, 0, 'flour', 1, NULL, 'kg', '', '2025-09-28 19:55:49'),
-(5, 0, 0, 'yeast', 14, NULL, 'kg', '', '2025-09-28 19:58:36'),
-(6, 0, 0, 'flour', 15, NULL, 'kg', '', '2025-09-28 20:00:40'),
-(7, 0, 0, 'sugar', 100, NULL, 'kg', '', '2025-09-28 20:01:20'),
-(8, 0, 0, 'sugar', 15, NULL, 'kg', '', '2025-09-28 20:03:59'),
-(9, 0, 0, 'yeast', 51, NULL, 'kg', '', '2025-09-28 20:08:51'),
-(10, 0, 0, 'yeast', 51, NULL, 'kg', '', '2025-09-28 20:11:17'),
-(11, 0, 0, 'sugar', 124, NULL, 'kg', '', '2025-09-28 20:13:35'),
-(12, 0, 0, 'sugar', 54, NULL, 'kg', '', '2025-09-28 20:17:30'),
-(13, 0, 0, 'flour', 15, NULL, 'kg', 'pending', '2025-10-01 17:08:57');
 
 -- --------------------------------------------------------
 
@@ -267,7 +258,13 @@ CREATE TABLE `stock_thresholds` (
 --
 
 INSERT INTO `stock_thresholds` (`id`, `item_id`, `threshold`, `created_at`, `updated_at`) VALUES
-(102, 171, 4, '2025-10-15 21:18:54', '2025-10-15 21:18:54');
+(102, 171, 4, '2025-10-15 21:18:54', '2025-10-15 21:18:54'),
+(103, 172, 5, '2025-10-16 06:24:36', '2025-10-16 06:24:36'),
+(104, 173, 5, '2025-10-16 06:24:44', '2025-10-16 06:24:44'),
+(105, 174, 5, '2025-10-16 06:24:48', '2025-10-16 06:24:48'),
+(106, 175, 5, '2025-10-16 06:24:52', '2025-10-16 06:24:52'),
+(108, 177, 5, '2025-10-16 06:36:21', '2025-10-16 06:36:21'),
+(109, 178, 4, '2025-10-16 07:41:52', '2025-10-16 07:41:52');
 
 -- --------------------------------------------------------
 
@@ -321,27 +318,27 @@ CREATE TABLE `user_notifications` (
 --
 
 INSERT INTO `user_notifications` (`id`, `user_id`, `notification_id`, `is_read`, `read_at`) VALUES
-(4012, 2, 509, 0, NULL),
-(4013, 6, 509, 0, NULL),
-(4014, 14, 509, 1, '2025-10-16 05:18:59'),
-(4015, 5, 509, 0, NULL),
-(4016, 3, 509, 0, NULL),
-(4017, 7, 509, 0, NULL),
-(4018, 15, 509, 0, NULL),
-(4019, 2, 510, 0, NULL),
-(4020, 6, 510, 0, NULL),
-(4021, 14, 510, 1, '2025-10-16 05:19:20'),
-(4022, 5, 510, 0, NULL),
-(4023, 3, 510, 0, NULL),
-(4024, 7, 510, 0, NULL),
-(4025, 15, 510, 0, NULL),
-(4026, 2, 511, 0, NULL),
-(4027, 6, 511, 0, NULL),
-(4028, 14, 511, 1, '2025-10-16 05:19:26'),
-(4029, 5, 511, 0, NULL),
-(4030, 3, 511, 0, NULL),
-(4031, 7, 511, 0, NULL),
-(4032, 15, 511, 0, NULL);
+(4187, 2, 534, 0, NULL),
+(4188, 6, 534, 0, NULL),
+(4189, 14, 534, 0, NULL),
+(4190, 5, 534, 0, NULL),
+(4191, 3, 534, 0, NULL),
+(4192, 7, 534, 0, NULL),
+(4193, 15, 534, 0, NULL),
+(4194, 2, 535, 0, NULL),
+(4195, 6, 535, 0, NULL),
+(4196, 14, 535, 1, '2025-10-16 18:28:23'),
+(4197, 5, 535, 0, NULL),
+(4198, 3, 535, 0, NULL),
+(4199, 7, 535, 0, NULL),
+(4200, 15, 535, 0, NULL),
+(4201, 2, 536, 0, NULL),
+(4202, 6, 536, 0, NULL),
+(4203, 14, 536, 0, NULL),
+(4204, 5, 536, 0, NULL),
+(4205, 3, 536, 0, NULL),
+(4206, 7, 536, 0, NULL),
+(4207, 15, 536, 0, NULL);
 
 --
 -- Indexes for dumped tables
@@ -434,19 +431,19 @@ ALTER TABLE `backup_ingredients`
 -- AUTO_INCREMENT for table `batches`
 --
 ALTER TABLE `batches`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=859;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=863;
 
 --
 -- AUTO_INCREMENT for table `batch_log`
 --
 ALTER TABLE `batch_log`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2153;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2165;
 
 --
 -- AUTO_INCREMENT for table `batch_materials`
 --
 ALTER TABLE `batch_materials`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1125;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1129;
 
 --
 -- AUTO_INCREMENT for table `ingredients`
@@ -458,25 +455,25 @@ ALTER TABLE `ingredients`
 -- AUTO_INCREMENT for table `inventory`
 --
 ALTER TABLE `inventory`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=172;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=179;
 
 --
 -- AUTO_INCREMENT for table `notifications`
 --
 ALTER TABLE `notifications`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=512;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=537;
 
 --
 -- AUTO_INCREMENT for table `requests`
 --
 ALTER TABLE `requests`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=58;
 
 --
 -- AUTO_INCREMENT for table `stock_thresholds`
 --
 ALTER TABLE `stock_thresholds`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=103;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=110;
 
 --
 -- AUTO_INCREMENT for table `users`
@@ -488,7 +485,7 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT for table `user_notifications`
 --
 ALTER TABLE `user_notifications`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4033;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4208;
 
 --
 -- Constraints for dumped tables
