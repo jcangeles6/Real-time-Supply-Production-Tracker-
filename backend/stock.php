@@ -4,10 +4,16 @@ session_start();
 include '../db.php';
 
 // Helper function to get JSON input
-function getJsonInput()
-{
+function getJsonInput() {
     $input = file_get_contents('php://input');
     return json_decode($input, true);
+}
+
+// Ensure user is logged in
+if (!isset($_SESSION['user_id'])) {
+    http_response_code(401);
+    echo json_encode(['error' => 'Unauthorized']);
+    exit();
 }
 
 // GET → fetch stocks
@@ -33,8 +39,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     }
 
     // Pagination params
-    $page = isset($_GET['page']) ? intval($_GET['page']) : 1;
-    $limit = isset($_GET['limit']) ? intval($_GET['limit']) : 10;
+    $page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
+    $limit = isset($_GET['limit']) ? max(1, intval($_GET['limit'])) : 10;
     $offset = ($page - 1) * $limit;
 
     // Filter & search
@@ -52,29 +58,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
 
     if ($search !== '') {
         if ($filter === 'quantity' && is_numeric($search)) {
-            // Quantity “contains” search (e.g., 5 matches 5, 56, 54)
             $searchParam = "%{$search}%";
-            $stmt = $conn->prepare("
-            SELECT * 
-            FROM inventory 
-            WHERE quantity LIKE ? 
-            ORDER BY quantity ASC, id ASC
-            LIMIT ? OFFSET ?
-        ");
+            $stmt = $conn->prepare("SELECT * FROM inventory WHERE quantity LIKE ? ORDER BY quantity ASC, id ASC LIMIT ? OFFSET ?");
             $stmt->bind_param("sii", $searchParam, $limit, $offset);
 
             $countStmt = $conn->prepare("SELECT COUNT(*) as total FROM inventory WHERE quantity LIKE ?");
             $countStmt->bind_param("s", $searchParam);
+
         } else {
-            // String search for item_name or status
             $searchParam = "%{$search}%";
-            $stmt = $conn->prepare("
-            SELECT * 
-            FROM inventory 
-            WHERE $filter LIKE ? 
-            ORDER BY quantity ASC, id ASC
-            LIMIT ? OFFSET ?
-        ");
+            $stmt = $conn->prepare("SELECT * FROM inventory WHERE $filter LIKE ? ORDER BY quantity ASC, id ASC LIMIT ? OFFSET ?");
             $stmt->bind_param("sii", $searchParam, $limit, $offset);
 
             $countStmt = $conn->prepare("SELECT COUNT(*) as total FROM inventory WHERE $filter LIKE ?");
@@ -84,16 +77,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         $countStmt->execute();
         $total = $countStmt->get_result()->fetch_assoc()['total'];
         $countStmt->close();
+
     } else {
-        // No search, just fetch all
         $stmt = $conn->prepare("SELECT * FROM inventory ORDER BY quantity ASC, id ASC LIMIT ? OFFSET ?");
         $stmt->bind_param("ii", $limit, $offset);
 
         $totalResult = $conn->query("SELECT COUNT(*) as total FROM inventory");
         $total = $totalResult->fetch_assoc()['total'];
     }
-
-
 
     $stmt->execute();
     $result = $stmt->get_result();
@@ -110,23 +101,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     ]);
     exit;
 }
+
 // POST → add new stock
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $data = getJsonInput();
 
-    if (empty($data['item_name']) || !isset($data['quantity']) || empty($data['unit']) || empty($data['status'])) {
+    if (empty($data['item_name']) || !isset($data['quantity']) || !isset($data['unit'])) {
         http_response_code(400);
         echo json_encode(['error' => 'Missing required fields']);
-        exit;
+        exit();
     }
 
-    $item_name = $data['item_name'];
+    $item_name = trim($data['item_name']);
     $quantity = intval($data['quantity']);
-    $unit = $data['unit'];
-    $status = $data['status'];
-    $threshold = isset($data['threshold']) ? intval($data['threshold']) : 10;
+    $unit = trim($data['unit']);
+    $status = isset($data['status']) ? trim($data['status']) : 'available';
+    $threshold = isset($data['threshold']) ? max(1, intval($data['threshold'])) : 10;
 
-    // ✅ Check if item already exists
+    if ($quantity < 0) {
+        http_response_code(400);
+        echo json_encode(['error' => 'Quantity must be 0 or greater']);
+        exit();
+    }
+
+    // Check if item already exists
     $check_stmt = $conn->prepare("SELECT id FROM inventory WHERE item_name = ?");
     $check_stmt->bind_param("s", $item_name);
     $check_stmt->execute();
@@ -135,7 +133,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $check_stmt->close();
 
     if ($existing_item) {
-        // Item exists → do NOT update quantity
         echo json_encode([
             'success' => false,
             'message' => "Item '{$item_name}' already exists. Use Update Stock to add quantity."
@@ -143,31 +140,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit();
     }
 
-    // Item does not exist → insert new stock
+    // Insert new stock
     $stmt = $conn->prepare("INSERT INTO inventory (item_name, quantity, unit, status) VALUES (?, ?, ?, ?)");
     $stmt->bind_param("siss", $item_name, $quantity, $unit, $status);
 
     if ($stmt->execute()) {
         $new_item_id = $stmt->insert_id;
 
-        // ✅ Save threshold for new item
-        $thresh_stmt = $conn->prepare("
-        INSERT INTO stock_thresholds (item_id, threshold, created_at, updated_at)
-        VALUES (?, ?, NOW(), NOW())
-    ");
+        // Save threshold
+        $thresh_stmt = $conn->prepare("INSERT INTO stock_thresholds (item_id, threshold, created_at, updated_at) VALUES (?, ?, NOW(), NOW())");
         $thresh_stmt->bind_param("ii", $new_item_id, $threshold);
         $thresh_stmt->execute();
         $thresh_stmt->close();
 
-        // Insert new notification in 'notifications' table
-        $notif_message = "📦 New product {$item_name} ({$quantity} {$unit}) has been added to the inventory!";
+        // Insert notification
+        $notif_message = "📦 New product {$item_name} ({$quantity} {$unit}) has been added!";
         $notif_stmt = $conn->prepare("INSERT INTO notifications (message, created_at) VALUES (?, NOW())");
         $notif_stmt->bind_param("s", $notif_message);
         $notif_stmt->execute();
         $new_notification_id = $notif_stmt->insert_id;
         $notif_stmt->close();
 
-        // Link new notification to all users (just like replenished notifications)
+        // Assign notification to all users
         $user_stmt = $conn->prepare("INSERT INTO user_notifications (user_id, notification_id, is_read) VALUES (?, ?, 0)");
         $users = $conn->query("SELECT id FROM users");
         while ($u = $users->fetch_assoc()) {
@@ -191,7 +185,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
     if (!isset($_GET['id'])) {
         http_response_code(400);
         echo json_encode(['error' => 'Missing stock ID']);
-        exit;
+        exit();
     }
 
     $id = intval($_GET['id']);
