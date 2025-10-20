@@ -149,14 +149,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     ")->fetch_assoc()['total_reserved'] ?? 0;
 
                 $available_stock = $stockData['quantity'] - $reservedSum;
-
-                if ($is_edit) {
-                    // Add back the old quantity for this batch
-                    $available_stock += $old_qty;
-                }
-
-                if ($new_qty > $available_stock) {
-                    throw new Exception("⚠️ Not enough stock for '{$stockData['item_name']}'. Needed: {$new_qty}, Available: {$available_stock}");
+                if (!$is_edit || $old_status !== 'in_progress') {
+                    if ($new_qty > $available_stock) {
+                        throw new Exception("⚠️ Not enough stock for '{$stockData['item_name']}'. Needed: {$new_qty}, Available: {$available_stock}");
+                    }
                 }
 
 
@@ -248,7 +244,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <input type="text" name="product_type" value="<?php echo htmlspecialchars($product_type_prefill); ?>" required>
 
             <label>Product Quantity</label>
-            <input type="text" name="batch_quantity" value="<?php echo htmlspecialchars($quantity_prefill); ?>" placeholder="Enter quantity" required>
+            <input type="number" name="batch_quantity" value="<?php echo htmlspecialchars($quantity_prefill); ?>" placeholder="Enter quantity" min="1" required>
 
             <div id="materialsContainer">
                 <?php if ($materials_prefill): ?>
@@ -265,7 +261,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 <?php endforeach; ?>
                             </select>
                             <label>Quantity</label>
-                            <input type="number" name="materials[<?php echo $index; ?>][quantity]" value="<?php echo htmlspecialchars($mat['quantity_used']); ?>" min="1" required>
+                            <input type="number"
+                                name="materials[<?php echo $index; ?>][quantity]"
+                                value="<?php echo htmlspecialchars($mat['quantity_used']); ?>"
+                                min="1"
+                                max="<?php
+                                        foreach ($inventory_items as $item) {
+                                            if ($item['id'] == $mat['stock_id']) {
+                                                echo max(1, $item['available_quantity'] + $mat['quantity_used']);
+                                            }
+                                        }
+                                        ?>"
+                                required>
                             <button type="button" class="removeMaterialBtn" style="background:#b22222;color:white;border:none;border-radius:40px;padding:1px 10px;margin-top:5px;cursor:pointer;">Remove</button>
                         </div>
                     <?php endforeach; ?>
@@ -282,7 +289,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <?php endforeach; ?>
                         </select>
                         <label>Quantity</label>
-                        <input type="number" name="materials[0][quantity]" min="1" required>
+                        <input type="number" name="materials[0][quantity]" min="1" max="9999" required>
                         <button type="button" class="removeMaterialBtn" style="background:#b22222;color:white;border:none;border-radius:40px;padding:10px 10px;margin-top:5px;cursor:pointer;">Remove</button>
                     </div>
                 <?php endif; ?>
