@@ -14,8 +14,13 @@ if (!isset($_GET['id'])) {
 
 $id = intval($_GET['id']);
 
-// Fetch stock item
-$stmt = $conn->prepare("SELECT * FROM inventory WHERE id = ?");
+// Fetch stock item with threshold
+$stmt = $conn->prepare("
+    SELECT i.*, COALESCE(st.threshold, 10) AS threshold
+    FROM inventory i
+    LEFT JOIN stock_thresholds st ON i.id = st.item_id
+    WHERE i.id = ?
+");
 $stmt->bind_param("i", $id);
 $stmt->execute();
 $result = $stmt->get_result();
@@ -39,9 +44,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $item_name = $data['item_name'];
     $quantity = intval($data['quantity']);
     $unit = $data['unit'];
+    $threshold = intval($data['threshold'] ?? 10);
 
     // Determine status automatically
-    $status = ($quantity === 0) ? 'out' : (($quantity <= 4) ? 'low' : 'available');
+    $status = ($quantity === 0) ? 'out' : (($quantity <= $threshold) ? 'low' : 'available');
 
     $old_quantity = intval($stock['quantity']);
 
@@ -87,7 +93,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $success = true;
 
     // Refresh stock after update
-    $stmt = $conn->prepare("SELECT * FROM inventory WHERE id = ?");
+    $stmt = $conn->prepare("
+        SELECT i.*, COALESCE(st.threshold, 10) AS threshold
+        FROM inventory i
+        LEFT JOIN stock_thresholds st ON i.id = st.item_id
+        WHERE i.id = ?
+    ");
     $stmt->bind_param("i", $id);
     $stmt->execute();
     $result = $stmt->get_result();
@@ -135,6 +146,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <option value="pcs" <?= $stock['unit'] == 'pcs' ? 'selected' : '' ?>>Pieces</option>
             </select>
 
+            <input type="hidden" name="threshold" id="thresholdInput" value="<?= $stock['threshold']; ?>">
             <input type="hidden" name="status" id="statusInput" value="<?= $stock['status']; ?>">
             <div id="statusDisplay" class="status-display"></div>
 
@@ -149,12 +161,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         function updateStatus() {
             const qty = parseInt(quantityInput.value) || 0;
+            const threshold = parseInt(document.getElementById('thresholdInput').value) || 10;
             let status = '';
+
             if (qty === 0) {
                 status = 'out';
                 statusDisplay.textContent = 'Out of Stock';
                 statusDisplay.className = 'status-display status-out';
-            } else if (qty <= 4) {
+            } else if (qty <= threshold) {
                 status = 'low';
                 statusDisplay.textContent = 'Low';
                 statusDisplay.className = 'status-display status-low';
@@ -163,6 +177,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 statusDisplay.textContent = 'Available';
                 statusDisplay.className = 'status-display status-available';
             }
+
             statusInput.value = status;
         }
 

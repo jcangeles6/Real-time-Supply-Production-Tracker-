@@ -50,7 +50,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $batch_quantity = intval($_POST['batch_quantity'] ?? 0);
     $materials = $_POST['materials'] ?? [];
 
-    if ($batch_quantity <= 0) {
+    if (empty($materials)) {
+        $messageType = 'error';
+        $message = "⚠️ You must have at least one material linked to the batch.";
+    } else if ($batch_quantity <= 0) {
         $messageType = 'error';
         $message = "❌ Invalid batch quantity.";
     } else {

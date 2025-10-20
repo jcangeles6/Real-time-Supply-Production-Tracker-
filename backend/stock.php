@@ -4,7 +4,8 @@ session_start();
 include '../db.php';
 
 // Helper function to get JSON input
-function getJsonInput() {
+function getJsonInput()
+{
     $input = file_get_contents('php://input');
     return json_decode($input, true);
 }
@@ -47,51 +48,68 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     $filter = isset($_GET['filter']) ? trim($_GET['filter']) : 'item_name';
     $search = isset($_GET['search']) ? trim($_GET['search']) : '';
 
-    // Allowed filter columns
     $allowedFilters = ['item_name', 'quantity', 'status'];
-    if (!in_array($filter, $allowedFilters)) {
-        $filter = 'item_name';
-    }
+    if (!in_array($filter, $allowedFilters)) $filter = 'item_name';
 
-    $stocks = [];
-    $total = 0;
+    // Build SQL
+    $sql = "SELECT i.*, COALESCE(st.threshold, 10) AS threshold 
+        FROM inventory i 
+        LEFT JOIN stock_thresholds st ON i.id = st.item_id";
+
+    $params = [];
+    $types = '';
 
     if ($search !== '') {
-        if ($filter === 'quantity' && is_numeric($search)) {
-            $searchParam = "%{$search}%";
-            $stmt = $conn->prepare("SELECT * FROM inventory WHERE quantity LIKE ? ORDER BY quantity ASC, id ASC LIMIT ? OFFSET ?");
-            $stmt->bind_param("sii", $searchParam, $limit, $offset);
-
-            $countStmt = $conn->prepare("SELECT COUNT(*) as total FROM inventory WHERE quantity LIKE ?");
-            $countStmt->bind_param("s", $searchParam);
-
-        } else {
-            $searchParam = "%{$search}%";
-            $stmt = $conn->prepare("SELECT * FROM inventory WHERE $filter LIKE ? ORDER BY quantity ASC, id ASC LIMIT ? OFFSET ?");
-            $stmt->bind_param("sii", $searchParam, $limit, $offset);
-
-            $countStmt = $conn->prepare("SELECT COUNT(*) as total FROM inventory WHERE $filter LIKE ?");
-            $countStmt->bind_param("s", $searchParam);
-        }
-
-        $countStmt->execute();
-        $total = $countStmt->get_result()->fetch_assoc()['total'];
-        $countStmt->close();
-
-    } else {
-        $stmt = $conn->prepare("SELECT * FROM inventory ORDER BY quantity ASC, id ASC LIMIT ? OFFSET ?");
-        $stmt->bind_param("ii", $limit, $offset);
-
-        $totalResult = $conn->query("SELECT COUNT(*) as total FROM inventory");
-        $total = $totalResult->fetch_assoc()['total'];
+        $sql .= " WHERE $filter LIKE ?";
+        $params[] = "%$search%";
+        $types .= 's';
     }
+
+    $sql .= " ORDER BY i.quantity ASC, i.id ASC LIMIT ? OFFSET ?";
+    $params[] = $limit;
+    $params[] = $offset;
+    $types .= 'ii';
+
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param($types, ...$params);
 
     $stmt->execute();
     $result = $stmt->get_result();
+
+    $stocks = [];
     while ($row = $result->fetch_assoc()) {
+        if ($row['quantity'] == 0) {
+            $row['status'] = 'out';
+        } elseif ($row['quantity'] <= $row['threshold']) {
+            $row['status'] = 'low';
+        } else {
+            $row['status'] = 'available';
+        }
         $stocks[] = $row;
     }
     $stmt->close();
+
+
+    // Get total count for pagination
+    $countSql = "SELECT COUNT(*) AS total 
+             FROM inventory i 
+             LEFT JOIN stock_thresholds st ON i.id = st.item_id";
+    $countParams = [];
+    $countTypes = '';
+
+    if ($search !== '') {
+        $countSql .= " WHERE $filter LIKE ?";
+        $countParams[] = "%$search%";
+        $countTypes .= 's';
+    }
+
+    $countStmt = $conn->prepare($countSql);
+    if ($countParams) {
+        $countStmt->bind_param($countTypes, ...$countParams);
+    }
+    $countStmt->execute();
+    $total = $countStmt->get_result()->fetch_assoc()['total'];
+    $countStmt->close();
 
     echo json_encode([
         'page' => $page,
@@ -115,14 +133,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $item_name = trim($data['item_name']);
     $quantity = intval($data['quantity']);
     $unit = trim($data['unit']);
-    $status = isset($data['status']) ? trim($data['status']) : 'available';
     $threshold = isset($data['threshold']) ? max(1, intval($data['threshold'])) : 10;
+
+    // Determine status based on threshold
+    $status = ($quantity === 0) ? 'out' : (($quantity <= $threshold) ? 'low' : 'available');
 
     if ($quantity < 0) {
         http_response_code(400);
         echo json_encode(['error' => 'Quantity must be 0 or greater']);
         exit();
     }
+
 
     // Check if item already exists
     $check_stmt = $conn->prepare("SELECT id FROM inventory WHERE item_name = ?");
