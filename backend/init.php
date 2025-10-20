@@ -3,8 +3,8 @@ ini_set('session.cookie_httponly', 1);
 ini_set('session.use_strict_mode', 1);
 // ini_set('session.cookie_secure', 1); // Uncomment if using HTTPS AND FOR DEPLOYING
 
+include __DIR__ . '/../db.php'; // ensures it always points to root db.php
 session_start();
-include 'db.php';
 mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 
 function handle_error($user_message = "Something went wrong. Please try again later.", $error_detail = null) {
