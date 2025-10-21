@@ -128,103 +128,126 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <title>🌸 Update Stock - BloomLux</title>
     <link rel="stylesheet" href="../css/update_stock.css">
 </head>
+
 <body>
-<div class="main">
-    <a href="add_stock.php" class="back-btn">⬅ Back to Inventory</a>
-    <h1>✏️ Update Stock</h1>
+    <div class="main">
+        <a href="add_stock.php" class="back-btn">⬅ Back to Inventory</a>
+        <h1>✏️ Update Stock</h1>
 
-    <div class="form-box">
-        <form method="POST" id="updateForm">
-            <label>Item Name</label>
-            <input type="text" name="item_name" value="<?= htmlspecialchars($stock['item_name']); ?>" required>
+        <div class="form-box">
+            <form method="POST" id="updateForm">
+                <label>Item Name</label>
+                <input type="text" name="item_name" value="<?= htmlspecialchars($stock['item_name']); ?>" required>
 
-            <label>Stored Quantity</label>
-            <input type="number" name="quantity" id="quantityInput" value="" min="0" step="any" placeholder="<?= $stock['quantity']; ?>" required>
+                <label>Stored Quantity</label>
+                <input
+                    type="number"
+                    name="quantity"
+                    id="quantityInput"
+                    value="<?= $real_available ?>"
+                    min="0"
+                    step="any"
+                    required>
 
-            <div class="indicator">
-                📦 <strong>Real Available Quantity:</strong>
-                <span style="color: <?= ($real_available <= $stock['threshold']) ? 'red' : 'green' ?>;">
-                    <?= $real_available ?>
-                </span>
-            </div>
+                <div class="indicator">
+                    📦 <strong>Real Available Quantity:</strong>
+                    <span style="color: <?= ($real_available <= $stock['threshold']) ? 'red' : 'green' ?>;">
+                        <?= $real_available ?>
+                    </span>
+                </div>
 
-            <label>Unit</label>
-            <select name="unit" required>
-                <option value="kg" <?= $stock['unit'] == 'kg' ? 'selected' : '' ?>>Kilograms (kg)</option>
-                <option value="g" <?= $stock['unit'] == 'g' ? 'selected' : '' ?>>Grams (g)</option>
-                <option value="L" <?= $stock['unit'] == 'L' ? 'selected' : '' ?>>Liters (L)</option>
-                <option value="ml" <?= $stock['unit'] == 'ml' ? 'selected' : '' ?>>Milliliters (ml)</option>
-                <option value="pcs" <?= $stock['unit'] == 'pcs' ? 'selected' : '' ?>>Pieces</option>
-            </select>
+                <label>Unit</label>
+                <select name="unit" required>
+                    <option value="kg" <?= $stock['unit'] == 'kg' ? 'selected' : '' ?>>Kilograms (kg)</option>
+                    <option value="g" <?= $stock['unit'] == 'g' ? 'selected' : '' ?>>Grams (g)</option>
+                    <option value="L" <?= $stock['unit'] == 'L' ? 'selected' : '' ?>>Liters (L)</option>
+                    <option value="ml" <?= $stock['unit'] == 'ml' ? 'selected' : '' ?>>Milliliters (ml)</option>
+                    <option value="pcs" <?= $stock['unit'] == 'pcs' ? 'selected' : '' ?>>Pieces</option>
+                </select>
 
-            <input type="hidden" name="threshold" id="thresholdInput" value="<?= $stock['threshold']; ?>">
-            <input type="hidden" name="status" id="statusInput" value="<?= $stock['status']; ?>">
-            <div id="statusDisplay" class="status-display"></div>
+                <input type="hidden" name="threshold" id="thresholdInput" value="<?= $stock['threshold']; ?>">
+                <input type="hidden" name="status" id="statusInput" value="<?= $stock['status']; ?>">
+                <div id="statusDisplay" class="status-display"></div>
 
-            <button type="submit">Update Stock</button>
-        </form>
-    </div>
+                <button type="submit">Update Stock</button>
+            </form>
+        </div>
 
-    <script>
-        const quantityInput = document.getElementById('quantityInput');
-        const statusInput = document.getElementById('statusInput');
-        const statusDisplay = document.getElementById('statusDisplay');
-        const realIndicator = document.querySelector('.indicator span');
-        const thresholdInput = parseInt(document.getElementById('thresholdInput').value) || 10;
+        <script>
+            const quantityInput = document.getElementById('quantityInput');
+            const statusInput = document.getElementById('statusInput');
+            const statusDisplay = document.getElementById('statusDisplay');
+            const realIndicator = document.querySelector('.indicator span');
+            const thresholdInput = parseInt(document.getElementById('thresholdInput').value) || 10;
 
-        function updateStatus() {
-            const qty = parseFloat(quantityInput.value);
-            let status = '';
+            function updateStatus() {
+                const qty = parseFloat(quantityInput.value);
+                let status = '';
 
-            if (isNaN(qty) || qty < 0) {
-                status = '';
-                statusDisplay.textContent = 'Enter a valid number';
-                statusDisplay.className = 'status-display status-out';
-                return;
-            }
-
-            if (qty === 0) {
-                status = 'out';
-                statusDisplay.textContent = 'Out of Stock';
-                statusDisplay.className = 'status-display status-out';
-            } else if (qty <= thresholdInput) {
-                status = 'low';
-                statusDisplay.textContent = 'Low';
-                statusDisplay.className = 'status-display status-low';
-            } else {
-                status = 'available';
-                statusDisplay.textContent = 'Available';
-                statusDisplay.className = 'status-display status-available';
-            }
-
-            statusInput.value = status;
-        }
-
-        quantityInput.addEventListener('input', updateStatus);
-        updateStatus();
-
-        // Auto-refresh real quantity every 5 seconds
-        async function refreshRealQuantity() {
-            try {
-                const res = await fetch(`admin_page/fetch_real_quantity.php?id=<?= $id ?>`);
-                const data = await res.json();
-                if (data.success) {
-                    const realQty = data.available_quantity;
-                    realIndicator.textContent = realQty;
-                    realIndicator.style.color = (realQty <= thresholdInput) ? 'red' : 'green';
+                if (isNaN(qty) || qty < 0) {
+                    status = '';
+                    statusDisplay.textContent = 'Enter a valid number';
+                    statusDisplay.className = 'status-display status-out';
+                    return;
                 }
-            } catch (err) {
-                console.error('Error fetching real quantity:', err);
-            }
-        }
 
-        setInterval(refreshRealQuantity, 5000);
-    </script>
-</div>
+                if (qty === 0) {
+                    status = 'out';
+                    statusDisplay.textContent = 'Out of Stock';
+                    statusDisplay.className = 'status-display status-out';
+                } else if (qty <= thresholdInput) {
+                    status = 'low';
+                    statusDisplay.textContent = 'Low';
+                    statusDisplay.className = 'status-display status-low';
+                } else {
+                    status = 'available';
+                    statusDisplay.textContent = 'Available';
+                    statusDisplay.className = 'status-display status-available';
+                }
+
+                statusInput.value = status;
+            }
+
+            quantityInput.addEventListener('input', updateStatus);
+            updateStatus();
+
+            // Auto-refresh real quantity every 5 seconds
+            async function refreshRealQuantity() {
+                try {
+                    const res = await fetch(`admin_page/fetch_real_quantity.php?id=<?= $id ?>`);
+                    const data = await res.json();
+                    if (data.success) {
+                        const realQty = data.available_quantity;
+
+                        // ✅ Update the "📦 Real Available Quantity" label
+                        realIndicator.textContent = realQty;
+                        realIndicator.style.color = (realQty <= thresholdInput) ? 'red' : 'green';
+
+                        // ✅ Also update the Stored Quantity input live
+                        const currentValue = parseFloat(quantityInput.value);
+                        if (!isNaN(realQty) && realQty !== currentValue) {
+                            quantityInput.value = realQty;
+                            updateStatus(); // auto-update status display
+                        }
+                    }
+                } catch (err) {
+                    console.error('Error fetching real quantity:', err);
+                }
+            }
+
+            // 🔥 Fetch once immediately when form opens
+            refreshRealQuantity();
+
+            // 🔁 Then refresh every 5 seconds
+            setInterval(refreshRealQuantity, 5000);
+        </script>
+    </div>
 </body>
+
 </html>
