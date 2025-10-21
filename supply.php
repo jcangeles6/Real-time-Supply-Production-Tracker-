@@ -1,4 +1,7 @@
 <?php
+
+//SUPPLY PAGE
+
 include 'backend/init.php';
 
 // Get username
@@ -226,7 +229,6 @@ $count_denied = $conn->query("SELECT COUNT(*) as c FROM requests WHERE status='d
 
                 // Determine display status
                 let displayStatus = status;
-                if (status === 'available' && quantity <= 5) displayStatus = 'low';
 
                 // Requestable if quantity > 0
                 let isRequestable = quantity > 0;

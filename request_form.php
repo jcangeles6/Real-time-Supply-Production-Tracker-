@@ -220,16 +220,58 @@ $inv_result = $conn->query("
             const maxNote = document.getElementById('maxNote');
             const warningNote = document.getElementById('warningNote');
 
-            let currentThreshold = 0; // Will update based on selected material
+            let inventoryData = {};
+            let currentThreshold = 0;
+
+            // Fetch real-time inventory
+            const fetchInventory = async () => {
+                try {
+                    const res = await fetch('backend/supply_page/fetch_supply.php');
+                    const data = await res.json();
+                    inventoryData = {};
+
+                    // Preserve the currently selected material
+                    const currentValue = ingredientSelect.value;
+
+                    ingredientSelect.innerHTML = '<option value="">Select Material</option>';
+                    data.forEach(item => {
+                        inventoryData[item.item_name] = item;
+                        const option = document.createElement('option');
+                        option.value = item.item_name;
+                        option.dataset.unit = item.unit;
+                        option.dataset.available = item.available_qty;
+                        option.dataset.total = item.total_qty;
+                        option.dataset.threshold = item.threshold;
+                        option.textContent = `${item.item_name} (Available: ${item.available_qty}, Total: ${item.total_qty}, Threshold: ${item.threshold})`;
+                        ingredientSelect.appendChild(option);
+                    });
+
+                    // Restore previously selected option
+                    if (currentValue && inventoryData[currentValue]) {
+                        ingredientSelect.value = currentValue;
+
+                        // Update the maxNote display as well
+                        const selected = inventoryData[currentValue];
+                        unitInput.value = selected.unit;
+                        currentThreshold = selected.threshold;
+                        maxNote.textContent = `Available: ${selected.available_qty}, Total: ${selected.total_qty}, Threshold: ${currentThreshold}`;
+                    }
+
+                } catch (err) {
+                    console.error('Failed to fetch inventory:', err);
+                }
+            };
+
+            fetchInventory();
 
             ingredientSelect.addEventListener('change', function() {
-                const selectedOption = this.options[this.selectedIndex];
-                unitInput.value = selectedOption.dataset.unit || '';
-                const availableQty = selectedOption.dataset.qty || '-';
-                currentThreshold = parseInt(selectedOption.dataset.threshold) || 0; // dynamic threshold
-                maxNote.textContent = `Available: ${availableQty}, Threshold: ${currentThreshold}`;
+                const selected = inventoryData[this.value];
+                if (!selected) return;
 
-                // Reset warning and border when changing material
+                unitInput.value = selected.unit;
+                currentThreshold = selected.threshold;
+                maxNote.textContent = `Available: ${selected.available_qty}, Total: ${selected.total_qty}, Threshold: ${currentThreshold}`;
+
                 warningNote.textContent = '';
                 quantityInput.style.borderColor = '#ddd';
             });
@@ -244,6 +286,9 @@ $inv_result = $conn->query("
                     quantityInput.style.borderColor = '#ddd';
                 }
             });
+
+            // Optional: refresh inventory every 5s so user sees live stock changes
+            setInterval(fetchInventory, 5000);
         });
     </script>
 

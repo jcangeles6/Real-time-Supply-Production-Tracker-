@@ -1,4 +1,7 @@
 <?php
+
+//ADMIN ADD STOCK PAGE AND FORM
+
 session_start();
 include '../db.php'; // Database connection
 
@@ -324,6 +327,45 @@ if (!isset($_SESSION['user_id'])) {
     quantityInput.addEventListener('input', updateStatus);
     thresholdInput.addEventListener('input', updateStatus);
     updateStatus(); // initial call
+
+    async function refreshInventory() {
+      try {
+        // call your fetch file (the one you pasted)
+        const res = await fetch('inventory_page/fetch_inventory.php');
+        const data = await res.json();
+
+        if (!data.success) return;
+
+        const tbody = document.querySelector('#inventoryTable tbody');
+        tbody.innerHTML = '';
+
+        data.items.forEach(item => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+        <td>${item.id}</td>
+        <td>${item.item_name}</td>
+        <td>${item.available_quantity}</td>
+        <td>${item.unit}</td>
+        <td class="status-${item.status.toLowerCase()}">${item.status}</td>
+        <td>${item.created_at || '—'}</td>
+        <td>${item.updated_at || '—'}</td>
+        <td>
+          <button class="btn" onclick="window.location.href='update_stock.php?id=${item.id}'">Edit</button>
+          <button class="btn btn-delete" onclick="showDeleteModal(${item.id})">Delete</button>
+        </td>
+      `;
+          tbody.appendChild(tr);
+        });
+      } catch (err) {
+        console.error('Error refreshing inventory:', err);
+      }
+    }
+
+    // 🔁 Auto refresh every 5 seconds
+    setInterval(refreshInventory, 5000);
+
+    // Load immediately on page load
+    refreshInventory();
   </script>
 </body>
 
