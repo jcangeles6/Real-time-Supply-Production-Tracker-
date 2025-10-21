@@ -84,42 +84,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $update->execute();
     $update->close();
 
-    // Notify if replenished
+    // ✅ Always notify when quantity increases (no duplicate limiter)
     if ($quantity > $old_quantity) {
-        $notif_msg = "♻️ $item_name stock replenished with " . ($quantity - $old_quantity) . " $unit!";
+        $added = $quantity - $old_quantity;
+        $notif_msg = "♻️ $item_name stock replenished with {$added} {$unit}!";
         $notif_type = "replenished";
 
-        $check_stmt = $conn->prepare("
-            SELECT id FROM notifications
-            WHERE type = ? AND message = ?
-            AND created_at >= (NOW() - INTERVAL 1 MINUTE)
-            LIMIT 1
-        ");
-        $check_stmt->bind_param("ss", $notif_type, $notif_msg);
-        $check_stmt->execute();
-        $check_stmt->store_result();
+        // Insert new notification
+        $stmt = $conn->prepare("
+        INSERT INTO notifications (type, message, created_at)
+        VALUES (?, ?, NOW())
+    ");
+        $stmt->bind_param("ss", $notif_type, $notif_msg);
+        $stmt->execute();
+        $notification_id = $stmt->insert_id;
+        $stmt->close();
 
-        if ($check_stmt->num_rows === 0) {
-            $stmt = $conn->prepare("
-                INSERT INTO notifications (type, message, created_at)
-                VALUES (?, ?, NOW())
-            ");
-            $stmt->bind_param("ss", $notif_type, $notif_msg);
-            $stmt->execute();
-            $notification_id = $stmt->insert_id;
-            $stmt->close();
-
-            $stmt2 = $conn->prepare("
-                INSERT IGNORE INTO user_notifications (user_id, notification_id, is_read)
-                SELECT id, ?, 0 FROM users
-            ");
-            $stmt2->bind_param("i", $notification_id);
-            $stmt2->execute();
-            $stmt2->close();
-        }
-        $check_stmt->close();
+        // Notify all users
+        $stmt2 = $conn->prepare("
+        INSERT IGNORE INTO user_notifications (user_id, notification_id, is_read)
+        SELECT id, ?, 0 FROM users
+    ");
+        $stmt2->bind_param("i", $notification_id);
+        $stmt2->execute();
+        $stmt2->close();
     }
-
+    
     // Redirect back to add_stock page after update
     header("Location: add_stock.php");
     exit();
@@ -229,12 +219,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         realIndicator.textContent = realQty;
                         realIndicator.style.color = (realQty <= thresholdInput) ? 'red' : 'green';
 
-                        // ✅ Also update the Stored Quantity input live
-                        const currentValue = parseFloat(quantityInput.value);
-                        if (!isNaN(realQty) && realQty !== currentValue) {
-                            quantityInput.value = realQty;
-                            updateStatus(); // auto-update status display
+                        // ✅ Update Stored Quantity ONLY if user is not typing
+                        if (!quantityInput.matches(':focus')) {
+                            const currentValue = parseFloat(quantityInput.value);
+                            if (!isNaN(realQty) && realQty !== currentValue) {
+                                quantityInput.value = realQty;
+                                updateStatus(); // auto-update status display
+                            }
                         }
+
                     }
                 } catch (err) {
                     console.error('Error fetching real quantity:', err);

@@ -95,14 +95,16 @@ try {
     $product_name = $batch_info['product_name'];
 
     if ($status === 'in_progress' || $status === 'completed') {
-        $notif_type = $status; // 'in_progress' or 'completed'
-        $notif_message = $status === 'completed'
-            ? "✔️ $product_name - Batch Completed"
-            : "🛠️ $product_name - Batch Started";
+        // Use a single notification type for all batches
+        $notif_type = 'batch'; // one type for started/completed
+        $notif_message = "🛠️ $product_name - Batch Started";
+        if ($status === 'completed') {
+            $notif_message = "✔️ $product_name - Batch Completed";
+        }
 
-        // --- Check if a notification exists for this exact batch and type ---
+        // Check if a notification exists for this batch
         $stmt = $conn->prepare("
-        SELECT id FROM notifications 
+        SELECT id, message FROM notifications 
         WHERE batch_id = ? AND type = ? 
         LIMIT 1
     ");
@@ -112,9 +114,16 @@ try {
         $stmt->close();
 
         if ($existing) {
+            // Update the existing notification message if status changed
+            if ($status === 'completed' && $existing['message'] !== $notif_message) {
+                $stmt = $conn->prepare("UPDATE notifications SET message = ?, created_at = NOW() WHERE id = ?");
+                $stmt->bind_param("si", $notif_message, $existing['id']);
+                $stmt->execute();
+                $stmt->close();
+            }
             $notification_id = $existing['id'];
         } else {
-            // Insert new notification linked to this batch
+            // Insert new notification if none exists yet
             $stmt = $conn->prepare("
             INSERT INTO notifications (batch_id, type, message, created_at) 
             VALUES (?, ?, ?, NOW())
@@ -125,7 +134,7 @@ try {
             $stmt->close();
         }
 
-        // --- Assign to all users without duplicates ---
+        // Assign to all users without duplicates
         $stmt = $conn->prepare("
         INSERT IGNORE INTO user_notifications (user_id, notification_id, is_read)
         SELECT id, ?, 0 FROM users
@@ -134,6 +143,7 @@ try {
         $stmt->execute();
         $stmt->close();
     }
+
 
 
 
