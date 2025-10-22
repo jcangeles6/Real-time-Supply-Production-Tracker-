@@ -227,22 +227,23 @@ if (!$batches) die("SQL Error: " . $conn->error);
                                 echo "<br>";
                             }
                         } else {
-                            echo "<span style='color:red;'>No materials linked</span>";
+                            // Show 'None' in gray only for completed batches
+                            echo $row['status'] === 'completed'
+                                ? "<span style='color:gray;'>None</span>"
+                                : "<span style='color:red;'>No materials linked</span>";
                         }
                         ?>
                     </td>
+
                     <td>
                         <?php
                         if (!empty($materials)) {
                             foreach ($materials as $m) {
                                 if ($row['status'] === 'scheduled') {
-                                    // Scheduled → Reserved
                                     echo "<span style='font-family:Poppins,sans-serif;'>{$m['name']}: Reserved (<b style='color:orange'>{$m['needed']}</b>)</span><br>";
                                 } elseif ($row['status'] === 'in_progress') {
-                                    // In Progress → Used
                                     echo "<span style='font-family:Poppins,sans-serif;'>{$m['name']}: Used (<b style='color:green'>{$m['needed']}</b>)</span><br>";
                                 } else {
-                                    // Completed
                                     echo "<span style='font-family:Poppins,sans-serif;'>—</span>";
                                 }
                             }
@@ -316,4 +317,5 @@ if (!$batches) die("SQL Error: " . $conn->error);
     </script>
 <?php unset($_SESSION['batch_error']);
 endif; ?>
+
 </html>
