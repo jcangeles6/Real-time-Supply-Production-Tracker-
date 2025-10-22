@@ -55,7 +55,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const todayHeader = document.createElement('li');
         todayHeader.classList.add('notif-header');
         todayHeader.innerHTML = `<span>TODAY</span><button class="view-all-btn">View All</button>`;
-        todayHeader.querySelector('button').addEventListener('click', () => window.location.href = 'notification.html');
+        todayHeader.querySelector('button').addEventListener('click', () => window.location.href = 'notification.php');
         notifFeed.appendChild(todayHeader);
 
         latestNotifs.forEach(n => {
