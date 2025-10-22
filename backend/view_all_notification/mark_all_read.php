@@ -1,4 +1,7 @@
 <?php
+
+//PARA SA NOTIFICATION PAGE
+
 session_start();
 error_reporting(E_ALL & ~E_NOTICE & ~E_WARNING); // Ignore notices/warnings
 ini_set('display_errors', 0); // Ensure no HTML error output

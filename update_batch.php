@@ -1,4 +1,7 @@
 <?php
+
+//NOTIFICATION PARA SA BATCHES PRODUCTION (STARTED, COMPLETED)
+
 include 'backend/init.php';
 session_start();
 $user_id = $_SESSION['user_id'] ?? null;
@@ -90,59 +93,50 @@ try {
         }
     }
 
-    // --- Notifications for batch start/completion ---
-    $batch_info = $conn->query("SELECT product_name FROM batches WHERE id=$id")->fetch_assoc();
-    $product_name = $batch_info['product_name'];
+   // --- Notifications for batch start/completion ---
+$batch_info = $conn->query("SELECT product_name FROM batches WHERE id=$id")->fetch_assoc();
+$product_name = $batch_info['product_name'];
 
-    if ($status === 'in_progress' || $status === 'completed') {
-        // Use a single notification type for all batches
-        $notif_type = 'batch'; // one type for started/completed
-        $notif_message = "🛠️ $product_name - Batch Started";
-        if ($status === 'completed') {
-            $notif_message = "✔️ $product_name - Batch Completed";
-        }
+if ($status === 'in_progress' || $status === 'completed') {
+    $notif_type = 'batch';
+    $notif_message = $status === 'in_progress'
+        ? "🛠️ $product_name - Batch Started"
+        : "✔️ $product_name - Batch Completed";
 
-        // Check if a notification exists for this batch
-        $stmt = $conn->prepare("
-        SELECT id, message FROM notifications 
-        WHERE batch_id = ? AND type = ? 
-        LIMIT 1
-    ");
-        $stmt->bind_param("is", $id, $notif_type);
+    // Check if a notification exists for this batch
+    $stmt = $conn->prepare("SELECT id FROM notifications WHERE batch_id = ? AND type = ? LIMIT 1");
+    $stmt->bind_param("is", $id, $notif_type);
+    $stmt->execute();
+    $existing = $stmt->get_result()->fetch_assoc();
+    $stmt->close();
+
+    if ($existing) {
+        // Update the notification message and timestamp
+        $stmt = $conn->prepare("UPDATE notifications SET message = ?, created_at = NOW() WHERE id = ?");
+        $stmt->bind_param("si", $notif_message, $existing['id']);
         $stmt->execute();
-        $existing = $stmt->get_result()->fetch_assoc();
         $stmt->close();
 
-        if ($existing) {
-            // Update the existing notification message if status changed
-            if ($status === 'completed' && $existing['message'] !== $notif_message) {
-                $stmt = $conn->prepare("UPDATE notifications SET message = ?, created_at = NOW() WHERE id = ?");
-                $stmt->bind_param("si", $notif_message, $existing['id']);
-                $stmt->execute();
-                $stmt->close();
-            }
-            $notification_id = $existing['id'];
-        } else {
-            // Insert new notification if none exists yet
-            $stmt = $conn->prepare("
-            INSERT INTO notifications (batch_id, type, message, created_at) 
-            VALUES (?, ?, ?, NOW())
-        ");
-            $stmt->bind_param("iss", $id, $notif_type, $notif_message);
-            $stmt->execute();
-            $notification_id = $stmt->insert_id;
-            $stmt->close();
-        }
-
-        // Assign to all users without duplicates
-        $stmt = $conn->prepare("
-        INSERT IGNORE INTO user_notifications (user_id, notification_id, is_read)
-        SELECT id, ?, 0 FROM users
-    ");
-        $stmt->bind_param("i", $notification_id);
+        $notification_id = $existing['id'];
+    } else {
+        // Insert new notification if none exists
+        $stmt = $conn->prepare("INSERT INTO notifications (batch_id, type, message, created_at) VALUES (?, ?, ?, NOW())");
+        $stmt->bind_param("iss", $id, $notif_type, $notif_message);
         $stmt->execute();
+        $notification_id = $stmt->insert_id;
         $stmt->close();
     }
+
+    // Reset user_notifications to unread for all users
+    $stmt = $conn->prepare("
+        INSERT INTO user_notifications (user_id, notification_id, is_read)
+        SELECT id, ?, 0 FROM users
+        ON DUPLICATE KEY UPDATE is_read = 0
+    ");
+    $stmt->bind_param("i", $notification_id);
+    $stmt->execute();
+    $stmt->close();
+}
 
 
 

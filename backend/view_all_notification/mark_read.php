@@ -1,4 +1,7 @@
 <?php
+
+//PARA SA NOTIFICATION PAGE
+
 header('Content-Type: application/json');
 include __DIR__ . '/../init.php';
 
