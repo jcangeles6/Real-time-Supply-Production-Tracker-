@@ -1,207 +1,344 @@
-        /* ---------------- VARIABLES SUPPLY CSS ------ */
-        
-        :root {
-            --bg: #ffb3ecff;          /* main background */
-            --card: #f5f0fa;        /* soft lavender card background */
-            --primary: #2e1a2eff;     /* lavender accent */
-            --text: #000000ff;        /* main text color */
-            --highlight: #000000ff;   /* darker lavender for buttons/status */
-            --shadow: 0 3px 10px rgba(0,0,0,0.08);
-        }
+/* ---------------- VARIABLES ---------------- */
+:root {
+    --bg-blur: rgba(255, 255, 255, 0.1);
+    --primary: #2e1a2eff;
+    --secondary: #b870d1;
+    --accent: #f3a7d7;
+    --text: #fff;
+    --card-bg: rgba(255, 255, 255, 0.15);
+    --shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+}
 
-        body {
-            font-family: 'Poppins', sans-serif;
-            margin: 0;
-            background: var(--bg);
-            display: flex;
-            color: var(--text);
-        }
+/* ---------------- GLOBAL ---------------- */
+body {
+    font-family: 'Poppins', sans-serif;
+    color: var(--text);
+    margin: 0;
+    padding: 0;
+    display: flex;
+    background: rgba(0, 0, 0, 0.6);
+    overflow-x: hidden;
+    min-height: 100vh;
+}
 
-        /* Sidebar */
-        .sidebar {
-            width: 240px;
-            background: var(--primary);
-            color: #ffffff;
-            height: 100vh;
-            position: fixed;
-            display: flex;
-            flex-direction: column;
-            padding: 40px 20px;
-            box-shadow: var(--shadow);
-        }
+/* Background with floral image + tint layers */
+body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background: url('https://thumbs.dreamstime.com/b/beautiful-colorful-meadow-wild-flowers-floral-background-landscape-purple-pink-sunset-blurred-soft-pastel-magical-332027305.jpg') no-repeat center/cover;
+    z-index: -2;
+}
+body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background: linear-gradient(120deg, rgba(214, 122, 177, 0.4), rgba(184, 112, 209, 0.4));
+    backdrop-filter: blur(15px);
+    z-index: -1;
+}
 
-        .sidebar h2 {
-            text-align: center;
-            font-weight: 700;
-            font-size: 30px;
-            margin-bottom: 40px;
-        }
+/* ---------------- SIDEBAR ---------------- */
+/* 🌸 Sidebar Container */
+.sidebar {
+    width: 240px;
+    background: linear-gradient(180deg, #b86bff, #ffb3ec);
+    color: #fff;
+    height: 100vh;
+    position: fixed;
+    display: flex;
+    flex-direction: column;
+    padding: 40px 20px;
+    box-shadow: var(--shadow);
+    border-top-right-radius: 25px;
+    border-bottom-right-radius: 25px;
+    overflow: hidden;
+    animation: sidebarSlideIn 0.7s ease-out forwards;
+}
 
-        .sidebar a {
-            display: block;
-            color: #ffffff;
-            padding: 20px 18px;
-            margin: 8px 0;
-            text-decoration: none;
-            border-radius: 50px;
-            transition: 0.3s;
-        }
+/* 🌷 Title Animation */
+.sidebar h2 {
+    text-align: center;
+    font-weight: 700;
+    font-size: 30px;
+    margin-bottom: 40px;
+    letter-spacing: 1px;
+    opacity: 0;
+    animation: fadeIn 1s 0.3s forwards;
+}
 
-        .sidebar a:hover {
-            background: var(--bg);
-            transform: translateX(3px);
-        }
+/* 🌼 Links */
+.sidebar a {
+    display: block;
+    color: #fff;
+    padding: 15px 18px;
+    margin: 8px 0;
+    text-decoration: none;
+    border-radius: 50px;
+    transition: all 0.4s ease;
+    position: relative;
+    opacity: 0;
+    transform: translateX(-15px);
+    animation: slideInLink 0.6s ease forwards;
+}
 
-        /* Main Section */
-        .main {
-            margin-left: 260px;
-            flex-grow: 1;
-            padding: 25px 35px;
-        }
+/* Each link animates slightly later */
+.sidebar a:nth-child(2) { animation-delay: 0.3s; }
+.sidebar a:nth-child(3) { animation-delay: 0.4s; }
+.sidebar a:nth-child(4) { animation-delay: 0.5s; }
+.sidebar a:nth-child(5) { animation-delay: 0.6s; }
+.sidebar a:nth-child(6) { animation-delay: 0.7s; }
 
-        /* Top bar */
-        .top-bar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 30px;
-        }
+/* 🌸 Hover Glow */
+.sidebar a:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: translateX(6px);
+    box-shadow: 0 0 12px rgba(255, 255, 255, 0.4);
+}
 
-        .welcome {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: var(--primary);
-        }
+/* 🌺 Animated Gradient Effect */
+@keyframes gradientShift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
 
-        .top-right {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
+.sidebar {
+    background: linear-gradient(135deg, #ffb3ecff, #2e1a2eff, #ffb3ecff);
+    background-size: 300% 300%;
+    animation: gradientShift 8s ease infinite, sidebarSlideIn 0.7s ease-out;
+}
 
-        .search-bar input {
-            padding: 10px 14px;
-            border: 1px solid #ddd;
-            border-radius: 20px;
-            width: 200px;
-            transition: 0.3s;
-            background: #fff;
-            color: var(--text);
-        }
+/* 🌼 Animations */
+@keyframes sidebarSlideIn {
+    from {
+        transform: translateX(-100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
 
-        .search-bar input:focus {
-            border-color: var(--primary);
-            outline: none;
-        }
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
 
-        .notif {
-            font-size: 20px;
-            cursor: pointer;
-        }
+@keyframes slideInLink {
+    from {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
 
-        #live-time {
-            font-weight: 500;
-            color: var(--highlight);
-        }
+/* 🌸 Optional Sidebar Glow Border */
+.sidebar::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: 5px;
+    height: 100%;
+    background: linear-gradient(180deg,#2e1a2eff, #ffb3ecff, #2e1a2eff);
+    animation: glowBorder 2.5s ease-in-out infinite alternate;
+    border-radius: 5px;
+}
 
-        /* Card styles */
-        .card {
-            background: var(--card);
-            padding: 20px;
-            border-radius: 16px;
-            box-shadow: var(--shadow);
-            margin-bottom: 25px;
-        }
+@keyframes glowBorder {
+    0% { opacity: 0.6; box-shadow: 0 0 6px #ffb3ec; }
+    100% { opacity: 1; box-shadow: 0 0 16px #b86bff; }
+}
 
-        .card h3 {
-            color: var(--highlight);
-            margin-bottom: 15px;
-            font-weight: 600;
-        }
+/* ---------------- MAIN CONTENT ---------------- */
+.main {
+    margin-left: 270px;
+    padding: 40px;
+    flex: 1;
+    animation: fadeIn 1s ease forwards;
+}
 
-        /* Table */
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            background: var(--bg);
-            border-radius: 10px;
-            overflow: hidden;
-            box-shadow: var(--shadow);
-            color: var(--text);
-        }
+/* Top Bar */
+.top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    background: #2e1a2eff;
+    padding: 15px 25px;
+    border-radius: 20px;
+    box-shadow: var(--shadow);
+    animation: slideDown 1.2s ease;
+}
 
-        th, td {
-            padding: 12px 15px;
-            border-bottom: 1px solid #eee;
-            text-align: center;
-        }
+.top-right {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
 
-        th {
-            background: var(--primary);
-            color: #fff;
-            font-weight: 600;
-        }
+.welcome {
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: var(--accent);
+}
 
-        tr:hover {
-            background: #f3eafa;
-        }
+.search-bar input {
+    padding: 8px 15px;
+    border-radius: 20px;
+    border: none;
+    outline: none;
+    font-family: 'Poppins', sans-serif;
+    background: rgba(255, 255, 255, 0.2);
+    color: var(--text);
+}
 
-        .btn {
-            display: inline-block;
-            background: var(--primary);
-            color: white;
-            padding: 8px 14px;
-            border-radius: 10px;
-            text-decoration: none;
-            font-weight: 500;
-            transition: 0.3s;
-        }
+.search-bar input::placeholder {
+    color: rgba(255, 255, 255, 0.8);
+}
 
-        .btn:hover {
-            background: var(--highlight);
-        }
+/* ---------------- CARDS / CONTAINERS ---------------- */
+.card {
+    background: linear-gradient(135deg, #2e1a2eff, #ffb3ecff, #2e1a2eff);
+    border-radius: 25px;
+    padding: 25px;
+    box-shadow: var(--shadow);
+    backdrop-filter: blur(18px);
+    margin-bottom: 35px;
+    animation: bgFlow 10s ease infinite;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
 
-        .badge {
-            padding: 5px 10px;
-            border-radius: 8px;
-            font-weight: bold;
-        }
+.card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.25);
+}
 
-        .pending { background: #f4e2ff; color: #6e54a3; }
-        .approved { background: #d9f0ff; color: #0a5c91; }
-        .cancelled { background: #f8d7da; color: #721c24; }
+.card h3 {
+    color: var(--accent);
+    margin-bottom: 15px;
+}
 
-        /* Pagination */
-        .pagination {
-            display: flex;
-            justify-content: center;
-            margin-top: 15px;
-            gap: 8px;
-        }
+/* ---------------- TABLES ---------------- */
+.table-container, .request-table {
+    width: 100%;
+    overflow-x: auto;
+}
 
-        .pagination a {
-            background: var(--bg);
-            border: 1px solid #ccc;
-            padding: 8px 14px;
-            border-radius: 6px;
-            text-decoration: none;
-            color: var(--primary);
-            transition: 0.3s;
-        }
+table {
+    width: 100%;
+    border-collapse: collapse;
+    color: var(--text);
+}
 
-        .pagination a:hover {
-            background: var(--highlight);
-            color: white;
-        }
+th, td {
+    padding: 12px 15px;
+    text-align: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
 
-        .pagination .active {
-            background: var(--primary);
-            color: white;
-            font-weight: bold;
-        }
+th {
+    background: rgba(255, 255, 255, 0.15);
+    font-weight: 600;
+}
+
+tr:hover {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+/* ---------------- BADGES ---------------- */
+.badge {
+    padding: 5px 12px;
+    border-radius: 12px;
+    color: #fff;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.badge.available {
+    background: #6fe49c;
+}
+
+.badge.low {
+    background: #ffc46b;
+}
+
+.badge.denied {
+    background: #e36b6b;
+}
+
+.badge.approved {
+    background: #9e82f0;
+}
+
+.badge.pending {
+    background: #f8d46b;
+}
+
+/* ---------------- BUTTONS ---------------- */
+.btn {
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    border: none;
+    padding: 8px 18px;
+    color: #fff;
+    border-radius: 15px;
+    text-decoration: none;
+    transition: 0.3s;
+}
+
+.btn:hover {
+    background: linear-gradient(135deg, var(--accent), var(--secondary));
+    transform: scale(1.05);
+}
+
+@keyframes bgFlow {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+/* ---------------- PAGINATION ---------------- */
+.pagination a {
+    margin: 0 6px;
+    text-decoration: none;
+    color: var(--accent);
+    font-weight: 500;
+    transition: 0.3s;
+}
+
+.pagination a.active {
+    font-weight: 700;
+    text-decoration: underline;
+}
+
+.pagination a:hover {
+    color: var(--secondary);
+}
+
+/* ---------------- ANIMATIONS ---------------- */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeUp {
+    from { opacity: 0; transform: translateY(40px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideDown {
+    from { opacity: 0; transform: translateY(-30px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
 /* ---------------- Notifications ---------------- */
 .notif {
-    font-size: 20px;
+    font-size: 30px;
     cursor: pointer;
     position: relative;
 }

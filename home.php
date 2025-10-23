@@ -31,16 +31,22 @@
         </div>
         <!-- Main -->
         <div class="main">
-            <div class="top-bar">
-                <div class="welcome">👋 Welcome, <?php echo htmlspecialchars($username); ?>!</div>
-                <div class="top-right">
-                    <div id="live-time">⏰ Loading time...</div>
-                    <div class="search-bar"><input type="text" placeholder="Search..."></div>
-                </div>
-            </div>
+            <h1>🌸 BloomLux Dashboard 🌸</h1>
+            <div id="clock"></div>
 
-            <div class="dashboard">
-                <div>
+            <div class="dashboard-container">
+                <!-- 🌷 Notifications Container -->
+                <div class="section-container notif-section">
+                    <h2 class="section-title">🔔 Notifications</h2>
+                    <div class="card notif-card">
+                        <div class="notif-scroll">
+                            <ul id="notifications-list"></ul>
+                        </div>
+                    </div>
+                </div>
+                <!-- 🌸 Stats Container -->
+                <div class="section-container stats-section">
+                    <h2 class="section-title">📦 Overview</h2>
                     <div class="stats">
                         <div class="stat-box">
                             <h3>520</h3>
@@ -55,34 +61,38 @@
                             <p>Completed Orders</p>
                         </div>
                     </div>
-                    <div class="card" style="width: 450px; height: 350px;">
-                        <h3>🏆 Top-Selling Products</h3>
-                        <canvas id="topSellingChart"></canvas>
-                    </div>
+                </div>
 
-
-                    <div>
-                        <div class="card" style="width: 600px; height: 250px;">
-                            <h3>🔔 Notifications</h3>
-                            <div class="notif-scroll">
-                                <ul id="notifications-list"></ul>
-                            </div>
+                <!-- 🌼 Cards Container (Charts and Data) -->
+                <div class="section-container cards-section">
+                    <h2 class="section-title">📊 Dashboard Insights</h2>
+                    <div class="cards-grid">
+                        <div class="card large-card">
+                            <h3>🏆 Top-Selling Products</h3>
+                            <canvas id="topSellingChart"></canvas>
                         </div>
 
-                        <div class="card" style="width: 600px; height: 350px;">
-                            <h3>📊 Sales Trend</h3>
+                        <div class="card medium-card">
+                            <h3>📈 Sales Trend</h3>
                             <canvas id="salesTrendChart"></canvas>
-                        </div>
-
-                        <div id="production-schedule-container">
-                            <div id="production-schedule-header">
-                                <h3>🗓 Production Schedule</h3>
-                                <button id="viewProductionBtn">Check Here</button>
-                            </div>
-                            <ul id="production-schedule-list"></ul>
                         </div>
                     </div>
                 </div>
+
+                
+
+                <!-- 🌹 Production Schedule Container -->
+                <div class="section-container schedule-section">
+                    <h2 class="section-title">🗓 Production Schedule</h2>
+                    <div class="card schedule-card">
+                        <div id="production-schedule-header">
+                            <h3>Ongoing Batches</h3>
+                            <button id="viewProductionBtn">Check Here</button>
+                        </div>
+                        <ul id="production-schedule-list"></ul>
+                    </div>
+                </div>
+
             </div>
             <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
             <script src="js/inventory-overview.js"></script>
@@ -107,6 +117,14 @@
                 // Initial load + auto refresh every 10s
                 updateHomeStats();
                 setInterval(updateHomeStats, 10000);
+
+                function updateClock() {
+                const now = new Date();
+                document.getElementById('clock').innerText =
+                    "📅 " + now.toLocaleDateString() + " | ⏰ " + now.toLocaleTimeString();
+                }
+                setInterval(updateClock, 1000);
+                window.onload = updateClock;
             </script>
     </body>
 

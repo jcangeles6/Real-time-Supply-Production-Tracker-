@@ -82,7 +82,6 @@ $count_denied = $conn->query("SELECT COUNT(*) as c FROM requests WHERE status='d
             <div class="top-right">
                 <div id="live-time">⏰ Loading...</div>
                 <div class="search-bar">
-                    <input type="text" placeholder="Search items...">
                 </div>
                 <div class="notif" id="notif-icon">
                     🔔

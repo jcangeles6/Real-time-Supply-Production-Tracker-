@@ -40,22 +40,8 @@ $username = $user['username'];
 
 <!-- Main -->
 <div class="main">
-    <div class="top-bar">
-        <div class="welcome">📊 Inventory Overview</div>
-        <div class="top-right">
-            <div id="live-time">⏰ Loading...</div>
-            <div class="search-bar">
-                <input type="text" placeholder="Search items..." id="searchInput">
-            </div>
-            <div class="notif" id="notif-icon">
-                🔔
-                <span id="notif-badge" style="background:red;color:white;font-size:0.75rem;border-radius:50%;padding:2px 6px;position:absolute;top:-5px;right:-5px;display:none;">0</span>
-            </div>
-            <div id="notif-dropdown">
-                <ul id="notif-feed"></ul>
-            </div>
-        </div>
-    </div>
+    <h1>🌸 BloomLux Inventory Dashboard 🌸</h1>
+    <div id="clock"></div>
 
     <div class="card">
         <h3>🍰 Materials Inventory List</h3>
@@ -125,6 +111,13 @@ async function fetchInventory() {
         console.error('Error fetching inventory:', err);
     }
 }
+function updateClock() {
+    const now = new Date();
+    document.getElementById('clock').innerText =
+        "📅 " + now.toLocaleDateString() + " | ⏰ " + now.toLocaleTimeString();
+}
+setInterval(updateClock, 1000);
+window.onload = updateClock;
 
 // Fetch immediately and then every 5 seconds
 fetchInventory();
