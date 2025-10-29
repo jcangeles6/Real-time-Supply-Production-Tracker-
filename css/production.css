@@ -12,14 +12,36 @@
             --shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
         }
 
+        /* ---------------- GLOBAL ---------------- */
         body {
-            font-family: 'Poppins', sans-serif;
-            background: var(--bg);
-            margin: 0;
-            display: flex;
+            font-family: Arial, sans-serif;
             color: var(--text);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            background: rgba(0, 0, 0, 0.6);
+            overflow-x: hidden;
+            min-height: 100vh;
         }
 
+        /* Background with floral image + tint layers */
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            background: url('https://thumbs.dreamstime.com/b/beautiful-colorful-meadow-wild-flowers-floral-background-landscape-purple-pink-sunset-blurred-soft-pastel-magical-332027305.jpg') no-repeat center/cover;
+            z-index: -2;
+        }
+        body::after {
+            content: "";
+            position: fixed;
+            inset: 0;
+            background: linear-gradient(120deg, rgba(214, 122, 177, 0.4), rgba(184, 112, 209, 0.4));
+            backdrop-filter: blur(15px);
+            z-index: -1;
+        }
+
+        /* ---------------- SIDEBAR ---------------- */
         /* 🌸 Sidebar Container */
         .sidebar {
             width: 240px;
@@ -40,6 +62,7 @@
         /* 🌷 Title Animation */
         .sidebar h2 {
             text-align: center;
+            font-family: Arial, sans-serif;
             font-weight: 700;
             font-size: 30px;
             margin-bottom: 40px;
@@ -126,7 +149,7 @@
             top: 0;
             width: 5px;
             height: 100%;
-            background: linear-gradient(180deg,#ff0000, #00ff2a, #1900ff);
+            background: linear-gradient(180deg,#2e1a2eff, #ffb3ecff, #2e1a2eff);
             animation: glowBorder 2.5s ease-in-out infinite alternate;
             border-radius: 5px;
         }
@@ -138,10 +161,10 @@
 
         /* Main content */
         .main {
-            margin-left: 260px;
+            margin-left: 270px;
+            padding: 40px;
             flex: 1;
-            padding: 60px;
-            background: var(--bg);
+            animation: fadeIn 1s ease forwards;
         }
 
         h1 {
@@ -163,7 +186,6 @@
             flex-wrap: wrap;
             gap: 20px;
             justify-content: center;
-            margin-bottom: 40px;
         }
 
         .card {
@@ -171,8 +193,8 @@
             border-radius: 16px;
             box-shadow: var(--shadow);
             text-align: center;
-            padding: 22px;
-            width: 230px;
+            padding: 25px;
+            width: 300px;
             transition: 0.3s ease;
             position: relative;
         }
@@ -209,12 +231,12 @@
         }
 
         .card.loading {
-            background: #ede5f5;
+            background: linear-gradient(160deg,#2e1a2eff, #ffb3ecff, #ffb3ecff, #2e1a2eff);
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
         }
 
         .spinner {
-            width: 230px;
+            width: 300px;
             height: 20px;
             border-radius: 22.4px;
             color: #2e1a2eff;
@@ -266,7 +288,7 @@
         table {
             width: 100%;
             border-collapse: collapse;
-            background: var(--card);
+            background:#ffb3ecff;
             border-radius: 12px;
             overflow: hidden;
             box-shadow: var(--shadow);
@@ -281,8 +303,8 @@
         }
 
         th {
-            background: var(--primary);
-            color: #c386afff;
+            background: var(--highlight);
+            color: rgb(255, 255, 255);
             font-weight: 500;
         }
 
@@ -291,8 +313,8 @@
         }
 
         .status-scheduled {
-            color: gray;
-            font-weight: 500;
+            color: rgb(0, 26, 255);
+            font-weight: 600;
         }
 
         .status-in_progress {
@@ -335,6 +357,132 @@
             margin-top: 4px;
         }
 
+        /* 🌸 BloomLux Production Dashboard Containers */
+        .container-cards {
+            background: #2e1a2eff;
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+            padding: 25px;
+            margin-bottom: 30px;
+            animation: fadeIn 0.8s ease-in-out;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .container-table {
+            background: #2e1a2eff;
+            backdrop-filter: blur(18px);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+            animation: fadeIn 0.8s ease-in-out;
+            border: 1px solid rgba(255, 255, 255, 0.25);
+        }
+
+        /* 🌸 Dashboard Cards Layout */
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+        }
+
+        .card {
+            background: linear-gradient(160deg,#2e1a2eff, #ffb3ecff, #ffb3ecff, #2e1a2eff);
+            border-radius: 18px;
+            font-weight: 700;
+            font-family: Arial, sans-serif;
+            font-size: 16px;
+            padding: 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            background: linear-gradient(255deg, #ffb3ecff, #2e1a2eff);
+        }
+
+        /* 🌸 Buttons */
+        .btn {
+            display: inline-block;
+            padding: 8px 16px;
+            background: linear-gradient(90deg, #f9a8d4, #d8b4fe);
+            border: none;
+            color: #2e1a2eff;
+            border-radius: 10px;
+            cursor: pointer;
+            text-decoration: none;
+            font-family: Arial, sans-serif;
+            font-weight: 700;
+            transition: 0.3s ease;
+        }
+
+        .btn:hover {
+            background: linear-gradient(90deg, #f472b6, #c084fc);
+        }
+
+        /* 🌸 Controls & Search */
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .controls input,
+        .controls select {
+            background: #ffb3ecff;
+            border: none;
+            border-radius: 10px;
+            padding: 8px 12px;
+            color: #000000;
+            outline: none;
+            font-family: Arial, sans-serif;
+        }
+
+        .controls input::placeholder {
+            color: #000000;
+        }
+
+        /* 🌸 Table Styling */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-family: Arial, sans-serif;
+            color: #000000;
+            font-weight: 500;
+            background: #ffb3ecff;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        th, td {
+            padding: 12px 14px;
+            text-align: left;
+        }
+
+        th {
+            background: linear-gradient(50deg, #ffb3ecff, #2e1a2eff);
+            color: #000000;
+            font-weight: 600;
+        }
+
+        tr:nth-child(even) {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        tr:hover {
+            background: rgba(255, 255, 255, 0.25);
+        }
+
+        /* 🌸 Animation */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+
         /* Tooltip container */
         .tooltip {
             position: relative;
@@ -343,36 +491,27 @@
 
         /* Tooltip icon */
         .tooltip i {
-            color: #ff69b4;
-            /* hot pink flower-themed icon */
+            color: #ffffff;
             cursor: pointer;
             transition: color 0.3s;
+            font-size: 16px;
         }
 
         /* Tooltip text (bubble) */
         .tooltip .tooltip-text {
-            visibility: hidden;
-            width: max-content;
-            max-width: 220px;
+            position: fixed; /* important for full-page positioning */
             background-color: #ffd1dc;
-            /* soft pink flower background */
             color: #5a2e5c;
-            /* deep lavender text */
-            text-align: left;
             border-radius: 8px;
             padding: 6px 10px;
-            position: fixed;
-            /* <-- change from absolute to fixed */
-            top: 0;
-            /* we will offset with JS */
-            left: 0;
-            /* we will offset with JS */
-            z-index: 1000;
-            opacity: 0;
-            transition: opacity 0.3s;
-            white-space: normal;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
             font-size: 13px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            opacity: 0;
+            visibility: hidden;
+            z-index: 9999;
+            transition: opacity 0.2s ease;
+            pointer-events: none;
+            white-space: normal;
         }
 
         /* Arrow pointing down to icon */
@@ -400,3 +539,5 @@
             color: #d147a3;
             /* darker pink */
         }
+        
+        

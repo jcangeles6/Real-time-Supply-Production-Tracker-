@@ -7,16 +7,23 @@ $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
 $start = ($page - 1) * $limit;
 
 // Fetch total rows
-$total_result = $conn->query("SELECT COUNT(*) AS total FROM inventory");
-$total_row = $total_result->fetch_assoc();
+// Fetch total rows
+$stmt_total = $conn->prepare("SELECT COUNT(*) AS total FROM inventory");
+$stmt_total->execute();
+$total_row = $stmt_total->get_result()->fetch_assoc();
+$stmt_total->close();
 $total_items = $total_row['total'];
 $total_pages = ceil($total_items / $limit);
 
-// Get username
+// Get username safely
 $user_id = $_SESSION['user_id'];
-$user_query = $conn->query("SELECT username FROM users WHERE id = $user_id");
-$user = $user_query->fetch_assoc();
-$username = $user['username'];
+$stmt_user = $conn->prepare("SELECT username FROM users WHERE id = ?");
+$stmt_user->bind_param("i", $user_id);
+$stmt_user->execute();
+$user = $stmt_user->get_result()->fetch_assoc();
+$stmt_user->close();
+$username = $user['username'] ?? 'User';
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -49,6 +56,7 @@ $username = $user['username'];
             <thead>
                 <tr>
                     <th>ID</th>
+                    <th>Image</th>
                     <th>Item Name</th>
                     <th>Available Quantity</th>
                     <th>Unit</th>
@@ -81,6 +89,8 @@ $username = $user['username'];
 const currentPage = <?= $page; ?>;
 const limit = <?= $limit; ?>;
 
+let fetchTimeout = null; // debounce timer
+
 async function fetchInventory() {
     try {
         const response = await fetch(`backend/inventory_page/fetch_inventory.php`);
@@ -99,6 +109,10 @@ async function fetchInventory() {
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td>${row.id}</td>
+                <td class="product-image-cell">
+                    <div class="product-image product-${row.item_name.toLowerCase().replace(/\s+/g, '-')}">
+                    </div>
+                </td> 
                 <td>${row.item_name}</td>
                 <td>${row.available_quantity}</td>
                 <td>${row.unit}</td>
@@ -119,18 +133,31 @@ function updateClock() {
 setInterval(updateClock, 1000);
 window.onload = updateClock;
 
-// Fetch immediately and then every 5 seconds
+// Fetch immediately
 fetchInventory();
-setInterval(fetchInventory, 5000);
 
-// Optional: live search
+// Optional: slower periodic refresh (15s instead of 5s) so it doesn't interrupt typing
+setInterval(() => {
+    const searchValue = document.getElementById('searchInput').value.trim();
+    if (searchValue === '') fetchInventory();
+}, 15000);
+
+// Live search (frontend filter) with debounce
 document.getElementById('searchInput').addEventListener('input', function() {
     const filter = this.value.toLowerCase();
-    document.querySelectorAll('#inventoryBody tr').forEach(tr => {
-        const name = tr.children[1].textContent.toLowerCase();
-        tr.style.display = name.includes(filter) ? '' : 'none';
-    });
+
+    // Clear any scheduled fetchInventory call
+    if (fetchTimeout) clearTimeout(fetchTimeout);
+
+    // Debounce: only apply filter 300ms after user stops typing
+    fetchTimeout = setTimeout(() => {
+        document.querySelectorAll('#inventoryBody tr').forEach(tr => {
+            const name = tr.children[1].textContent.toLowerCase();
+            tr.style.display = name.includes(filter) ? '' : 'none';
+        });
+    }, 300);
 });
+
 </script>
 
 </body>

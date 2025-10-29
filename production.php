@@ -133,7 +133,7 @@ if (!$batches) die("SQL Error: " . $conn->error);
                         <br>
                         <span class="tooltip">
                             <i class="fa fa-info-circle"></i>
-                            <span class="tooltip-text">Name of the product being produced</span>
+                            <span class="tooltip-text">Name of the product</span>
                         </span>
                     </th>
                     <th>
@@ -273,8 +273,8 @@ if (!$batches) die("SQL Error: " . $conn->error);
                                 <span style="color:gray;">✔ Done</span>
                             <?php endif; ?>
                             <?php if ($row['status'] !== 'completed'): ?>
-                                <a href="#" onclick="showDeleteModal(<?= $row['id'] ?>)" class="btn" style="background:#b22222;">🗑</a>
-                                <a href="add_batch.php?batch_id=<?= $row['id'] ?>" class="btn" style="background:#228b22;">📄</a>
+                                <a href="#" onclick="showDeleteModal(<?= $row['id'] ?>)" class="btn" style="background:#b22222;">🗑️</a>
+                                <a href="add_batch.php?batch_id=<?= $row['id'] ?>" class="btn" style="background:#228b22;">📝</a>
                             <?php endif; ?>
                         </td>
                     </tr>
@@ -301,8 +301,6 @@ if (!$batches) die("SQL Error: " . $conn->error);
 
             icon.addEventListener('mouseenter', () => {
                 const rect = icon.getBoundingClientRect();
-                bubble.style.top = (rect.top - bubble.offsetHeight - 6) + 'px'; // 6px gap
-                bubble.style.left = (rect.left + rect.width / 2 - bubble.offsetWidth / 2) + 'px';
             });
         });
     </script>

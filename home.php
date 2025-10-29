@@ -29,41 +29,45 @@
             <a href="inventory.php">📊 Inventory</a>
             <a href="logout.php">🚪 Logout</a>
         </div>
+        
         <!-- Main -->
         <div class="main">
-            <h1>🌸 BloomLux Dashboard 🌸</h1>
-            <div id="clock"></div>
+            <!-- 🌸 Top Stats Bar -->
+            <div class="top-stats-bar">
+                <div class="stat-box">
+                    <h3>520</h3>
+                    <p>Materials in Stock</p>
+                </div>
+                <div class="stat-box">
+                    <h3>150</h3>
+                    <p>In Production</p>
+                </div>
+                <div class="stat-box">
+                    <h3>95</h3>
+                    <p>Completed Orders</p>
+                </div>
+            </div>
 
-            <div class="dashboard-container">
-                <!-- 🌷 Notifications Container -->
+            <div class="dashboard-body">
+                <!-- Left: Notifications & Production -->
                 <div class="section-container notif-section">
                     <h2 class="section-title">🔔 Notifications</h2>
-                    <div class="card notif-card">
+                    <div class="card large-card">
                         <div class="notif-scroll">
                             <ul id="notifications-list"></ul>
                         </div>
                     </div>
-                </div>
-                <!-- 🌸 Stats Container -->
-                <div class="section-container stats-section">
-                    <h2 class="section-title">📦 Overview</h2>
-                    <div class="stats">
-                        <div class="stat-box">
-                            <h3>520</h3>
-                            <p>Materials in Stock</p>
+
+                    <div class="card medium-card">
+                        <div id="production-schedule-header">
+                            <h3>Ongoing Batches</h3>
+                            <button id="viewProductionBtn">Check Here</button>
                         </div>
-                        <div class="stat-box">
-                            <h3>150</h3>
-                            <p>In Production</p>
-                        </div>
-                        <div class="stat-box">
-                            <h3>95</h3>
-                            <p>Completed Orders</p>
-                        </div>
+                        <ul id="production-schedule-list"></ul>
                     </div>
                 </div>
 
-                <!-- 🌼 Cards Container (Charts and Data) -->
+                <!-- Right: Insights -->
                 <div class="section-container cards-section">
                     <h2 class="section-title">📊 Dashboard Insights</h2>
                     <div class="cards-grid">
@@ -78,21 +82,6 @@
                         </div>
                     </div>
                 </div>
-
-                
-
-                <!-- 🌹 Production Schedule Container -->
-                <div class="section-container schedule-section">
-                    <h2 class="section-title">🗓 Production Schedule</h2>
-                    <div class="card schedule-card">
-                        <div id="production-schedule-header">
-                            <h3>Ongoing Batches</h3>
-                            <button id="viewProductionBtn">Check Here</button>
-                        </div>
-                        <ul id="production-schedule-list"></ul>
-                    </div>
-                </div>
-
             </div>
             <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
             <script src="js/inventory-overview.js"></script>

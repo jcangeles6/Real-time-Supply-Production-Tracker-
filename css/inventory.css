@@ -11,7 +11,7 @@
 
         /* ---------------- GLOBAL ---------------- */
         body {
-            font-family: 'Poppins', sans-serif;
+            font-family: Arial, sans-serif;
             color: var(--text);
             margin: 0;
             padding: 0;
@@ -189,14 +189,14 @@
             font-weight: bold;
             text-align: center;
             font-size: 25px;
-            font-family: 'Arial';
+            font-family: Arial, sans-serif;
         }
 
         /* Table */
         table {
             width: 100%;
             border-collapse: collapse;
-            font-family: "Poppins", sans-serif;
+            font-family: Arial, sans-serif;
             color: #000000;
             background: #ffb3ecff;
             border-radius: 12px;
@@ -206,6 +206,89 @@
         th, td {
             padding: 12px 14px;
             text-align: left;
+        }
+
+        .product-image-cell {
+            width: 90px;
+            padding: 8px !important;
+        }
+
+        .product-image {
+            width: 70px;
+            height: 70px;
+            border-radius: 8px;
+            border: 2px solid #2e1a2eff;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+            transition: transform 0.2s, box-shadow 0.2s;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .product-image:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 12px rgba(46, 26, 46, 0.4);
+        }
+
+        .product-initial {
+            font-size: 28px;
+            font-weight: bold;
+            color: #ffffff;
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
+            z-index: 1;
+        }
+
+        /* Product image backgrounds - Add your image URLs here */
+        .product-rose {
+            background-image: url('https://t4.ftcdn.net/jpg/01/01/76/11/360_F_101761144_JLrGeY2fRdHLhdfY06OC0Kb4rZ9UGraP.jpg');
+        }
+
+        .product-sunflower {
+            background-image: url('https://cdn.florista.ph/uploads/product/floristaph/Sunny_Bouquet_18_4990.webp');
+        }
+
+        .product-ribbon {
+            background-image: url('https://www.ribbonsforyou.com/media/magefan_blog/50mm_double_satin_col_250_x_10_reels2.jpg');
+        }
+
+        .product-tulips {
+            background-image: url('https://www.redflowersngifts.com/cdn/shop/products/Tulips_Bouquet_4.jpg?v=1733479557');
+        }
+
+        .product-daisy {
+            background-image: url('https://www.flowerchimp.com.ph/cdn/shop/files/BQ2_1_1946x.jpg?v=1694674133');
+        }
+
+        .product-soil {
+            background-image: url('https://kellogggarden.com/wp-content/uploads/2019/01/all-natural-garden-soil-organic-plus.png');
+        }
+
+        .product-star-gazer {
+            background-image: url('https://flowersmanila.com/cdn/shop/products/251549241_436533354730761_1454118908522281689_n.jpg?v=1659295971');
+        }
+
+        .product-malaysian-flower {
+            background-image: url('https://manilablossomsonline-2060d.kxcdn.com/upload/product/1617771803_9-mix-pg.webp');
+        }
+
+        .product-gerbera {
+            background-image: url('https://www.fnp.com/images/pr/l/v20240913124852/mixed-gerbera-blossoms_1.jpg');
+        }
+
+        .product-carnation {
+            background-image: url('https://flowersmanila.com/cdn/shop/products/251549241_436533354730761_1454118908522281689_n.jpg?v=1659295971');
+        }
+
+        .product-paper {
+            background-image: url('https://www.gosupps.com/media/catalog/product/cache/25/image/1500x/040ec09b1e35df139433887a97daa66f/6/1/61mZLco5UtL._AC_SL1500_.jpg');
+        }
+
+        .product-radus {
+            background-image: url('https://www.flowerchimp.com.ph/cdn/shop/products/ScentedDreams3_1946x.jpg?v=1647332799');
         }
 
         th {
