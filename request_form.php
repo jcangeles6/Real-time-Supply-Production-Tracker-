@@ -42,174 +42,134 @@ $inv_result = $conn->query("
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>🌸 BloomLux Restock Request 🌸</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/home.css">
     <style>
-        :root {
-            --bg: #ffb3ecff;
-            --card: #f5f0fa;
-            --primary: #2e1a2eff;
-            --text: #000000ff;
-            --highlight: #000000ff;
-            --shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
-        }
-
-        body {
-            font-family: 'Poppins', sans-serif;
-            background: var(--bg);
+        /* Page-specific refinements to align with Home theme */
+        .request-container {
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
-            margin: 0;
-            color: var(--text);
-        }
-
-        .form-box {
-            background: var(--card);
-            padding: 40px 35px;
-            border-radius: 20px;
-            box-shadow: var(--shadow);
             width: 100%;
-            max-width: 400px;
-            text-align: center;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            min-height: calc(100vh - 120px);
+            box-sizing: border-box;
         }
-
-        .form-box:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 25px rgba(46, 26, 46, 0.15);
+        .request-card {
+            max-width: 520px;
+            width: 100%;
+            margin: 0 auto;
         }
-
-        .emoji {
-            font-size: 40px;
-            margin-bottom: 10px;
-        }
-
-        h2 {
+        .request-card h2 {
             color: var(--primary);
-            font-size: 26px;
-            font-weight: 700;
-            margin-bottom: 20px;
+            margin-bottom: 12px;
+            text-align: center;
         }
-
-        label {
+        .form-field-label {
             display: block;
-            text-align: left;
             font-weight: 600;
             color: var(--primary);
-            margin-bottom: 6px;
-            margin-top: 10px;
+            margin: 8px 0 6px;
         }
-
-        input,
-        select,
-        textarea {
-            width: 94%;
+        .form-field-input,
+        .form-field-select,
+        .form-field-textarea {
+            width: 100%;
             padding: 12px;
             border: 1px solid #ddd;
             border-radius: 10px;
-            margin-bottom: 8px;
+            background: #fff;
             font-size: 15px;
-            background-color: #fff;
-            transition: 0.3s;
+            transition: 0.2s;
+            box-sizing: border-box;
         }
-
-        input:focus,
-        select:focus,
-        textarea:focus {
+        .form-field-input:focus,
+        .form-field-select:focus,
+        .form-field-textarea:focus {
             outline: none;
             border-color: var(--primary);
-            box-shadow: 0 0 6px rgba(46, 26, 46, 0.3);
+            box-shadow: 0 0 6px rgba(46, 26, 46, 0.25);
         }
-
-        button {
+        .submit-btn {
             width: 100%;
             padding: 12px;
-            background-color: var(--primary);
-            color: white;
-            font-weight: 600;
-            border: none;
-            border-radius: 10px;
-            font-size: 16px;
-            cursor: pointer;
-            transition: background 0.3s ease, transform 0.2s ease;
-        }
-
-        button:hover {
-            background-color: var(--highlight);
-            transform: scale(1.03);
-        }
-
-        .back-btn {
-            display: inline-block;
-            margin-top: 15px;
-            padding: 10px 15px;
-            background-color: #e7d4f9;
-            color: var(--primary);
-            text-decoration: none;
-            font-weight: 600;
-            border-radius: 10px;
-            transition: 0.3s;
-        }
-
-        .back-btn:hover {
-            background-color: var(--primary);
+            background: linear-gradient(135deg, #ffb3ec, #2e1a2eff);
             color: #fff;
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s ease;
+            margin-top: 8px;
         }
-
-        .max-note {
-            font-size: 13px;
-            color: #555;
-            margin-bottom: 15px;
+        .submit-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(46, 26, 46, 0.25);
         }
-
-        @media (max-width: 500px) {
-            .form-box {
-                width: 90%;
-                padding: 30px;
-            }
-
-            h2 {
-                font-size: 22px;
-            }
+        .back-link {
+            display: inline-block;
+            margin-top: 12px;
+            color: #fff;
+            background: linear-gradient(135deg, #ff9eb3, #ff4d4d);
+            text-decoration: none;
+            padding: 8px 14px;
+            border-radius: 10px;
+            font-weight: 600;
         }
+        .notes-hint {
+            font-size: 12px;
+            color: #333;
+            margin-top: 4px;
+        }
+        .max-note { font-size: 13px; color: #555; margin-bottom: 10px; }
     </style>
 </head>
 
 <body>
-    <div class="form-box">
-        <div class="emoji">🌸</div>
-        <h2>Restock Request</h2>
-        <form method="POST" id="requestForm">
-            <label>Material Name</label>
-            <select name="ingredient_name" id="ingredient" required>
-                <option value="">Select Material</option>
-                <?php while ($item = $inv_result->fetch_assoc()): ?>
-                    <option value="<?= htmlspecialchars($item['item_name']); ?>"
-                        data-unit="<?= htmlspecialchars($item['unit']); ?>"
-                        data-qty="<?= $item['quantity']; ?>"
-                        data-threshold="<?= $item['threshold']; ?>">
-                        <?= htmlspecialchars($item['item_name']); ?> (Available: <?= $item['quantity']; ?>, Threshold: <?= $item['threshold']; ?>)
-                    </option>
-                <?php endwhile; ?>
-            </select>
+    <!-- Sidebar (same as Home) -->
+    <div class="sidebar">
+        <h2>🌸 BloomLux Dashboard 🌸</h2>
+        <a href="home.php">🏠 Home</a>
+        <a href="supply.php">📦 Supply</a>
+        <a href="production.php">🧁 Production</a>
+        <a href="inventory.php">📊 Inventory</a>
+        <a href="logout.php">🚪 Logout</a>
+    </div>
 
-            <label>Quantity to Request</label>
-            <input type="number" name="quantity" id="quantity" min="1" placeholder="Enter quantity" required>
-            <div class="max-note" id="maxNote">Available: -</div>
-            <div class="warning-note" id="warningNote" style="color:red;font-size:13px;margin-bottom:10px;"></div>
+    <!-- Main -->
+    <div class="main">
+        <div class="section-container request-container">
+            <div class="card request-card">
+                <h2>Restock Request</h2>
+                <form method="POST" id="requestForm">
+                    <label class="form-field-label">Material Name</label>
+                    <select class="form-field-select" name="ingredient_name" id="ingredient" required>
+                        <option value="">Select Material</option>
+                        <?php while ($item = $inv_result->fetch_assoc()): ?>
+                            <option value="<?= htmlspecialchars($item['item_name']); ?>"
+                                data-unit="<?= htmlspecialchars($item['unit']); ?>"
+                                data-qty="<?= $item['quantity']; ?>"
+                                data-threshold="<?= $item['threshold']; ?>">
+                                <?= htmlspecialchars($item['item_name']); ?> (Available: <?= $item['quantity']; ?>, Threshold: <?= $item['threshold']; ?>)
+                            </option>
+                        <?php endwhile; ?>
+                    </select>
 
-            <label>Notes / Priority</label>
-            <textarea name="notes" id="notes" placeholder="Optional: urgent, special instructions..." rows="3" maxlength="100"></textarea>
-            <div style="font-size:12px;color:#555;">Max 100 characters</div>
+                    <label class="form-field-label">Quantity to Request</label>
+                    <input class="form-field-input" type="number" name="quantity" id="quantity" min="1" placeholder="Enter quantity" required>
+                    <div class="max-note" id="maxNote">Available: -</div>
+                    <div class="warning-note" id="warningNote" style="color:red;font-size:13px;margin-bottom:10px;"></div>
 
+                    <label class="form-field-label">Notes / Priority</label>
+                    <textarea class="form-field-textarea" name="notes" id="notes" placeholder="Optional: urgent, special instructions..." rows="3" maxlength="100"></textarea>
+                    <div class="notes-hint">Max 100 characters</div>
 
-            <!-- Hidden unit input -->
-            <input type="hidden" name="unit" id="unit">
+                    <!-- Hidden unit input -->
+                    <input type="hidden" name="unit" id="unit">
 
-            <button type="submit">Submit Request</button>
-        </form>
-
-        <a href="supply.php" class="back-btn">⬅ Back to Supply</a>
+                    <button class="submit-btn" type="submit">Submit Request</button>
+                </form>
+                <a href="supply.php" class="back-link">⬅ Back to Supply</a>
+            </div>
+        </div>
     </div>
 
     <script>

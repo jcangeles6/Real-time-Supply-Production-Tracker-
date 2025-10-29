@@ -68,7 +68,7 @@ $count_denied = $conn->query("SELECT COUNT(*) as c FROM requests WHERE status='d
     <!-- Sidebar -->
     <div class="sidebar">
         <h2>🌸 BloomLux Supply 🌸</h2>
-        <a href="home.php">🌸 Back to Dashboard 🌸</a>
+        <a href="home.php">🔙 Back to Dashboard</a>
         <a href="supply.php">📦 Supply</a>
         <a href="production.php">🧁 Production</a>
         <a href="inventory.php">📊 Inventory</a>
@@ -240,7 +240,7 @@ $count_denied = $conn->query("SELECT COUNT(*) as c FROM requests WHERE status='d
                     <td><span class="badge ${displayStatus}">
                         ${displayStatus.charAt(0).toUpperCase() + displayStatus.slice(1)}
                     </span></td>
-                    <td>${isRequestable ? `<a href="request_form.php?ingredient=${encodeURIComponent(item.item_name)}" class="btn">Request</a>` : '<span style="color:#8b4513;">Out of Stock</span>'}</td>
+                    <td>${isRequestable ? `<a href="request_form.php?ingredient=${encodeURIComponent(item.item_name)}" class="btn">Request</a>` : '<span style="color:#FF0000;">Out of Stock</span>'}</td>
                 `;
                 invTableBody.appendChild(tr);
             });

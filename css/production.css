@@ -62,7 +62,6 @@
         /* 🌷 Title Animation */
         .sidebar h2 {
             text-align: center;
-            font-family: Arial, sans-serif;
             font-weight: 700;
             font-size: 30px;
             margin-bottom: 40px;
@@ -110,7 +109,60 @@
         .sidebar {
             background: linear-gradient(135deg, #ffb3ecff, #2e1a2eff, #ffb3ecff);
             background-size: 300% 300%;
-            animation: gradientShift 8s ease infinite, sidebarSlideIn 0.7s ease-out;
+            animation: gradientShift 8s ease infinite, sidebarSlideIn 0.7s ease-out, breatheGlow 3.2s ease-in-out infinite;
+            transform-origin: left center;
+            transition: transform 0.25s ease;
+        }
+
+        .sidebar:hover {
+            transform: scale(1.02);
+        }
+
+        @keyframes breatheGlow {
+            0%, 100% { box-shadow: 0 0 12px rgba(255, 255, 255, 0.15); }
+            50% { box-shadow: 0 0 22px rgba(255, 255, 255, 0.35); }
+        }
+
+        /* Optional shimmer accent line */
+        .sidebar::before {
+            content: "";
+            position: absolute;
+            top: 0; left: 0;
+            width: 6px; height: 100%;
+            background: linear-gradient(180deg, rgba(255,255,255,0.6), transparent, rgba(255,255,255,0.6));
+            filter: blur(2px);
+            opacity: 0.35;
+            animation: shimmerMove 2.8s linear infinite;
+        }
+
+        @keyframes shimmerMove {
+            0% { transform: translateY(-20%); }
+            100% { transform: translateY(20%); }
+        }
+
+        /* Sidebar logo and link icon support */
+        .sidebar .sidebar-logo {
+            width: 120px;
+            height: auto;
+            border-radius: 12px;
+            box-shadow: 0 6px 16px rgba(0,0,0,0.25);
+            margin: 0 auto 18px;
+            display: block;
+        }
+
+        .sidebar a {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .sidebar a::before {
+            content: "";
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            background-size: cover;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
         }
 
         /* 🌼 Animations */
@@ -159,24 +211,30 @@
             100% { opacity: 1; box-shadow: 0 0 16px #b86bff; }
         }
 
+
         /* Main content */
         .main {
             margin-left: 270px;
             padding: 40px;
             flex: 1;
             animation: fadeIn 1s ease forwards;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            box-sizing: border-box;
         }
 
         h1 {
-            color: var(--primary);
+            color: #fff;
             text-align: center;
             font-weight: 700;
             margin-bottom: 5px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
         }
 
         #clock {
             text-align: center;
-            color: var(--highlight);
+            color: #fff;
             font-weight: 500;
             margin-bottom: 30px;
         }
@@ -231,30 +289,32 @@
         }
 
         .card.loading {
-            background: linear-gradient(160deg,#2e1a2eff, #ffb3ecff, #ffb3ecff, #2e1a2eff);
+            background: rgba(255, 255, 255, 0.15);
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            backdrop-filter: blur(12px);
         }
 
         .spinner {
-            width: 300px;
+            width: 100%;
             height: 20px;
-            border-radius: 22.4px;
-            color: #2e1a2eff;
-            border: 2.2px solid;
+            border-radius: 22px;
+            color: #fff;
+            border: 2px solid;
             position: relative;
+            margin: 10px 0;
         }
 
         .spinner::before {
             content: "";
             position: absolute;
-            margin: 2.2px;
+            margin: 2px;
             inset: 0 100% 0 0;
             border-radius: inherit;
             background: currentColor;
-            animation: progress-pf82op 2.4s infinite;
+            animation: progress 2.4s infinite;
         }
 
-        @keyframes progress-pf82op {
+        @keyframes progress {
             100% {
                 inset: 0;
             }
@@ -337,46 +397,97 @@
             display: none;
             position: fixed;
             inset: 0;
-            background: rgba(0, 0, 0, 0.4);
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
             justify-content: center;
             align-items: center;
+            z-index: 999;
         }
 
         .modal-content {
-            background: var(--card);
-            padding: 20px;
-            border-radius: 10px;
+            background: #fff;
+            padding: 25px;
+            border-radius: 15px;
             text-align: center;
-            box-shadow: var(--shadow);
-            color: var(--text);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            color: #000;
+            max-width: 400px;
+            animation: popIn 0.3s ease;
+        }
+
+        @keyframes popIn {
+            from {
+                transform: scale(0.9);
+                opacity: 0;
+            }
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
         }
 
         .quantity-info {
             font-size: 13px;
-            color: var(--highlight);
+            color: #666;
             margin-top: 4px;
+        }
+
+        /* Status colors */
+        .status-scheduled {
+            color: #0066ff;
+            font-weight: 600;
+        }
+
+        .status-in_progress {
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        .status-completed {
+            color: #6aa84f;
+            font-weight: 600;
+        }
+
+        td.actions .btn {
+            padding: 6px 10px;
+            font-size: 13px;
+            line-height: 1.2;
+            margin: 2px;
         }
 
         /* 🌸 BloomLux Production Dashboard Containers */
         .container-cards {
-            background: #2e1a2eff;
+            background: linear-gradient(135deg, #ffb3ec, #2e1a2eff);
             backdrop-filter: blur(20px);
             border-radius: 20px;
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+            box-shadow: 0 10px 20px rgba(46, 26, 46, 0.3);
             padding: 25px;
             margin-bottom: 30px;
-            animation: fadeIn 0.8s ease-in-out;
-            border: 1px solid rgba(255, 255, 255, 0.3);
+            animation: fadeSlideUp 1s ease forwards;
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            opacity: 0;
         }
 
         .container-table {
-            background: #2e1a2eff;
+            background: linear-gradient(135deg, #ffb3ec, #2e1a2eff);
             backdrop-filter: blur(18px);
             border-radius: 20px;
             padding: 25px;
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-            animation: fadeIn 0.8s ease-in-out;
-            border: 1px solid rgba(255, 255, 255, 0.25);
+            box-shadow: 0 10px 20px rgba(46, 26, 46, 0.3);
+            animation: fadeSlideUp 1s ease forwards;
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            opacity: 0;
+        }
+
+        @keyframes fadeSlideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         /* 🌸 Dashboard Cards Layout */
@@ -387,39 +498,56 @@
         }
 
         .card {
-            background: linear-gradient(160deg,#2e1a2eff, #ffb3ecff, #ffb3ecff, #2e1a2eff);
+            background: rgba(255, 255, 255, 0.15);
             border-radius: 18px;
             font-weight: 700;
-            font-family: Arial, sans-serif;
+            font-family: 'Poppins', sans-serif;
             font-size: 16px;
             padding: 20px;
             text-align: center;
             transition: all 0.3s ease;
             box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+            color: #fff;
+            backdrop-filter: blur(12px);
         }
 
         .card:hover {
             transform: translateY(-5px);
-            background: linear-gradient(255deg, #ffb3ecff, #2e1a2eff);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+            background: rgba(255, 255, 255, 0.25);
+        }
+
+        .card h2 {
+            color: #fff;
+            margin: 0 0 10px;
+            font-weight: 700;
+        }
+
+        .card p {
+            color: #fff;
+            margin: 0 0 15px;
         }
 
         /* 🌸 Buttons */
         .btn {
             display: inline-block;
             padding: 8px 16px;
-            background: linear-gradient(90deg, #f9a8d4, #d8b4fe);
+            background: linear-gradient(135deg, #ffb3ec, #2e1a2eff);
             border: none;
-            color: #2e1a2eff;
+            color: #fff;
             border-radius: 10px;
             cursor: pointer;
             text-decoration: none;
-            font-family: Arial, sans-serif;
-            font-weight: 700;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 600;
             transition: 0.3s ease;
+            box-shadow: 0 4px 12px rgba(46, 26, 46, 0.25);
         }
 
         .btn:hover {
-            background: linear-gradient(90deg, #f472b6, #c084fc);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(46, 26, 46, 0.35);
+            background: linear-gradient(135deg, #ff9eb3, #ff4d4d);
         }
 
         /* 🌸 Controls & Search */
@@ -427,53 +555,69 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 15px;
+            margin-bottom: 20px;
+            gap: 15px;
+            flex-wrap: wrap;
         }
 
         .controls input,
         .controls select {
-            background: #ffb3ecff;
-            border: none;
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.3);
             border-radius: 10px;
-            padding: 8px 12px;
-            color: #000000;
+            padding: 10px 14px;
+            color: #000;
             outline: none;
-            font-family: Arial, sans-serif;
+            font-family: 'Poppins', sans-serif;
+            transition: 0.3s;
+        }
+
+        .controls input:focus,
+        .controls select:focus {
+            border-color: #fff;
+            box-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
+            background: #fff;
         }
 
         .controls input::placeholder {
-            color: #000000;
+            color: #666;
         }
 
         /* 🌸 Table Styling */
         table {
             width: 100%;
             border-collapse: collapse;
-            font-family: Arial, sans-serif;
-            color: #000000;
+            font-family: 'Poppins', sans-serif;
+            color: #000;
             font-weight: 500;
-            background: #ffb3ecff;
+            background: #fff;
             border-radius: 12px;
             overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         }
 
         th, td {
             padding: 12px 14px;
-            text-align: left;
+            text-align: center;
+            border-bottom: 1px solid #eee;
         }
 
         th {
-            background: linear-gradient(50deg, #ffb3ecff, #2e1a2eff);
-            color: #000000;
+            background: linear-gradient(135deg, #ffb3ec, #2e1a2eff);
+            color: #fff;
             font-weight: 600;
         }
 
-        tr:nth-child(even) {
-            background: rgba(255, 255, 255, 0.1);
+        td {
+            background: #fff;
         }
 
-        tr:hover {
-            background: rgba(255, 255, 255, 0.25);
+        tr:nth-child(even) td {
+            background: rgba(255, 179, 236, 0.1);
+        }
+
+        tr:hover td {
+            background: rgba(255, 179, 236, 0.2);
         }
 
         /* 🌸 Animation */

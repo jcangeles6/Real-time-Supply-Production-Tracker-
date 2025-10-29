@@ -38,7 +38,7 @@ $username = $user['username'] ?? 'User';
 <!-- Sidebar -->
 <div class="sidebar">
     <h2>🌸 BloomLux Inventory 🌸</h2>
-    <a href="home.php">🌸 Back to Dashboard 🌸</a>
+    <a href="home.php">🔙 Back to Dashboard </a>
     <a href="supply.php">📦 Supply</a>
     <a href="production.php">🧁 Production</a>
     <a href="inventory.php">📊 Inventory</a>

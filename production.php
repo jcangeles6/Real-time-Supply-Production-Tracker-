@@ -66,7 +66,7 @@ if (!$batches) die("SQL Error: " . $conn->error);
 <body>
     <div class="sidebar">
         <h2>🌸 BloomLux Production 🌸</h2>
-        <a href="home.php">🌸 Back to Dashboard 🌸</a>
+        <a href="home.php">🔙 Back to Dashboard </a>
         <a href="supply.php">📦 Supply</a>
         <a href="production.php">🧁 Production</a>
         <a href="inventory.php">📊 Inventory</a>

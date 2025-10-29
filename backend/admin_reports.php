@@ -32,7 +32,11 @@ if (!$is_admin) {
 
 <body>
     <div class="sidebar">
-        <h2>Admin Panel</h2>
+        <h2>🌸 BloomLux Admin 🌸</h2>
+        <a href="../admin_dashboard.php">🔙 Back to Dashboard </a>
+        <a href="../my_requests.php">📋 All Requests</a>
+        <a href="add_stock.php">📦 Add Stock</a>
+        <a href="../logout.php">🚪 Logout</a>
     </div>
 
     <div class="main">

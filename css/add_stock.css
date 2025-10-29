@@ -13,15 +13,208 @@
       margin: 0;
       padding: 0;
       color: var(--primary);
+      display: flex; /* enable sidebar layout */
+      position: relative;
+    }
+
+    /* Floral background + tint overlay like home.css */
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background: url('https://thumbs.dreamstime.com/b/beautiful-colorful-meadow-wild-flowers-floral-background-landscape-purple-pink-sunset-blurred-soft-pastel-magical-332027305.jpg') no-repeat center/cover;
+      z-index: -2;
+    }
+    body::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background: linear-gradient(120deg, rgba(214,122,177,0.4), rgba(184,112,209,0.4));
+      backdrop-filter: blur(15px);
+      z-index: -1;
     }
 
     .main {
       padding: 30px 40px;
-      max-width: 1400px;
-      margin: 0 auto;
       animation: fadeIn 0.5s ease-in-out;
+      margin-left: 270px; /* match other pages */
+      box-sizing: border-box;
+      flex: 1 1 auto;
+      max-width: none; /* allow full width */
+      width: auto;
+      margin-right: 0;
     }
 
+    /* ---------------- SIDEBAR ---------------- */
+        /* 🌸 Sidebar Container */
+        .sidebar {
+            width: 240px;
+            background: linear-gradient(180deg, #b86bff, #ffb3ec);
+            color: #fff;
+            height: 100vh;
+            position: fixed;
+            display: flex;
+            flex-direction: column;
+            padding: 40px 20px;
+            box-shadow: var(--shadow);
+            border-top-right-radius: 25px;
+            border-bottom-right-radius: 25px;
+            overflow: hidden;
+            animation: sidebarSlideIn 0.7s ease-out forwards;
+        }
+
+        /* 🌷 Title Animation */
+        .sidebar h2 {
+            text-align: center;
+            font-weight: 700;
+            font-size: 30px;
+            margin-bottom: 40px;
+            letter-spacing: 1px;
+            opacity: 0;
+            animation: fadeIn 1s 0.3s forwards;
+        }
+
+        /* 🌼 Links */
+        .sidebar a {
+            display: block;
+            color: #fff;
+            padding: 15px 18px;
+            margin: 8px 0;
+            text-decoration: none;
+            border-radius: 50px;
+            transition: all 0.4s ease;
+            position: relative;
+            opacity: 0;
+            transform: translateX(-15px);
+            animation: slideInLink 0.6s ease forwards;
+        }
+
+        /* Each link animates slightly later */
+        .sidebar a:nth-child(2) { animation-delay: 0.3s; }
+        .sidebar a:nth-child(3) { animation-delay: 0.4s; }
+        .sidebar a:nth-child(4) { animation-delay: 0.5s; }
+        .sidebar a:nth-child(5) { animation-delay: 0.6s; }
+        .sidebar a:nth-child(6) { animation-delay: 0.7s; }
+
+        /* 🌸 Hover Glow */
+        .sidebar a:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateX(6px);
+            box-shadow: 0 0 12px rgba(255, 255, 255, 0.4);
+        }
+
+        /* 🌺 Animated Gradient Effect */
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .sidebar {
+            background: linear-gradient(135deg, #ffb3ecff, #2e1a2eff, #ffb3ecff);
+            background-size: 300% 300%;
+            animation: gradientShift 8s ease infinite, sidebarSlideIn 0.7s ease-out, breatheGlow 3.2s ease-in-out infinite;
+            transform-origin: left center;
+            transition: transform 0.25s ease;
+        }
+
+        .sidebar:hover {
+            transform: scale(1.02);
+        }
+
+        @keyframes breatheGlow {
+            0%, 100% { box-shadow: 0 0 12px rgba(255, 255, 255, 0.15); }
+            50% { box-shadow: 0 0 22px rgba(255, 255, 255, 0.35); }
+        }
+
+        /* Optional shimmer accent line */
+        .sidebar::before {
+            content: "";
+            position: absolute;
+            top: 0; left: 0;
+            width: 6px; height: 100%;
+            background: linear-gradient(180deg, rgba(255,255,255,0.6), transparent, rgba(255,255,255,0.6));
+            filter: blur(2px);
+            opacity: 0.35;
+            animation: shimmerMove 2.8s linear infinite;
+        }
+
+        @keyframes shimmerMove {
+            0% { transform: translateY(-20%); }
+            100% { transform: translateY(20%); }
+        }
+
+        /* Sidebar logo and link icon support */
+        .sidebar .sidebar-logo {
+            width: 120px;
+            height: auto;
+            border-radius: 12px;
+            box-shadow: 0 6px 16px rgba(0,0,0,0.25);
+            margin: 0 auto 18px;
+            display: block;
+        }
+
+        .sidebar a {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .sidebar a::before {
+            content: "";
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            background-size: cover;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+        }
+
+        /* 🌼 Animations */
+        @keyframes sidebarSlideIn {
+            from {
+                transform: translateX(-100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideInLink {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        /* 🌸 Optional Sidebar Glow Border */
+        .sidebar::after {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: 0;
+            width: 5px;
+            height: 100%;
+            background: linear-gradient(180deg,#2e1a2eff, #ffb3ecff, #2e1a2eff);
+            animation: glowBorder 2.5s ease-in-out infinite alternate;
+            border-radius: 5px;
+        }
+
+        @keyframes glowBorder {
+            0% { opacity: 0.6; box-shadow: 0 0 6px #ffb3ec; }
+            100% { opacity: 1; box-shadow: 0 0 16px #b86bff; }
+        }
+        
     h1 {
       color: var(--primary);
       margin-bottom: 20px;
@@ -34,18 +227,19 @@
       display: inline-block;
       margin-bottom: 20px;
       padding: 8px 16px;
-      background: var(--accent);
+      background: linear-gradient(135deg, #ff9eb3, #ff4d4d);
       color: var(--white);
       text-decoration: none;
-      border-radius: 25px;
+      border-radius: 12px;
       font-weight: 600;
       font-size: 14px;
-      transition: all 0.3s ease;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 12px rgba(46,26,46,0.25);
     }
 
     .back-btn:hover {
-      background: var(--primary);
-      transform: scale(1.05);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(46,26,46,0.35);
     }
 
     .add-btn-container {
@@ -62,14 +256,15 @@
     .form-box {
       display: none;
       background: var(--white);
-      padding: 25px 30px;
+      padding: 22px 26px;
       border-radius: 16px;
-      box-shadow: var(--shadow);
+      box-shadow: 0 5px 20px rgba(0,0,0,0.15);
       margin: 0 auto 30px;
       width: 100%;
       max-width: 600px;
       box-sizing: border-box;
       animation: fadeIn 0.4s ease;
+      border: 1px solid rgba(255,255,255,0.6);
     }
 
     label {
@@ -83,25 +278,26 @@
       width: 100%;
       padding: 12px;
       margin-bottom: 15px;
-      border: 1px solid #ccc;
+      border: 1px solid rgba(0,0,0,0.15);
       border-radius: 10px;
       box-sizing: border-box;
       font-family: 'Poppins', sans-serif;
     }
 
     button {
-      background: var(--accent);
+      background: linear-gradient(135deg, #ffb3ec, #2e1a2eff);
       color: white;
       font-weight: 600;
       border: none;
       cursor: pointer;
-      border-radius: 25px;
-      transition: 0.3s;
+      border-radius: 12px;
+      transition: 0.2s;
+      box-shadow: 0 4px 12px rgba(46,26,46,0.25);
     }
 
     button:hover {
-      background: var(--primary);
-      transform: scale(1.05);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(46,26,46,0.35);
     }
 
     /* Table */
@@ -111,7 +307,7 @@
       background: var(--white);
       border-radius: 12px;
       overflow: hidden;
-      box-shadow: var(--shadow);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
       margin-bottom: 50px;
     }
 
@@ -123,7 +319,7 @@
     }
 
     th {
-      background: var(--accent);
+      background: linear-gradient(135deg, #ffb3ec, #2e1a2eff);
       color: var(--white);
       font-weight: 600;
     }
@@ -177,13 +373,15 @@
     }
 
     .btn {
-      background: var(--accent);
+      background: linear-gradient(135deg, #ffb3ec, #2e1a2eff);
       color: var(--white);
+      box-shadow: 0 4px 12px rgba(46,26,46,0.25);
+      border-radius: 12px;
     }
 
     .btn:hover {
-      background: var(--primary);
-      transform: scale(1.05);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(46,26,46,0.35);
     }
 
     .btn-delete {
@@ -263,4 +461,10 @@
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(10px); }
       to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Responsive: hide sidebar on small screens */
+    @media (max-width: 992px) {
+      .sidebar { display: none; }
+      .main { margin-left: 0; }
     }

@@ -106,7 +106,60 @@ body::after {
 .sidebar {
     background: linear-gradient(135deg, #ffb3ecff, #2e1a2eff, #ffb3ecff);
     background-size: 300% 300%;
-    animation: gradientShift 8s ease infinite, sidebarSlideIn 0.7s ease-out;
+    animation: gradientShift 8s ease infinite, sidebarSlideIn 0.7s ease-out, breatheGlow 3.2s ease-in-out infinite;
+    transform-origin: left center;
+    transition: transform 0.25s ease;
+}
+
+.sidebar:hover {
+    transform: scale(1.02);
+}
+
+@keyframes breatheGlow {
+    0%, 100% { box-shadow: 0 0 12px rgba(255, 255, 255, 0.15); }
+    50% { box-shadow: 0 0 22px rgba(255, 255, 255, 0.35); }
+}
+
+/* Optional shimmer accent line */
+.sidebar::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 0;
+    width: 6px; height: 100%;
+    background: linear-gradient(180deg, rgba(255,255,255,0.6), transparent, rgba(255,255,255,0.6));
+    filter: blur(2px);
+    opacity: 0.35;
+    animation: shimmerMove 2.8s linear infinite;
+}
+
+@keyframes shimmerMove {
+    0% { transform: translateY(-20%); }
+    100% { transform: translateY(20%); }
+}
+
+/* Sidebar logo and link icon support */
+.sidebar .sidebar-logo {
+    width: 120px;
+    height: auto;
+    border-radius: 12px;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.25);
+    margin: 0 auto 18px;
+    display: block;
+}
+
+.sidebar a {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.sidebar a::before {
+    content: "";
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    background-size: cover;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
 }
 
 /* 🌼 Animations */
@@ -154,6 +207,7 @@ body::after {
     0% { opacity: 0.6; box-shadow: 0 0 6px #ffb3ec; }
     100% { opacity: 1; box-shadow: 0 0 16px #b86bff; }
 }
+
 
 /* ---------------- MAIN CONTENT ---------------- */
 .main {
@@ -244,11 +298,11 @@ th, td {
 
 th {
     background: rgba(255, 255, 255, 0.15);
-    font-weight: 600;
+    font-weight: 800;
 }
 
 tr:hover {
-    background: rgba(255, 255, 255, 0.08);
+    background: rgba(0, 0, 0, 0.08);
 }
 
 /* ---------------- BADGES ---------------- */

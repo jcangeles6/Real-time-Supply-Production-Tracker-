@@ -1,30 +1,55 @@
 :root {
+    --bg: #ffb3ecff;
     --primary: #2e1a2eff;
     --accent: #ffb3ecff;
     --card-bg: #f5f0fa;
     --white: #ffffff;
+    --text: #000;
     --shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 body {
     font-family: 'Poppins', sans-serif;
     margin: 0;
-    background: var(--accent);
-    color: var(--primary);
+    background: var(--bg);
+    color: var(--text);
     display: flex;
+}
+
+/* Floral overlay to match theme */
+body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background: url('https://thumbs.dreamstime.com/b/beautiful-colorful-meadow-wild-flowers-floral-background-landscape-purple-pink-sunset-blurred-soft-pastel-magical-332027305.jpg') no-repeat center/cover;
+    z-index: -2;
+}
+body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background: linear-gradient(120deg, rgba(214,122,177,0.4), rgba(184,112,209,0.4));
+    backdrop-filter: blur(15px);
+    z-index: -1;
 }
 
 /* Sidebar */
 .sidebar {
     width: 240px;
-    background: linear-gradient(180deg, var(--primary), #4a2d4a);
-    color: var(--white);
+    background: linear-gradient(135deg, #ffb3ecff, #2e1a2eff, #ffb3ecff);
+    background-size: 300% 300%;
+    color: #fff;
     height: 100vh;
     position: fixed;
     padding: 40px 20px;
     display: flex;
     flex-direction: column;
     box-shadow: var(--shadow);
+    border-top-right-radius: 25px;
+    border-bottom-right-radius: 25px;
+    overflow: hidden;
+    animation: gradientShift 8s ease infinite, sidebarSlideIn 0.7s ease-out, breatheGlow 3.2s ease-in-out infinite;
+    transform-origin: left center;
 }
 
 .sidebar h2 {
@@ -36,19 +61,29 @@ body {
 }
 
 .sidebar a {
-    display: block;
-    color: var(--white);
-    padding: 20px 18px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #fff;
+    padding: 15px 18px;
     margin: 8px 0;
     text-decoration: none;
     border-radius: 50px;
     transition: 0.3s ease;
+    opacity: 0;
+    transform: translateX(-15px);
+    animation: slideInLink 0.6s ease forwards;
 }
 
-.sidebar a:hover {
-    background: #a87fbf;
-    transform: translateX(4px);
-}
+.sidebar a:hover { background: rgba(255,255,255,0.2); transform: translateX(6px); box-shadow: 0 0 12px rgba(255,255,255,0.4); }
+
+.sidebar::after { content:''; position:absolute; right:0; top:0; width:5px; height:100%; background:linear-gradient(180deg,#2e1a2eff,#ffb3ecff,#2e1a2eff); animation: glowBorder 2.5s ease-in-out infinite alternate; border-radius:5px; }
+
+@keyframes sidebarSlideIn { from{transform:translateX(-100%);opacity:0} to{transform:translateX(0);opacity:1} }
+@keyframes slideInLink { from{opacity:0; transform:translateX(-20px)} to{opacity:1; transform:translateX(0)} }
+@keyframes gradientShift { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
+@keyframes breatheGlow { 0%,100%{box-shadow:0 0 12px rgba(255,255,255,0.15)} 50%{box-shadow:0 0 22px rgba(255,255,255,0.35)} }
+@keyframes glowBorder { 0%{opacity:.6; box-shadow:0 0 6px #ffb3ec} 100%{opacity:1; box-shadow:0 0 16px #b86bff} }
 
 /* Main Section */
 .main {
@@ -83,12 +118,14 @@ h1 {
 }
 
 .card {
-    background: var(--card-bg);
+    background: var(--bg);
     padding: 20px;
     border-radius: 20px;
     width: 230px;
     text-align: center;
-    box-shadow: var(--shadow);
+    box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,255,255,0.6);
     transition: transform 0.3s ease;
 }
 
@@ -113,10 +150,10 @@ h1 {
 table {
     width: 100%;
     border-collapse: collapse;
-    background: var(--card-bg);
+    background: #fff;
     border-radius: 20px;
     overflow: hidden;
-    box-shadow: var(--shadow);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
 }
 
 thead tr {
@@ -132,7 +169,7 @@ th, td {
 }
 
 th {
-    background: #6e065d; /* match sidebar */
+    background: linear-gradient(135deg, #ffb3ec, #2e1a2eff);
     color: #fff;
     font-weight: bold;
     padding: 16px 20px;  /* more space */
@@ -157,20 +194,21 @@ table th:nth-child(5), table td:nth-child(5) { width: 16%; }
 }
 
 .btn {
-    background: var(--primary);
+    background: linear-gradient(135deg, #ffb3ec, #2e1a2eff);
     color: var(--white);
     padding: 10px 16px;
-    border-radius: 25px;
+    border-radius: 12px;
     text-decoration: none;
     margin: 0 8px;
     display: inline-block;
-    transition: 0.3s ease;
+    transition: 0.2s ease;
+    box-shadow: 0 4px 12px rgba(46,26,46,0.25);
     font-weight: 600;
 }
 
 .btn:hover {
-    background: #4a2d4a;
-    transform: scale(1.05);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(46,26,46,0.35);
 }
 
 @media (max-width: 768px) {

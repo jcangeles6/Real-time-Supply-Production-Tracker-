@@ -1,66 +1,220 @@
 
     :root {
-      --bg: #ffb3ecff;
-      /* soft pink background */
-      --card: #f5f0fa;
-      /* lavender card */
-      --primary: #2e1a2eff;
-      /* dark lavender text/button */
-      --accent: #ff7dd8;
-      /* bright pink accent */
+      --bg: #ffb3ecff;          /* soft pink background */
+      --card: #f5f0fa;          /* light lavender card */
+      --primary: #2e1a2eff;     /* deep lavender */
+      --accent: #2e1a2eff;      /* gradient partner */
+      --white: #ffffff;
       --text: #000000ff;
-      /* standard text */
-      --shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+      --shadow: 0 4px 12px rgba(0,0,0,0.1);
     }
 
     body {
       font-family: 'Poppins', sans-serif;
       background: var(--bg);
       margin: 0;
-      color: var(--text);
+      padding: 0;
+      color: var(--primary);
       display: flex;
+      position: relative;
     }
 
-    /* Sidebar */
-    .sidebar {
-      width: 240px;
-      background: var(--primary);
-      color: #fff;
-      height: 100vh;
+    /* Floral background + tint overlay (match add_stock.css) */
+    body::before {
+      content: "";
       position: fixed;
-      display: flex;
-      flex-direction: column;
-      padding: 30px 20px;
-      box-shadow: var(--shadow);
+      inset: 0;
+      background: url('https://thumbs.dreamstime.com/b/beautiful-colorful-meadow-wild-flowers-floral-background-landscape-purple-pink-sunset-blurred-soft-pastel-magical-332027305.jpg') no-repeat center/cover;
+      z-index: -2;
+    }
+    body::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background: linear-gradient(120deg, rgba(214,122,177,0.4), rgba(184,112,209,0.4));
+      backdrop-filter: blur(15px);
+      z-index: -1;
     }
 
-    .sidebar h2 {
-      text-align: center;
-      font-weight: 700;
-      font-size: 24px;
-      margin-bottom: 40px;
-    }
+    /* 🌸 Sidebar Container */
+        .sidebar {
+            width: 240px;
+            background: linear-gradient(180deg, #b86bff, #ffb3ec);
+            color: #fff;
+            height: 100vh;
+            position: fixed;
+            display: flex;
+            flex-direction: column;
+            padding: 40px 20px;
+            box-shadow: var(--shadow);
+            border-top-right-radius: 25px;
+            border-bottom-right-radius: 25px;
+            overflow: hidden;
+            animation: sidebarSlideIn 0.7s ease-out forwards;
+        }
 
-    .sidebar a {
-      display: block;
-      color: #fff;
-      padding: 14px 18px;
-      margin: 8px 0;
-      text-decoration: none;
-      border-radius: 30px;
-      transition: 0.3s;
-    }
+        /* 🌷 Title Animation */
+        .sidebar h2 {
+            text-align: center;
+            font-weight: 700;
+            font-size: 30px;
+            margin-bottom: 40px;
+            letter-spacing: 1px;
+            opacity: 0;
+            animation: fadeIn 1s 0.3s forwards;
+        }
 
-    .sidebar a:hover {
-      background: var(--accent);
-      transform: translateX(5px);
-    }
+        /* 🌼 Links */
+        .sidebar a {
+            display: block;
+            color: #fff;
+            padding: 15px 18px;
+            margin: 8px 0;
+            text-decoration: none;
+            border-radius: 50px;
+            transition: all 0.4s ease;
+            position: relative;
+            opacity: 0;
+            transform: translateX(-15px);
+            animation: slideInLink 0.6s ease forwards;
+        }
+
+        /* Each link animates slightly later */
+        .sidebar a:nth-child(2) { animation-delay: 0.3s; }
+        .sidebar a:nth-child(3) { animation-delay: 0.4s; }
+        .sidebar a:nth-child(4) { animation-delay: 0.5s; }
+        .sidebar a:nth-child(5) { animation-delay: 0.6s; }
+        .sidebar a:nth-child(6) { animation-delay: 0.7s; }
+
+        /* 🌸 Hover Glow */
+        .sidebar a:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateX(6px);
+            box-shadow: 0 0 12px rgba(255, 255, 255, 0.4);
+        }
+
+        /* 🌺 Animated Gradient Effect */
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .sidebar {
+            background: linear-gradient(135deg, #ffb3ecff, #2e1a2eff, #ffb3ecff);
+            background-size: 300% 300%;
+            animation: gradientShift 8s ease infinite, sidebarSlideIn 0.7s ease-out, breatheGlow 3.2s ease-in-out infinite;
+            transform-origin: left center;
+            transition: transform 0.25s ease;
+        }
+
+        .sidebar:hover {
+            transform: scale(1.02);
+        }
+
+        @keyframes breatheGlow {
+            0%, 100% { box-shadow: 0 0 12px rgba(255, 255, 255, 0.15); }
+            50% { box-shadow: 0 0 22px rgba(255, 255, 255, 0.35); }
+        }
+
+        /* Optional shimmer accent line */
+        .sidebar::before {
+            content: "";
+            position: absolute;
+            top: 0; left: 0;
+            width: 6px; height: 100%;
+            background: linear-gradient(180deg, rgba(255,255,255,0.6), transparent, rgba(255,255,255,0.6));
+            filter: blur(2px);
+            opacity: 0.35;
+            animation: shimmerMove 2.8s linear infinite;
+        }
+
+        @keyframes shimmerMove {
+            0% { transform: translateY(-20%); }
+            100% { transform: translateY(20%); }
+        }
+
+        /* Sidebar logo and link icon support */
+        .sidebar .sidebar-logo {
+            width: 120px;
+            height: auto;
+            border-radius: 12px;
+            box-shadow: 0 6px 16px rgba(0,0,0,0.25);
+            margin: 0 auto 18px;
+            display: block;
+        }
+
+        .sidebar a {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .sidebar a::before {
+            content: "";
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            background-size: cover;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+        }
+
+        /* 🌼 Animations */
+        @keyframes sidebarSlideIn {
+            from {
+                transform: translateX(-100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideInLink {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        /* 🌸 Optional Sidebar Glow Border */
+        .sidebar::after {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: 0;
+            width: 5px;
+            height: 100%;
+            background: linear-gradient(180deg,#2e1a2eff, #ffb3ecff, #2e1a2eff);
+            animation: glowBorder 2.5s ease-in-out infinite alternate;
+            border-radius: 5px;
+        }
+
+        @keyframes glowBorder {
+            0% { opacity: 0.6; box-shadow: 0 0 6px #ffb3ec; }
+            100% { opacity: 1; box-shadow: 0 0 16px #b86bff; }
+        }
 
     /* Main area */
     .main {
-      margin-left: 260px;
-      flex-grow: 1;
-      padding: 35px 45px;
+      padding: 30px 40px;
+      animation: fadeIn 0.5s ease-in-out;
+      margin-left: 270px;
+      box-sizing: border-box;
+      flex: 1 1 auto;
+      max-width: none;
+      width: auto;
+      margin-right: 0;
     }
 
     .top-bar {
@@ -83,11 +237,12 @@
 
     /* Card container */
     .card {
-      background: var(--card);
-      padding: 25px;
-      border-radius: 20px;
-      box-shadow: var(--shadow);
+      background: transparent;
+      padding: 0;
+      border-radius: 0;
+      box-shadow: none;
       animation: fadeIn 0.6s ease-in-out;
+      overflow-x: auto; /* enable horizontal scroll if needed */
     }
 
     .card h3 {
@@ -96,27 +251,31 @@
       font-weight: 600;
     }
 
-    /* Table styling */
+    /* Table styling (match add_stock.css) */
     table {
       width: 100%;
       border-collapse: collapse;
-      background: white;
-      border-radius: 16px;
+      background: var(--white);
+      border-radius: 12px;
       overflow: hidden;
-      box-shadow: var(--shadow);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      margin-bottom: 30px;
     }
 
     th,
     td {
-      padding: 12px 15px;
+      padding: 14px 16px;
       border-bottom: 1px solid #eee;
       text-align: center;
+      white-space: normal;
+      font-size: 15px;
     }
 
     th {
-      background: var(--accent);
-      color: white;
+      background: linear-gradient(135deg, #ffb3ec, #2e1a2eff);
+      color: var(--white);
       font-weight: 600;
+      white-space: nowrap;
     }
 
     tr:hover {
@@ -130,6 +289,7 @@
       padding: 6px 12px;
       border-radius: 10px;
       display: inline-block;
+      white-space: nowrap;
     }
 
     .pending {
@@ -149,20 +309,34 @@
 
     /* Cancel button */
     .btn-cancel {
-      background: var(--primary);
+      background: linear-gradient(135deg, #ffb3ec, #2e1a2eff);
       color: white;
-      padding: 6px 14px;
+      padding: 8px 14px;
       border: none;
-      border-radius: 8px;
+      border-radius: 12px;
       cursor: pointer;
-      transition: 0.3s;
+      transition: 0.2s;
+      box-shadow: 0 4px 12px rgba(46,26,46,0.25);
+      white-space: nowrap;
     }
 
     .btn-cancel:hover {
-      background: var(--accent);
-      transform: scale(1.05);
-      box-shadow: var(--shadow);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(46,26,46,0.35);
     }
+
+    .btn-approve {
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      padding: 8px 14px;
+      margin-left: 6px;
+      border-radius: 12px;
+      cursor: pointer;
+      font-size: 0.95rem;
+      white-space: nowrap;
+    }
+    .btn-approve:hover { background-color: #45a049; }
 
     .empty {
       color: var(--primary);
@@ -170,6 +344,9 @@
       padding: 20px 0;
       font-weight: 500;
     }
+
+    /* Better fitting table */
+    #requestsTable { table-layout: auto; }
 
     /* Animation */
     @keyframes fadeIn {

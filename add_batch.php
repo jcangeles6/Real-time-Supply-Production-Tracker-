@@ -235,72 +235,106 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Add / Edit Batch | BloomLux</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/add_batch.css">
+    <link rel="stylesheet" href="css/home.css">
+    <style>
+        .batch-container { display:flex; justify-content:center; align-items:flex-start; }
+        .batch-card { max-width: 600px; width:100%; margin:10px auto; }
+        .batch-card h2 { color: var(--primary); margin-bottom: 20px; text-align: center; }
+        .form-label { display:block; font-weight:600; color: var(--primary); margin:12px 0 6px; }
+        .form-input, .form-select { width:100%; padding:12px; border:1px solid #ddd; border-radius:10px; background:#fff; font-size:15px; transition:0.2s; box-sizing:border-box; margin-bottom:10px; }
+        .form-input:focus, .form-select:focus { outline:none; border-color: var(--primary); box-shadow: 0 0 6px rgba(46,26,46,0.25); }
+        .material-row { background: rgba(255,255,255,0.5); padding:15px; border-radius:12px; margin-bottom:15px; border:1px solid rgba(255,255,255,0.3); }
+        .submit-btn, .action-btn { width:100%; padding:12px; background: linear-gradient(135deg, #ffb3ec, #2e1a2eff); color:#fff; border:none; border-radius:12px; font-weight:600; cursor:pointer; transition:0.2s ease; margin-top:8px; margin-bottom:10px; }
+        .submit-btn:hover, .action-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(46,26,46,0.25); }
+        .action-btn { background: linear-gradient(135deg, #2e1a2eff, #4a2a4a); }
+        .back-link { display:inline-block; margin-bottom:15px; color:#fff; background: linear-gradient(135deg, #ff9eb3, #ff4d4d); text-decoration:none; padding:10px 18px; border-radius:10px; font-weight:600; transition:0.2s; }
+        .back-link:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(255,77,77,0.3); }
+        .removeMaterialBtn { background:#b22222 !important; color:#fff !important; border:none !important; border-radius:8px !important; padding:8px 14px !important; margin-top:8px !important; cursor:pointer !important; font-weight:500 !important; transition:0.2s !important; }
+        .removeMaterialBtn:hover { background:#8b1a1a !important; transform: translateY(-1px); }
+        .modal { display:none; position:fixed; z-index:999; left:0; top:0; width:100%; height:100%; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); }
+        .modal-content { background:#fff; border-radius:15px; padding:25px; max-width:400px; margin:15% auto; text-align:center; box-shadow: 0 8px 32px rgba(0,0,0,0.3); animation: popIn 0.3s ease; }
+        @keyframes popIn { from { transform: scale(0.9); opacity:0; } to { transform: scale(1); opacity:1; } }
+        .close-btn { background: linear-gradient(135deg, #ffb3ec, #2e1a2eff); color:#fff; border:none; border-radius:8px; padding:10px 20px; cursor:pointer; margin-top:15px; transition:0.2s; font-weight:600; }
+        .close-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(46,26,46,0.25); }
+    </style>
 </head>
 
 <body>
-    <div class="form-box">
-        <button type="button" class="back-btn" onclick="window.location.href='production.php'">← Back</button>
-        <h2>🍞 Add / Edit Batch</h2>
-        <form id="batchForm" method="POST">
-            <label>Product Type</label>
-            <input type="text" name="product_type" value="<?php echo htmlspecialchars($product_type_prefill); ?>" required>
+    <!-- Sidebar (same as Home) -->
+    <div class="sidebar">
+        <h2>🌸 BloomLux Dashboard 🌸</h2>
+        <a href="home.php">🏠 Home</a>
+        <a href="supply.php">📦 Supply</a>
+        <a href="production.php">🧁 Production</a>
+        <a href="inventory.php">📊 Inventory</a>
+        <a href="logout.php">🚪 Logout</a>
+    </div>
 
-            <label>Product Quantity</label>
-            <input type="number" name="batch_quantity" value="<?php echo htmlspecialchars($quantity_prefill); ?>" placeholder="Enter quantity" min="1" required>
+    <!-- Main -->
+    <div class="main">
+        <div class="section-container batch-container">
+            <div class="card batch-card">
+                <a href="production.php" class="back-link">← Back to Production</a>
+                <h2>🍞 Add / Edit Batch</h2>
+                <form id="batchForm" method="POST">
+                    <label class="form-label">Product Type</label>
+                    <input class="form-input" type="text" name="product_type" value="<?php echo htmlspecialchars($product_type_prefill); ?>" required>
 
-            <div id="materialsContainer">
-                <?php if ($materials_prefill): ?>
-                    <?php foreach ($materials_prefill as $index => $mat): ?>
-                        <div class="material-row">
-                            <label>Material</label>
-                            <select name="materials[<?php echo $index; ?>][id]" required>
-                                <option value="">-- Select Material --</option>
-                                <?php foreach ($inventory_items as $item): ?>
-                                    <option value="<?php echo $item['id']; ?>" <?php echo ($item['id'] == $mat['stock_id']) ? 'selected' : ''; ?>>
-                                        <?php echo htmlspecialchars($item['item_name']); ?> (Available: <?php echo max(0, $item['available_quantity']); ?>)
+                    <label class="form-label">Product Quantity</label>
+                    <input class="form-input" type="number" name="batch_quantity" value="<?php echo htmlspecialchars($quantity_prefill); ?>" placeholder="Enter quantity" min="1" required>
 
-                                    </option>
-                                <?php endforeach; ?>
-                            </select>
-                            <label>Quantity</label>
-                            <input type="number"
-                                name="materials[<?php echo $index; ?>][quantity]"
-                                value="<?php echo htmlspecialchars($mat['quantity_used']); ?>"
-                                min="1"
-                                max="<?php
-                                        foreach ($inventory_items as $item) {
-                                            if ($item['id'] == $mat['stock_id']) {
-                                                echo max(1, $item['available_quantity'] + $mat['quantity_used']);
-                                            }
-                                        }
-                                        ?>"
-                                required>
-                            <button type="button" class="removeMaterialBtn" style="background:#b22222;color:white;border:none;border-radius:40px;padding:1px 10px;margin-top:5px;cursor:pointer;">Remove</button>
-                        </div>
-                    <?php endforeach; ?>
-                <?php else: ?>
-                    <div class="material-row">
-                        <label>Material</label>
-                        <select name="materials[0][id]" required>
-                            <option value="">-- Select Material --</option>
-                            <?php foreach ($inventory_items as $item): ?>
-                                <option value="<?php echo $item['id']; ?>">
-                                    <?php echo htmlspecialchars($item['item_name']); ?> (Available: <?php echo max(0, $item['available_quantity']); ?>)
-
-                                </option>
+                    <div id="materialsContainer">
+                        <?php if ($materials_prefill): ?>
+                            <?php foreach ($materials_prefill as $index => $mat): ?>
+                                <div class="material-row">
+                                    <label class="form-label">Material</label>
+                                    <select class="form-select" name="materials[<?php echo $index; ?>][id]" required>
+                                        <option value="">-- Select Material --</option>
+                                        <?php foreach ($inventory_items as $item): ?>
+                                            <option value="<?php echo $item['id']; ?>" <?php echo ($item['id'] == $mat['stock_id']) ? 'selected' : ''; ?>>
+                                                <?php echo htmlspecialchars($item['item_name']); ?> (Available: <?php echo max(0, $item['available_quantity']); ?>)
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                    <label class="form-label">Quantity</label>
+                                    <input class="form-input" type="number"
+                                        name="materials[<?php echo $index; ?>][quantity]"
+                                        value="<?php echo htmlspecialchars($mat['quantity_used']); ?>"
+                                        min="1"
+                                        max="<?php
+                                                foreach ($inventory_items as $item) {
+                                                    if ($item['id'] == $mat['stock_id']) {
+                                                        echo max(1, $item['available_quantity'] + $mat['quantity_used']);
+                                                    }
+                                                }
+                                                ?>"
+                                        required>
+                                    <button type="button" class="removeMaterialBtn">Remove</button>
+                                </div>
                             <?php endforeach; ?>
-                        </select>
-                        <label>Quantity</label>
-                        <input type="number" name="materials[0][quantity]" min="1" max="9999" required>
-                        <button type="button" class="removeMaterialBtn" style="background:#b22222;color:white;border:none;border-radius:40px;padding:10px 10px;margin-top:5px;cursor:pointer;">Remove</button>
+                        <?php else: ?>
+                            <div class="material-row">
+                                <label class="form-label">Material</label>
+                                <select class="form-select" name="materials[0][id]" required>
+                                    <option value="">-- Select Material --</option>
+                                    <?php foreach ($inventory_items as $item): ?>
+                                        <option value="<?php echo $item['id']; ?>">
+                                            <?php echo htmlspecialchars($item['item_name']); ?> (Available: <?php echo max(0, $item['available_quantity']); ?>)
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                                <label class="form-label">Quantity</label>
+                                <input class="form-input" type="number" name="materials[0][quantity]" min="1" max="9999" required>
+                                <button type="button" class="removeMaterialBtn">Remove</button>
+                            </div>
+                        <?php endif; ?>
                     </div>
-                <?php endif; ?>
-            </div>
 
-            <button type="button" id="addMaterialBtn">+ Add Material</button>
-            <button type="submit">Save Batch</button>
-        </form>
+                    <button type="button" class="action-btn" id="addMaterialBtn">+ Add Material</button>
+                    <button type="submit" class="submit-btn">Save Batch</button>
+                </form>
+            </div>
+        </div>
     </div>
 
     <div id="messageModal" class="modal">
@@ -321,19 +355,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 const div = document.createElement('div');
                 div.classList.add('material-row');
                 div.innerHTML = `
-            <label>Material</label>
-            <select name="materials[${index}][id]" required>
+            <label class="form-label">Material</label>
+            <select class="form-select" name="materials[${index}][id]" required>
                 <option value="">-- Select Material --</option>
                 <?php foreach ($inventory_items as $item): ?>
                 <option value="<?php echo $item['id']; ?>">
                     <?php echo htmlspecialchars($item['item_name']); ?> (Available: <?php echo max(0, $item['available_quantity']); ?>)
-
                 </option>
                 <?php endforeach; ?>
             </select>
-            <label>Quantity</label>
-            <input type="number" name="materials[${index}][quantity]" min="1" required>
-            <button type="button" class="removeMaterialBtn" style="background:#b22222;color:white;border:none;border-radius:40px;padding:10px 10px;margin-top:5px;cursor:pointer;">Remove</button>
+            <label class="form-label">Quantity</label>
+            <input class="form-input" type="number" name="materials[${index}][quantity]" min="1" required>
+            <button type="button" class="removeMaterialBtn">Remove</button>
         `;
                 div.querySelector('.removeMaterialBtn').addEventListener('click', () => div.remove());
                 return div;
@@ -416,4 +449,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 messageModal.style.display = 'block';
             <?php endif; ?>
         });
+
+        // Close modal function (for onclick handler)
+        function closeModal() {
+            const messageModal = document.getElementById('messageModal');
+            messageModal.style.display = 'none';
+            <?php if ($messageType === 'success'): ?>
+                window.location.href = 'production.php';
+            <?php endif; ?>
+        }
     </script>

@@ -21,9 +21,16 @@ if (!isset($_SESSION['user_id'])) {
 </head>
 
 <body>
+  <div class="sidebar">
+    <h2>🌸 BloomLux Requests 🌸</h2>
+    <a href="../admin_dashboard.php">🔙 Back to Dashboard </a>
+    <a href="../my_requests.php">📋 All Requests</a>
+    <a href="add_stock.php">📦 Add Stock</a>
+    <a href="../logout.php">🚪 Logout</a>
+  </div>
+
   <div class="main">
-    <a href="../admin_dashboard.php" class="back-btn">⬅ Back to Admin Dashboard</a>
-    <h1>📦 Inventory</h1>
+    <h1>🌸 BloomLux Admin Inventory Dashboard 🌸</h1>
 
     <div class="add-btn-container">
       <button class="btn" onclick="toggleForm()">➕ Add Stock</button>
