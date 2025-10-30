@@ -1,7 +1,7 @@
 <?php
 include '../db.php';
 
-$query = "
+$stmt = $conn->prepare("
     SELECT 
         b.id, 
         b.product_name, 
@@ -17,9 +17,9 @@ $query = "
       AND b.is_deleted = 0
     GROUP BY b.id, b.product_name, b.quantity, b.completed_at
     ORDER BY b.completed_at DESC
-";
-
-$result = $conn->query($query);
+");
+$stmt->execute();
+$result = $stmt->get_result();
 $total_completed = $result->num_rows;
 $total_quantity = 0;
 $data = [];

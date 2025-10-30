@@ -1,14 +1,14 @@
 <?php
-
-//SUPPLY PAGE
-
 include 'backend/init.php';
 
-// Get username
+// Get username securely
 $user_id = $_SESSION['user_id'];
-$result = $conn->query("SELECT username FROM users WHERE id = $user_id");
-$user = $result->fetch_assoc();
-$username = $user['username'];
+$stmt = $conn->prepare("SELECT username FROM users WHERE id = ?");
+$stmt->bind_param("i", $user_id);
+$stmt->execute();
+$user = $stmt->get_result()->fetch_assoc();
+$username = $user['username'] ?? 'Unknown';
+$stmt->close();
 
 // Pagination setup
 $limit = 10; // 10 requests per page
@@ -16,16 +16,41 @@ $page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
 $offset = ($page - 1) * $limit;
 
 // Count total requests
-$total_requests = $conn->query("SELECT COUNT(*) as c FROM requests")->fetch_assoc()['c'];
+$stmt = $conn->prepare("SELECT COUNT(*) AS c FROM requests");
+$stmt->execute();
+$total_requests = $stmt->get_result()->fetch_assoc()['c'];
+$stmt->close();
+
 $total_pages = ceil($total_requests / $limit);
 
 // Fetch requests for current page, newest first
-$result_requests = $conn->query("SELECT * FROM requests ORDER BY requested_at DESC LIMIT $limit OFFSET $offset");
+$stmt = $conn->prepare("SELECT * FROM requests ORDER BY requested_at DESC LIMIT ? OFFSET ?");
+$stmt->bind_param("ii", $limit, $offset);
+$stmt->execute();
+$result_requests = $stmt->get_result();
+$stmt->close();
 
 // Count requests by status for summary
-$count_pending = $conn->query("SELECT COUNT(*) as c FROM requests WHERE status='pending'")->fetch_assoc()['c'];
-$count_approved = $conn->query("SELECT COUNT(*) as c FROM requests WHERE status='approved'")->fetch_assoc()['c'];
-$count_denied = $conn->query("SELECT COUNT(*) as c FROM requests WHERE status='denied'")->fetch_assoc()['c'];
+$statuses = ['pending', 'approved', 'denied'];
+$count_pending = $count_approved = $count_denied = 0;
+
+foreach ($statuses as $status) {
+    $stmt = $conn->prepare("SELECT COUNT(*) AS c FROM requests WHERE status = ?");
+    $stmt->bind_param("s", $status);
+    $stmt->execute();
+    $count = $stmt->get_result()->fetch_assoc()['c'];
+    $stmt->close();
+
+    if ($status === 'pending') $count_pending = $count;
+    if ($status === 'approved') $count_approved = $count;
+    if ($status === 'denied') $count_denied = $count;
+}
+
+// Fetch inventory items
+$stmt = $conn->prepare("SELECT * FROM inventory ORDER BY item_name ASC");
+$stmt->execute();
+$inv_result = $stmt->get_result();
+$stmt->close();
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -105,7 +130,10 @@ $count_denied = $conn->query("SELECT COUNT(*) as c FROM requests WHERE status='d
                         <th>Action</th>
                     </tr>
                     <?php
-                    $inv_result = $conn->query("SELECT * FROM inventory ORDER BY item_name ASC");
+                    $stmt = $conn->prepare("SELECT * FROM inventory ORDER BY item_name ASC");
+                    $stmt->execute();
+                    $inv_result = $stmt->get_result();
+                    $stmt->close();
                     if ($inv_result->num_rows > 0):
                         while ($item = $inv_result->fetch_assoc()):
                             $isAvailable = strtolower($item['status']) === 'available' && intval($item['quantity']) > 0;

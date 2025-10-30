@@ -12,9 +12,16 @@ if (!isset($_SESSION['user_id'])) {
 
 // Get username
 $user_id = $_SESSION['user_id'];
-$res = $conn->query("SELECT username FROM users WHERE id = $user_id");
+// Securely fetch username using a prepared statement
+$stmt = $conn->prepare("SELECT username FROM users WHERE id = ?");
+$stmt->bind_param("i", $user_id);
+$stmt->execute();
+$res = $stmt->get_result();
 $user = $res->fetch_assoc();
-$username = $user['username'];
+$stmt->close();
+
+$username = $user['username'] ?? 'User';
+
 ?>
 <!DOCTYPE html>
 <html lang="en">

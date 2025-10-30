@@ -9,8 +9,7 @@ error_reporting(0);
 include __DIR__ . '/../init.php';
 
 try {
-    // ✅ Fetch inventory with real-time available quantity, threshold, and timestamps
-    $query = "
+    $stmt = $conn->prepare("
         SELECT 
             i.id,
             i.item_name,
@@ -25,34 +24,22 @@ try {
         LEFT JOIN stock_thresholds t ON i.id = t.item_id
         GROUP BY i.id
         ORDER BY available_quantity DESC, i.item_name ASC
-    ";
+    ");
+    $stmt->execute();
+    $result = $stmt->get_result();
 
-    $result = $conn->query($query);
     $items = [];
-
     while ($row = $result->fetch_assoc()) {
-        // Compute available quantity and threshold
         $available_quantity = (int)$row['available_quantity'];
         $threshold = isset($row['threshold']) ? (int)$row['threshold'] : 0;
 
-        // ✅ Determine status based on quantity vs. threshold
-        if ($available_quantity <= 0) {
-            $status = 'Out of Stock';
-        } elseif ($available_quantity <= $threshold) {
-            $status = 'Low';
-        } else {
-            $status = 'Available';
-        }
+        if ($available_quantity <= 0) $status = 'Out of Stock';
+        elseif ($available_quantity <= $threshold) $status = 'Low';
+        else $status = 'Available';
 
-        // ✅ Format timestamps (readable format)
-        $created_at = $row['created_at']
-            ? date('M d, Y h:i A', strtotime($row['created_at']))
-            : '—';
-        $updated_at = $row['updated_at']
-            ? date('M d, Y h:i A', strtotime($row['updated_at']))
-            : '—';
+        $created_at = $row['created_at'] ? date('M d, Y h:i A', strtotime($row['created_at'])) : '—';
+        $updated_at = $row['updated_at'] ? date('M d, Y h:i A', strtotime($row['updated_at'])) : '—';
 
-        // ✅ Push data into array
         $items[] = [
             'id' => $row['id'],
             'item_name' => $row['item_name'],
@@ -64,14 +51,14 @@ try {
         ];
     }
 
-    // ✅ Return success JSON
     echo json_encode([
         'success' => true,
         'items' => $items
     ]);
 
+    $stmt->close();
+
 } catch (Exception $e) {
-    // Handle any runtime errors
     echo json_encode([
         'success' => false,
         'error' => $e->getMessage()

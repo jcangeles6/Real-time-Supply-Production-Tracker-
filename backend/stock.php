@@ -182,16 +182,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $new_notification_id = $notif_stmt->insert_id;
         $notif_stmt->close();
 
-        // Assign notification to all users
-        $user_stmt = $conn->prepare("INSERT INTO user_notifications (user_id, notification_id, is_read) VALUES (?, ?, 0)");
-        $users = $conn->query("SELECT id FROM users");
-        while ($u = $users->fetch_assoc()) {
-            $user_stmt->bind_param("ii", $u['id'], $new_notification_id);
-            $user_stmt->execute();
-        }
-        $user_stmt->close();
+        // Assign notification to all users (prepared select + prepared insert)
+        $users_select = $conn->prepare("SELECT id FROM users");
+        $users_select->execute();
+        $users_result = $users_select->get_result();
 
-        echo json_encode(['success' => true, 'message' => $notif_message]);
+        $user_insert = $conn->prepare("INSERT INTO user_notifications (user_id, notification_id, is_read) VALUES (?, ?, 0)");
+        while ($u = $users_result->fetch_assoc()) {
+            $uid = (int)$u['id']; // ensure integer type
+            $user_insert->bind_param("ii", $uid, $new_notification_id);
+            $user_insert->execute();
+        }
+        $user_insert->close();
+        $users_select->close();
+
     } else {
         http_response_code(500);
         echo json_encode(['error' => 'Failed to add stock']);

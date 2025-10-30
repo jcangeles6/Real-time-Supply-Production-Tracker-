@@ -7,14 +7,27 @@ ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 
-$inventory_items = $conn->query("
-    SELECT i.id, i.item_name, i.quantity - IFNULL(SUM(bm.quantity_reserved),0) AS available_quantity
+$stmt = $conn->prepare("
+    SELECT 
+        i.id, 
+        i.item_name, 
+        i.quantity - IFNULL(SUM(bm.quantity_reserved), 0) AS available_quantity
     FROM inventory i
-    LEFT JOIN batch_materials bm
-        JOIN batches b ON bm.batch_id = b.id AND b.is_deleted = 0
+    LEFT JOIN batch_materials bm 
         ON bm.stock_id = i.id
+    LEFT JOIN batches b 
+        ON bm.batch_id = b.id AND b.is_deleted = 0
+    WHERE i.item_name LIKE CONCAT('%', ?, '%')
     GROUP BY i.id
-")->fetch_all(MYSQLI_ASSOC);
+    ORDER BY i.item_name ASC
+");
+
+$search = $_GET['search'] ?? '';
+$stmt->bind_param("s", $search);
+$stmt->execute();
+$inventory_items = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+$stmt->close();
+
 
 // Prefill variables
 $product_type_prefill = $_GET['product_name'] ?? '';
@@ -35,7 +48,11 @@ if (isset($_GET['batch_id'])) {
     $materials_prefill = $matQuery->get_result()->fetch_all(MYSQLI_ASSOC);
     $matQuery->close();
 
-    $batchInfo = $conn->query("SELECT product_name, quantity FROM batches WHERE id = $batch_id")->fetch_assoc();
+    $stmt = $conn->prepare("SELECT product_name, quantity FROM batches WHERE id = ?");
+    $stmt->bind_param("i", $batch_id);
+    $stmt->execute();
+    $batchInfo = $stmt->get_result()->fetch_assoc();
+    $stmt->close();
     if ($batchInfo) {
         $product_type_prefill = $batchInfo['product_name'];
         $quantity_prefill = $batchInfo['quantity'];
@@ -142,14 +159,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
 
                 // Reserved stock in other batches
-                $reservedSum = $conn->query("
-        SELECT SUM(bm.quantity_reserved) as total_reserved
-        FROM batch_materials bm
-        JOIN batches b ON bm.batch_id = b.id
-        WHERE bm.stock_id = $stock_id
-        AND bm.batch_id != $batch_id
-        AND b.is_deleted = 0
-    ")->fetch_assoc()['total_reserved'] ?? 0;
+                $stmt = $conn->prepare("
+                SELECT SUM(bm.quantity_reserved) AS total_reserved
+                FROM batch_materials bm
+                JOIN batches b ON bm.batch_id = b.id
+                WHERE bm.stock_id = ?
+                AND bm.batch_id != ?
+                AND b.is_deleted = 0
+            ");
+            $stmt->bind_param("ii", $stock_id, $batch_id);
+            $stmt->execute();
+            $res = $stmt->get_result()->fetch_assoc();
+            $reservedSum = $res['total_reserved'] ?? 0;
+            $stmt->close();
 
                 $available_stock = $stockData['quantity'] - $reservedSum;
                 if (!$is_edit || $old_status !== 'in_progress') {

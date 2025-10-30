@@ -5,17 +5,24 @@ session_start();
 $response = ['success' => false];
 
 try {
-    // Materials in stock (sum of all inventory quantities)
-    $res = $conn->query("SELECT SUM(quantity) as totalMaterials FROM inventory");
-    $materials = $res ? (int)$res->fetch_assoc()['totalMaterials'] : 0;
+    // Materials in stock
+    $stmt = $conn->prepare("SELECT SUM(quantity) as totalMaterials FROM inventory");
+    $stmt->execute();
+    $materials = (int)$stmt->get_result()->fetch_assoc()['totalMaterials'];
 
-    // In Production (batches with status='in_progress')
-    $res = $conn->query("SELECT COUNT(*) as inProduction FROM batches WHERE status='in_progress' AND is_deleted=0");
-    $inProduction = $res ? (int)$res->fetch_assoc()['inProduction'] : 0;
+    // In Production
+    $stmt = $conn->prepare("SELECT COUNT(*) as inProduction FROM batches WHERE status=? AND is_deleted=0");
+    $status = 'in_progress';
+    $stmt->bind_param("s", $status);
+    $stmt->execute();
+    $inProduction = (int)$stmt->get_result()->fetch_assoc()['inProduction'];
 
-    // Completed Orders (batches with status='completed')
-    $res = $conn->query("SELECT COUNT(*) as completed FROM batches WHERE status='completed' AND is_deleted=0");
-    $completed = $res ? (int)$res->fetch_assoc()['completed'] : 0;
+    // Completed Orders
+    $stmt = $conn->prepare("SELECT COUNT(*) as completed FROM batches WHERE status=? AND is_deleted=0");
+    $status = 'completed';
+    $stmt->bind_param("s", $status);
+    $stmt->execute();
+    $completed = (int)$stmt->get_result()->fetch_assoc()['completed'];
 
     $response = [
         'success' => true,

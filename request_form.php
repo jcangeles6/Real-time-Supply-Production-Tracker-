@@ -27,12 +27,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 // Fetch inventory with thresholds
-$inv_result = $conn->query("
-    SELECT i.id as item_id, i.item_name, i.unit, i.quantity, t.threshold 
+$stmt = $conn->prepare("
+    SELECT i.id AS item_id, i.item_name, i.unit, i.quantity, t.threshold
     FROM inventory i
     LEFT JOIN stock_thresholds t ON i.id = t.item_id
     ORDER BY t.threshold ASC
 ");
+$stmt->execute();
+$inv_result = $stmt->get_result();
 ?>
 <!DOCTYPE html>
 <html lang="en">

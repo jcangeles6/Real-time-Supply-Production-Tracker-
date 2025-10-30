@@ -2,7 +2,7 @@
 include 'backend/init.php';
 
 // Get completed batches today
-$query = "
+$stmt = $conn->prepare("
     SELECT 
         b.id, 
         b.product_name, 
@@ -17,8 +17,9 @@ $query = "
       AND b.is_deleted = 0
     GROUP BY b.id, b.product_name, b.quantity, b.completed_at
     ORDER BY b.completed_at DESC
-";
-$batches = $conn->query($query);
+");
+$stmt->execute();
+$batches = $stmt->get_result();
 $total_completed = $batches->num_rows;
 $total_quantity = 0;
 $data = [];
@@ -26,6 +27,7 @@ while ($row = $batches->fetch_assoc()) {
     $total_quantity += $row['quantity'];
     $data[] = $row;
 }
+
 ?>
 
 <!DOCTYPE html>

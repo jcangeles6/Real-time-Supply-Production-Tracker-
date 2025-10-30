@@ -6,15 +6,16 @@ $labels = [];
 $values = [];
 
 // Top 10 products based on completed batches
-$query = "
+$stmt = $conn->prepare("
     SELECT product_name, COUNT(*) AS total_sold
     FROM batches
     WHERE status = 'completed'
     GROUP BY product_name
     ORDER BY total_sold DESC
     LIMIT 10
-";
-$result = $conn->query($query);
+");
+$stmt->execute();
+$result = $stmt->get_result();
 
 if ($result) {
     while ($row = $result->fetch_assoc()) {

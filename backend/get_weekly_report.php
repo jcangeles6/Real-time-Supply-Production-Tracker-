@@ -4,7 +4,7 @@ header('Content-Type: application/json');
 
 $data = [];
 
-$query = "
+$stmt = $conn->prepare("
     SELECT 
         b.id, b.product_name, b.quantity, b.completed_at,
         GROUP_CONCAT(CONCAT(i.item_name, ' (', bm.quantity_used, ')') SEPARATOR ', ') AS materials
@@ -14,13 +14,12 @@ $query = "
     WHERE b.status = 'completed' AND b.is_deleted = 0
     GROUP BY b.id, b.product_name, b.quantity, b.completed_at
     ORDER BY b.completed_at DESC
-";
-
-$result = $conn->query($query);
+");
+$stmt->execute();
+$result = $stmt->get_result();
 
 if ($result) {
     while ($row = $result->fetch_assoc()) {
-        // Include only batches from current week
         if (date('W', strtotime($row['completed_at'])) == date('W') &&
             date('Y', strtotime($row['completed_at'])) == date('Y')) {
             $data[] = $row;
@@ -28,7 +27,6 @@ if ($result) {
     }
 }
 
-// Return same format as daily report
 $response = [
     'total_completed' => count($data),
     'total_quantity' => array_sum(array_map(fn($b) => (int)$b['quantity'], $data)),
@@ -36,3 +34,4 @@ $response = [
 ];
 
 echo json_encode($response);
+$stmt->close();

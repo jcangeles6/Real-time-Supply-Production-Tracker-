@@ -33,11 +33,14 @@ if (isset($_POST['approve_id'])) {
 }
 
 // Fetch current stock + thresholds
-$stockResult = $conn->query("
+$stmt = $conn->prepare("
     SELECT i.id, i.item_name, i.quantity, st.threshold
     FROM inventory i
     LEFT JOIN stock_thresholds st ON i.id = st.item_id
-") or die($conn->error);
+");
+$stmt->execute();
+$stockResult = $stmt->get_result();
+$stmt->close();
 
 // Admin: fetch all requests
 $sql = "SELECT id, user_id, ingredient_name, quantity, notes, unit, status, requested_at 

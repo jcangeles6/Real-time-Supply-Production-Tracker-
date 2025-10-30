@@ -4,7 +4,7 @@ header('Content-Type: application/json');
 
 $data = [];
 
-$query = "
+$stmt = $conn->prepare("
     SELECT 
         b.id, b.product_name, b.quantity, b.completed_at,
         GROUP_CONCAT(CONCAT(i.item_name, ' (', bm.quantity_used, ')') SEPARATOR ', ') AS materials
@@ -14,9 +14,10 @@ $query = "
     WHERE b.status = 'completed' AND b.is_deleted = 0
     GROUP BY b.id, b.product_name, b.quantity, b.completed_at
     ORDER BY b.completed_at DESC
-";
+");
+$stmt->execute();
+$result = $stmt->get_result();
 
-$result = $conn->query($query);
 
 if ($result) {
     while ($row = $result->fetch_assoc()) {

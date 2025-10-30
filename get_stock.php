@@ -1,7 +1,8 @@
 <?php
 include 'backend/init.php';
 
-$result = $conn->query("
+// Main inventory + thresholds
+$stmt = $conn->prepare("
     SELECT 
         i.id, 
         i.item_name AS name, 
@@ -10,21 +11,30 @@ $result = $conn->query("
         t.threshold
     FROM inventory i
     LEFT JOIN stock_thresholds t ON i.id = t.item_id
-") or die($conn->error);
+");
+$stmt->execute();
+$result = $stmt->get_result();
 
 $items = [];
 
-while ($row = $result->fetch_assoc()) {
-    // Reserved quantity for this item (exclude deleted batches)
-    $reservedQuery = $conn->query("
-        SELECT SUM(quantity_reserved) AS total_reserved 
-        FROM batch_materials bm 
-        JOIN batches b ON bm.batch_id = b.id 
-        WHERE bm.stock_id = {$row['id']} 
-        AND b.is_deleted = 0
-    ");
+$reserved_stmt = $conn->prepare("
+    SELECT SUM(quantity_reserved) AS total_reserved 
+    FROM batch_materials bm 
+    JOIN batches b ON bm.batch_id = b.id 
+    WHERE bm.stock_id = ? 
+      AND b.is_deleted = 0
+");
 
-    $reserved = $reservedQuery->fetch_assoc()['total_reserved'] ?? 0;
+while ($row = $result->fetch_assoc()) {
+    $stock_id = $row['id'];
+
+    // Use prepared statement safely for reserved quantities
+    $reserved_stmt->bind_param("i", $stock_id);
+    $reserved_stmt->execute();
+    $reserved_res = $reserved_stmt->get_result();
+    $reserved_data = $reserved_res->fetch_assoc();
+    $reserved = $reserved_data['total_reserved'] ?? 0;
+
     $available = $row['quantity'] - $reserved;
 
     $items[$row['id']] = [

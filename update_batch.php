@@ -94,8 +94,14 @@ try {
     }
 
    // --- Notifications for batch start/completion ---
-$batch_info = $conn->query("SELECT product_name FROM batches WHERE id=$id")->fetch_assoc();
-$product_name = $batch_info['product_name'];
+// Fetch product_name securely
+$stmt = $conn->prepare("SELECT product_name FROM batches WHERE id = ?");
+$stmt->bind_param("i", $id);
+$stmt->execute();
+$batch_info = $stmt->get_result()->fetch_assoc();
+$stmt->close();
+
+$product_name = $batch_info['product_name'] ?? '';
 
 if ($status === 'in_progress' || $status === 'completed') {
     $notif_type = 'batch';

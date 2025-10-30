@@ -8,7 +8,10 @@ if (!isset($_SESSION['user_id']) || $_SESSION['is_admin'] != 1) {
 }
 
 // Fetch all users for the admin table
-$result = $conn->query("SELECT id, username, email, reset_requested FROM users");
+$stmt = $conn->prepare("SELECT id, username, email, reset_requested FROM users");
+$stmt->execute();
+$result = $stmt->get_result();
+$stmt->close();
 ?>
 
 <!DOCTYPE html>

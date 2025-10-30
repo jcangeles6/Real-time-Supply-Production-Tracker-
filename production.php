@@ -2,19 +2,59 @@
 include 'backend/init.php';
 
 // Dashboard Data
-$daily_batches = $conn->query("SELECT COUNT(*) as count 
+$daily_batches_stmt = $conn->prepare("
+    SELECT COUNT(*) as count 
     FROM batches 
     WHERE DATE(scheduled_at) = CURDATE() 
-      AND is_deleted = 0")->fetch_assoc()['count'];
-$in_progress = $conn->query("SELECT COUNT(*) as count FROM batches WHERE status = 'in_progress' AND is_deleted = 0")->fetch_assoc()['count'];
-$completed_today = $conn->query("SELECT COUNT(*) as count FROM batches WHERE status = 'completed' AND DATE(completed_at) = CURDATE()")->fetch_assoc()['count'];
-$ingredients_needed = $conn->query("SELECT COUNT(*) as count FROM requests WHERE status = 'pending'")->fetch_assoc()['count'];
+      AND is_deleted = 0
+");
+$daily_batches_stmt->execute();
+$daily_batches = $daily_batches_stmt->get_result()->fetch_assoc()['count'];
 
-// Filter
+$in_progress_stmt = $conn->prepare("
+    SELECT COUNT(*) as count 
+    FROM batches 
+    WHERE status = 'in_progress' AND is_deleted = 0
+");
+$in_progress_stmt->execute();
+$in_progress = $in_progress_stmt->get_result()->fetch_assoc()['count'];
+
+$completed_today_stmt = $conn->prepare("
+    SELECT COUNT(*) as count 
+    FROM batches 
+    WHERE status = 'completed' AND DATE(completed_at) = CURDATE()
+");
+$completed_today_stmt->execute();
+$completed_today = $completed_today_stmt->get_result()->fetch_assoc()['count'];
+
+$ingredients_stmt = $conn->prepare("
+    SELECT COUNT(*) as count 
+    FROM requests 
+    WHERE status = 'pending'
+");
+$ingredients_stmt->execute();
+$ingredients_needed = $ingredients_stmt->get_result()->fetch_assoc()['count'];
+
+// Filter (SECURE)
 $status_filter = $_GET['status_filter'] ?? 'all';
-$where = ($status_filter != 'all') ? "AND status='$status_filter'" : '';
 
-$batches = $conn->query("SELECT * FROM batches WHERE is_deleted = 0 $where ORDER BY scheduled_at DESC");
+if ($status_filter !== 'all') {
+    $batches_stmt = $conn->prepare("
+        SELECT * FROM batches 
+        WHERE is_deleted = 0 AND status = ? 
+        ORDER BY scheduled_at DESC
+    ");
+    $batches_stmt->bind_param("s", $status_filter);
+} else {
+    $batches_stmt = $conn->prepare("
+        SELECT * FROM batches 
+        WHERE is_deleted = 0 
+        ORDER BY scheduled_at DESC
+    ");
+}
+$batches_stmt->execute();
+$batches = $batches_stmt->get_result();
+
 if (!$batches) die("SQL Error: " . $conn->error);
 ?>
 
@@ -188,21 +228,23 @@ if (!$batches) die("SQL Error: " . $conn->error);
                 <?php while ($row = $batches->fetch_assoc()): ?>
                     <?php
                     $batch_id = $row['id'];
-                    $materials_res = $conn->query("
-            SELECT i.id AS stock_id, i.item_name, i.quantity AS current_stock,
-                bm.quantity_used, bm.quantity_reserved
-                FROM batch_materials bm
-                JOIN inventory i ON bm.stock_id = i.id
-                WHERE bm.batch_id = $batch_id
-            ");
+                    $stmt = $conn->prepare("
+                        SELECT i.id AS stock_id, i.item_name, i.quantity AS current_stock,
+                            bm.quantity_used, bm.quantity_reserved
+                        FROM batch_materials bm
+                        JOIN inventory i ON bm.stock_id = i.id
+                        WHERE bm.batch_id = ?
+                    ");
+                    $stmt->bind_param("i", $batch_id);
+                    $stmt->execute();
+                    $materials_res = $stmt->get_result();
 
                     $materials = [];
                     $startDisabled = false;
 
                     while ($mat = $materials_res->fetch_assoc()) {
-                        $needed_total = $mat['quantity_used']; // just the quantity inputted per item
+                        $needed_total = $mat['quantity_used'];
                         $after = $mat['current_stock'] - max($needed_total - $mat['quantity_reserved'], 0);
-
 
                         if ($after < 0) $startDisabled = true;
 
@@ -215,6 +257,7 @@ if (!$batches) die("SQL Error: " . $conn->error);
                             'after' => $after
                         ];
                     }
+                    $stmt->close();
                     ?>
                     <tr>
                         <td><?= $row['id'] ?></td>
