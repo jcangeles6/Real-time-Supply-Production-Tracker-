@@ -42,6 +42,7 @@ $stmt->execute();
 $stockResult = $stmt->get_result();
 $stmt->close();
 
+
 // Admin: fetch all requests
 $sql = "SELECT id, user_id, ingredient_name, quantity, notes, unit, status, requested_at 
         FROM requests 
@@ -86,10 +87,10 @@ if ($result->num_rows > 0) {
 
   <div class="sidebar">
     <h2>🌸 BloomLux Requests 🌸</h2>
-    <a href="../admin_dashboard.php">🔙 Back to Dashboard </a>
-    <a href="../my_requests.php">📋 All Requests</a>
-    <a href="add_stock.php">📦 Add Stock</a>
-    <a href="../logout.php">🚪 Logout</a>
+    <a href="admin_dashboard.php">🌸 Back to Dashboard 🌸</a>
+    <a href="my_requests.php">📋 All Requests</a>
+    <a href="backend/add_stock.php">📦 Add Stock</a>
+    <a href="logout.php">🚪 Logout</a>
   </div>
 
   <div class="main">
@@ -178,9 +179,6 @@ if ($result->num_rows > 0) {
       <?php endif; ?>
     </div>
   </div>
-
-  <script src="js/my-request-form.js"></script>
-
   <!-- Low Stock Modal -->
   <div id="lowStockModal" class="modal">
     <div class="modal-content">
@@ -189,6 +187,13 @@ if ($result->num_rows > 0) {
       <button class="close-btn flash-btn" onclick="closeLowStockModal()">OK</button>
     </div>
   </div>
+
+  <!-- 🔊 Alert Sound -->
+  <audio id="lowStockSound" src="alert.mp3" preload="auto"></audio>
+
+  <!-- ✅ Move script here -->
+  <script src="js/my-request-form.js"></script>
+
 
 
 </body>

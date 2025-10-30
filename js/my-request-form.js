@@ -22,48 +22,59 @@ function closeLowStockModal() {
 
 async function checkLowStock() {
     try {
+        const modal = document.getElementById('lowStockModal');
+        const list = document.getElementById('lowStockList');
+
+        // 🔒 If modal is already open, just skip everything — don't touch it
+        if (modal.style.display === 'block') return;
+
         const res = await fetch('get_stock.php');
         const data = await res.json();
         if (!data.success) return;
 
-        const list = document.getElementById('lowStockList');
-        list.innerHTML = '';
+        const lowStockItems = Object.values(data.items || []).filter(
+            item => item.quantity <= item.threshold
+        );
 
-        const lowStockItems = Object.values(data.items || []).filter(item => item.quantity <= item.threshold);
-
-        // Only alert for new low-stock items
+        // Only alert for new low-stock items not seen before
         const newAlerts = lowStockItems.filter(item => !alreadyAlerted[item.name]);
+        if (newAlerts.length === 0) return;
 
-        if (newAlerts.length > 0) {
-            newAlerts.forEach(item => alreadyAlerted[item.name] = true);
+        // ✅ Build the alert list (once per new set)
+        list.innerHTML = '';
+        newAlerts.forEach(item => alreadyAlerted[item.name] = true);
 
-            lowStockItems.forEach(item => {
-                const li = document.createElement('li');
-                li.innerHTML = `<span class="item-name">${item.name}</span>
-                                <span class="stock-info">Available: <span class="qty">${item.quantity}</span> / Threshold: <span class="threshold">${item.threshold}</span></span>`;
-                list.appendChild(li);
-            });
+        lowStockItems.forEach(item => {
+            const li = document.createElement('li');
+            li.innerHTML = `<span class="item-name">${item.name}</span>
+                            <span class="stock-info">
+                                Available: <span class="qty">${item.quantity}</span> /
+                                Threshold: <span class="threshold">${item.threshold}</span>
+                            </span>`;
+            list.appendChild(li);
+        });
 
-            const modal = document.getElementById('lowStockModal');
-            modal.style.display = 'block';
+        // 🔔 Show modal — stays visible until user closes it
+        modal.style.display = 'block';
 
-            const sound = document.getElementById('lowStockSound');
-            let playCount = 0, volume = 0.2;
-            sound.volume = volume;
-            sound.currentTime = 0;
+        // 🔊 Play alert sound up to 3x
+        const sound = document.getElementById('lowStockSound');
+        let playCount = 0, volume = 0.2;
+        sound.volume = volume;
+        sound.currentTime = 0;
 
-            const playInterval = setInterval(() => {
-                sound.volume = Math.min(volume, 1);
-                sound.play();
-                volume += 0.2;
-                playCount++;
-                if (playCount >= 3) clearInterval(playInterval);
-            }, 1200);
-        }
+        const playInterval = setInterval(() => {
+            sound.volume = Math.min(volume, 1);
+            sound.play();
+            volume += 0.2;
+            playCount++;
+            if (playCount >= 3) clearInterval(playInterval);
+        }, 1200);
     } catch (err) {
         console.error('Error fetching stock:', err);
     }
 }
+
 
 async function updateRequests() {
     try {
@@ -80,7 +91,7 @@ async function updateRequests() {
         };
 
         const summaryDiv = document.querySelector('.summary');
-        summaryDiv.textContent = `Total Requests: ${summary.total} | Pending: ${summary.pending} | Approved: ${summary.approved} | Denied: ${summary.denied}`;
+        summaryDiv.textContent = 'Total Requests: ${summary.total} | Pending: ${summary.pending} | Approved: ${summary.approved} | Denied: ${summary.denied}';
 
         const table = document.getElementById('requestsTable');
         if (!table) return;

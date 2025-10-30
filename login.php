@@ -50,7 +50,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             exit();
         } else {
             $failed_attempts++;
-            if ($failed_attempts >= 5) {
+            if ($failed_attempts >= 3) {
                 $lock_time = date("Y-m-d H:i:s", strtotime("+5 minutes"));
                 $update_stmt = $conn->prepare("
                     UPDATE users 
