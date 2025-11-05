@@ -225,7 +225,7 @@
         }
 
         h1 {
-            color: #fff;
+            color: #000000;
             text-align: center;
             font-weight: 700;
             margin-bottom: 5px;
@@ -234,44 +234,9 @@
 
         #clock {
             text-align: center;
-            color: #fff;
+            color: #000000;
             font-weight: 500;
             margin-bottom: 30px;
-        }
-
-        .dashboard {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 20px;
-            justify-content: center;
-        }
-
-        .card {
-            background: var(--card);
-            border-radius: 16px;
-            box-shadow: var(--shadow);
-            text-align: center;
-            padding: 25px;
-            width: 300px;
-            transition: 0.3s ease;
-            position: relative;
-        }
-
-        .card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
-        }
-
-        .card h2 {
-            color: var(--highlight);
-            margin: 0 0 10px;
-            font-weight: 600;
-        }
-
-        .card p {
-            margin: 0 0 15px;
-            color: var(--text);
-            font-size: 15px;
         }
 
         .btn {
@@ -298,7 +263,7 @@
             width: 100%;
             height: 20px;
             border-radius: 22px;
-            color: #fff;
+            color: var(--bg);
             border: 2px solid;
             position: relative;
             margin: 10px 0;
@@ -518,13 +483,13 @@
         }
 
         .card h2 {
-            color: #fff;
+            color: #000000;
             margin: 0 0 10px;
             font-weight: 700;
         }
 
         .card p {
-            color: #fff;
+            color: #ffffff;
             margin: 0 0 15px;
         }
 

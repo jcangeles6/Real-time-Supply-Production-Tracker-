@@ -33,29 +33,45 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const allNotifs = [];
 
-            stockData.items.forEach(item => {
-                allNotifs.push({
-                    id: `stock-${item.id}`,
-                    text: item.quantity > 0
-                        ? `⚠️ ${item.name} stock is low! (Available: ${item.quantity})`
-                        : `❌ ${item.name} is out of stock!`,
-                    timestamp: new Date().toISOString(),
-                    type: 'low-stock',
-                    isUnread: true
-                });
-            });
+stockData.items.forEach(item => {
+    if (item.status === 'low') {
+        allNotifs.push({
+            id: `stock-${item.id}`,
+            text: `⚠️ ${item.name} stock is low! (Available: ${item.quantity})`,
+            timestamp: new Date().toISOString(),
+            type: 'low-stock',
+            isUnread: true
+        });
+    } else if (item.status === 'out') {
+        allNotifs.push({
+            id: `stock-${item.id}`,
+            text: `❌ ${item.name} is out of stock!`,
+            timestamp: new Date().toISOString(),
+            type: 'out-stock',
+            isUnread: true
+        });
+    }
+});
 
-            dbData.notifications.forEach(n => {
-                if (n.type === 'deleted') return;
-                allNotifs.push({
-                    id: n.user_notification_id,
-                    text: n.message,
-                    timestamp: n.created_at,
-                    type: n.type,
-                    batchId: n.batch_id,
-                    isUnread: n.is_read == 0
-                });
-            });
+dbData.notifications.forEach(n => {
+    if (n.type === 'deleted') return;
+
+    let text = n.message;
+    if (n.type === 'expiring') {
+        text = `${n.message}`; // expiring soon
+    } else if (n.type === 'expired') {
+        text = `${n.message}`; // expired
+    }
+
+    allNotifs.push({
+        id: n.user_notification_id,
+        text,
+        timestamp: n.created_at,
+        type: n.type,
+        batchId: n.batch_id,
+        isUnread: n.is_read == 0
+    });
+});
 
             allNotifs.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
 

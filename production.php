@@ -35,7 +35,7 @@ $ingredients_stmt = $conn->prepare("
 $ingredients_stmt->execute();
 $ingredients_needed = $ingredients_stmt->get_result()->fetch_assoc()['count'];
 
-// Filter (SECURE)
+// Filter
 $status_filter = $_GET['status_filter'] ?? 'all';
 
 if ($status_filter !== 'all') {
@@ -100,6 +100,30 @@ if (!$batches) die("SQL Error: " . $conn->error);
         function showStockAlert() {
             alert("⚠️ Insufficient stock to start this batch!");
         }
+
+        // Material Breakdown modal
+        function showBreakdown(batchId) {
+            fetch('backend/production_page/material_breakdown.php?batch_id=' + batchId)
+                .then(res => res.json())
+                .then(data => {
+                    const content = document.getElementById('breakdownContent');
+                    content.innerHTML = '';
+                    if (data.length === 0) {
+                        content.innerHTML = '<p>No material details found.</p>';
+                    } else {
+                        data.forEach(m => {
+                            const div = document.createElement('div');
+                            div.innerHTML = `<span style="color:${m.color}; font-weight:bold;">[${m.status}]</span> ${m.name}: Batch #${m.inventory_batch_id} ${m.expiration_date ? `(${m.expiration_date})` : ''} → ${m.quantity_used} used`;
+                            content.appendChild(div);
+                        });
+                    }
+                    document.getElementById('breakdownModal').style.display = 'flex';
+                });
+        }
+
+        function closeBreakdownModal() {
+            document.getElementById('breakdownModal').style.display = 'none';
+        }
     </script>
 </head>
 
@@ -117,7 +141,35 @@ if (!$batches) die("SQL Error: " . $conn->error);
         <h1>🌸 BloomLux Production Dashboard 🌸</h1>
         <div id="clock"></div>
 
-        <!-- 🌸 New Container for Dashboard Cards -->
+
+        <!-- Batch Error Modal -->
+        <div id="batchErrorModal" class="modal">
+            <div class="modal-content">
+                <h3 style="color:#b22222;">⚠️ Warning</h3>
+                <p id="batchErrorMessage"></p>
+                <button onclick="closeBatchErrorModal()" class="btn" style="background:#6aa84f;">OK</button>
+            </div>
+        </div>
+
+        <?php if (isset($_SESSION['batch_error'])): ?>
+            <script>
+                function showBatchErrorModal(message) {
+                    const modal = document.getElementById('batchErrorModal');
+                    document.getElementById('batchErrorMessage').innerText = message;
+                    modal.style.display = 'flex';
+                }
+
+                function closeBatchErrorModal() {
+                    document.getElementById('batchErrorModal').style.display = 'none';
+                }
+
+                // Show modal on page load
+                showBatchErrorModal("<?= addslashes($_SESSION['batch_error']) ?>");
+            </script>
+            <?php unset($_SESSION['batch_error']); ?>
+        <?php endif; ?>
+
+
         <div class="container-cards">
             <div class="dashboard">
                 <div class="card">
@@ -128,7 +180,6 @@ if (!$batches) die("SQL Error: " . $conn->error);
                 <div class="card loading">
                     <h2>In Progress</h2>
                     <div class="spinner"></div>
-                    <h2></h2>
                     <p><?php echo $in_progress; ?> Ongoing</p>
                 </div>
                 <div class="card">
@@ -144,7 +195,6 @@ if (!$batches) die("SQL Error: " . $conn->error);
             </div>
         </div>
 
-        <!-- 🌸 New Container for Table -->
         <div class="container-table">
             <div class="controls">
                 <input type="text" id="searchBatch" placeholder="🔍 Search batch..." onkeyup="filterTable()">
@@ -160,81 +210,26 @@ if (!$batches) die("SQL Error: " . $conn->error);
 
             <table>
                 <tr>
-                    <th>
-                        ID
-                        <br>
-                        <span class="tooltip">
-                            <i class="fa fa-info-circle"></i>
-                            <span class="tooltip-text">Batch ID</span>
-                        </span>
-                    </th>
-                    <th>
-                        Product
-                        <br>
-                        <span class="tooltip">
-                            <i class="fa fa-info-circle"></i>
-                            <span class="tooltip-text">Name of the product</span>
-                        </span>
-                    </th>
-                    <th>
-                        Current Stock
-                        <br>
-                        <span class="tooltip">
-                            <i class="fa fa-info-circle"></i>
-                            <span class="tooltip-text">Number of items currently in inventory</span>
-                        </span>
-                    </th>
-                    <th>
-                        Material Status
-                        <br>
-                        <span class="tooltip">
-                            <i class="fa fa-info-circle"></i>
-                            <span class="tooltip-text">Reserved or used material for this batch</span>
-                        </span>
-                    </th>
-                    <th>
-                        Status
-                        <br>
-                        <span class="tooltip">
-                            <i class="fa fa-info-circle"></i>
-                            <span class="tooltip-text">Current production status</span>
-                        </span>
-                    </th>
-                    <th>
-                        Scheduled At
-                        <br>
-                        <span class="tooltip">
-                            <i class="fa fa-info-circle"></i>
-                            <span class="tooltip-text">When the batch is scheduled</span>
-                        </span>
-                    </th>
-                    <th>
-                        Completed At
-                        <br>
-                        <span class="tooltip">
-                            <i class="fa fa-info-circle"></i>
-                            <span class="tooltip-text">When the batch was completed</span>
-                        </span>
-                    </th>
-                    <th>
-                        Actions
-                        <br>
-                        <span class="tooltip">
-                            <i class="fa fa-info-circle"></i>
-                            <span class="tooltip-text">Available actions for this batch</span>
-                        </span>
-                    </th>
+                    <th>ID</th>
+                    <th>Product</th>
+                    <th>Current Stock</th>
+                    <th>Material Status</th>
+                    <th>Status</th>
+                    <th>Scheduled At</th>
+                    <th>Completed At</th>
+                    <th>Actions</th>
                 </tr>
+
                 <?php while ($row = $batches->fetch_assoc()): ?>
                     <?php
                     $batch_id = $row['id'];
                     $stmt = $conn->prepare("
-                        SELECT i.id AS stock_id, i.item_name, i.quantity AS current_stock,
-                            bm.quantity_used, bm.quantity_reserved
-                        FROM batch_materials bm
-                        JOIN inventory i ON bm.stock_id = i.id
-                        WHERE bm.batch_id = ?
-                    ");
+   SELECT i.id AS stock_id, i.item_name, i.quantity AS current_stock,
+    bm.quantity_used, bm.quantity_reserved
+    FROM batch_materials bm
+    JOIN inventory i ON bm.stock_id = i.id
+    WHERE bm.batch_id = ?
+");
                     $stmt->bind_param("i", $batch_id);
                     $stmt->execute();
                     $materials_res = $stmt->get_result();
@@ -245,7 +240,6 @@ if (!$batches) die("SQL Error: " . $conn->error);
                     while ($mat = $materials_res->fetch_assoc()) {
                         $needed_total = $mat['quantity_used'];
                         $after = $mat['current_stock'] - max($needed_total - $mat['quantity_reserved'], 0);
-
                         if ($after < 0) $startDisabled = true;
 
                         $materials[] = [
@@ -259,6 +253,7 @@ if (!$batches) die("SQL Error: " . $conn->error);
                     }
                     $stmt->close();
                     ?>
+
                     <tr>
                         <td><?= $row['id'] ?></td>
                         <td>
@@ -282,21 +277,18 @@ if (!$batches) die("SQL Error: " . $conn->error);
                         </td>
                         <td>
                             <?php
-                            if (!empty($materials)) {
+                            if ($row['status'] === 'completed') {
+                                echo "<span style='color:gray;'>—</span>";
+                            } elseif ($row['status'] === 'in_progress') {
+                                echo "<button class='btn' onclick='showBreakdown({$row['id']})'>🔍 Breakdown</button>";
+                            } elseif (!empty($materials)) {
                                 foreach ($materials as $m) {
-                                    if ($row['status'] === 'scheduled') {
-                                        // Scheduled → Reserved
-                                        echo "<span style='font-family:Poppins,sans-serif;'>{$m['name']}: Reserved (<b style='color:orange'>{$m['needed']}</b>)</span><br>";
-                                    } elseif ($row['status'] === 'in_progress') {
-                                        // In Progress → Used
-                                        echo "<span style='font-family:Poppins,sans-serif;'>{$m['name']}: Used (<b style='color:green'>{$m['needed']}</b>)</span><br>";
-                                    } else {
-                                        // Completed
-                                        echo "<span style='font-family:Poppins,sans-serif;'>—</span>";
-                                    }
+                                    $status_text = ($row['status'] === 'scheduled') ? 'Reserved' : 'Used';
+                                    $status_color = ($row['status'] === 'scheduled') ? 'orange' : 'green';
+                                    echo "<span style='font-family:Poppins,sans-serif;'>{$m['name']}: {$status_text} (<b style='color:{$status_color}'>{$m['needed']}</b>)</span><br>";
                                 }
                             } else {
-                                echo "<span style='font-family:Poppins,sans-serif;'>—</span>";
+                                echo "<span style='color:red;'>No materials linked</span>";
                             }
                             ?>
                         </td>
@@ -322,13 +314,10 @@ if (!$batches) die("SQL Error: " . $conn->error);
                         </td>
                     </tr>
                 <?php endwhile; ?>
-            </table>                    
+            </table>
         </div>
 
-        <div style="text-align:center;margin-top:15px;">
-            <a href="production.php" class="btn">🔄 Refresh</a>
-        </div>
-
+        <!-- Delete Modal -->
         <div id="deleteModal" class="modal">
             <div class="modal-content">
                 <p>Are you sure you want to delete this batch?</p>
@@ -336,31 +325,17 @@ if (!$batches) die("SQL Error: " . $conn->error);
                 <button id="confirmDeleteBtn" class="btn" style="background:#b22222;">Delete</button>
             </div>
         </div>
-    </div>
-    <script>
-        document.querySelectorAll('.tooltip').forEach(t => {
-            const icon = t.querySelector('i');
-            const bubble = t.querySelector('.tooltip-text');
 
-            icon.addEventListener('mouseenter', () => {
-                const rect = icon.getBoundingClientRect();
-            });
-        });
-    </script>
+        <!-- Material Breakdown Modal -->
+        <div id="breakdownModal" class="modal">
+            <div class="modal-content">
+                <h3>Material Breakdown</h3>
+                <div id="breakdownContent"></div>
+                <button onclick="closeBreakdownModal()" class="btn">Close</button>
+            </div>
+        </div>
+
+    </div>
 </body>
 
-<?php if (!empty($_SESSION['batch_error'])): ?>
-    <script>
-        const modal = document.createElement('div');
-        modal.style = "position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);display:flex;justify-content:center;align-items:center;z-index:999;";
-        modal.innerHTML = `
-        <div style="background:white;padding:20px;border-radius:15px;text-align:center;max-width:400px;">
-            <p><?php echo $_SESSION['batch_error']; ?></p>
-            <button onclick="this.parentElement.parentElement.remove();" style="margin-top:10px;padding:8px 15px;border:none;border-radius:10px;background:#c47a3f;color:white;cursor:pointer;">OK</button>
-        </div>
-    `;
-        document.body.appendChild(modal);
-    </script>
-<?php unset($_SESSION['batch_error']);
-endif; ?>
 </html>

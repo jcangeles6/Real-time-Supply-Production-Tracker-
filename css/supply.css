@@ -421,12 +421,12 @@ tr:hover {
 #notif-dropdown {
     display: none;
     position: absolute;
-    right: 35px;
-    top: 50px;
+    right: 90px;
+    top: 90px;
     width: 350px;
     max-height: 450px;
     overflow-y: auto;
-    background: #fff;
+    background: linear-gradient(135deg, #2e1a2eff, #ffb3ecff, #2e1a2eff);
     border-radius: 10px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
     z-index: 100;

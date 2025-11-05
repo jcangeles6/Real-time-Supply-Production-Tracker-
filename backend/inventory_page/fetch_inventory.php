@@ -10,21 +10,26 @@ include __DIR__ . '/../init.php';
 
 try {
     $stmt = $conn->prepare("
-        SELECT 
-            i.id,
-            i.item_name,
-            i.unit,
-            i.created_at,
-            i.updated_at,
-            i.quantity - IFNULL(SUM(CASE WHEN b.is_deleted = 0 THEN bm.quantity_reserved ELSE 0 END), 0) AS available_quantity,
-            t.threshold
-        FROM inventory i
-        LEFT JOIN batch_materials bm ON bm.stock_id = i.id
-        LEFT JOIN batches b ON bm.batch_id = b.id
-        LEFT JOIN stock_thresholds t ON i.id = t.item_id
-        GROUP BY i.id
-        ORDER BY available_quantity DESC, i.item_name ASC
-    ");
+    SELECT 
+        i.id,
+        i.item_name,
+        i.unit,
+        i.created_at,
+        i.updated_at,
+        COALESCE(SUM(
+            CASE 
+                WHEN (ib.expiration_date IS NULL OR ib.expiration_date >= CURDATE()) 
+                THEN ib.quantity 
+                ELSE 0 
+            END
+        ), 0) AS available_quantity,
+        t.threshold
+    FROM inventory i
+    LEFT JOIN inventory_batches ib ON ib.inventory_id = i.id
+    LEFT JOIN stock_thresholds t ON i.id = t.item_id
+    GROUP BY i.id
+    ORDER BY available_quantity DESC, i.item_name ASC
+");
     $stmt->execute();
     $result = $stmt->get_result();
 

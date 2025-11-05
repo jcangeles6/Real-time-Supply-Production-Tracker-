@@ -106,14 +106,7 @@
                 // Initial load + auto refresh every 10s
                 updateHomeStats();
                 setInterval(updateHomeStats, 10000);
-
-                function updateClock() {
-                const now = new Date();
-                document.getElementById('clock').innerText =
-                    "📅 " + now.toLocaleDateString() + " | ⏰ " + now.toLocaleTimeString();
-                }
-                setInterval(updateClock, 1000);
-                window.onload = updateClock;
+                
             </script>
     </body>
 

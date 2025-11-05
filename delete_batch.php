@@ -9,7 +9,7 @@ $batch_id = intval($_GET['id']);
 try {
     $conn->begin_transaction();
 
-    // Fetch batch info and status
+    // Fetch batch info
     $stmt = $conn->prepare("SELECT id, status FROM batches WHERE id = ?");
     $stmt->bind_param("i", $batch_id);
     $stmt->execute();
@@ -19,26 +19,38 @@ try {
     if (!$batch) throw new Exception("❌ Batch not found.");
     if ($batch['status'] === 'completed') throw new Exception("⚠️ Completed batches cannot be deleted.");
 
-    // Fetch batch materials
-    $stmt = $conn->prepare("
-        SELECT bm.stock_id, bm.quantity_used
-        FROM batch_materials bm
-        WHERE bm.batch_id = ? FOR UPDATE
-    ");
-    $stmt->bind_param("i", $batch_id);
-    $stmt->execute();
-    $materials = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
-    $stmt->close();
+    // ✅ Refund all material usage (if started)
+    if ($batch['status'] === 'in_progress') {
+        $stmt = $conn->prepare("
+            SELECT stock_id, inventory_batch_id, quantity_used
+            FROM batch_material_usage
+            WHERE batch_id = ?
+            FOR UPDATE
+        ");
+        $stmt->bind_param("i", $batch_id);
+        $stmt->execute();
+        $usages = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+        $stmt->close();
 
-    // Refund stock if in_progress
-    foreach ($materials as $mat) {
-        $refund_qty = ($batch['status'] === 'in_progress') ? $mat['quantity_used'] : 0;
-        if ($refund_qty > 0) {
+        foreach ($usages as $use) {
+            // Refund per inventory batch
+            $stmt = $conn->prepare("UPDATE inventory_batches SET quantity = quantity + ? WHERE id = ?");
+            $stmt->bind_param("di", $use['quantity_used'], $use['inventory_batch_id']);
+            $stmt->execute();
+            $stmt->close();
+
+            // Refund main inventory
             $stmt = $conn->prepare("UPDATE inventory SET quantity = quantity + ? WHERE id = ?");
-            $stmt->bind_param("ii", $refund_qty, $mat['stock_id']);
+            $stmt->bind_param("di", $use['quantity_used'], $use['stock_id']);
             $stmt->execute();
             $stmt->close();
         }
+
+        // Clear usage records
+        $stmt = $conn->prepare("DELETE FROM batch_material_usage WHERE batch_id = ?");
+        $stmt->bind_param("i", $batch_id);
+        $stmt->execute();
+        $stmt->close();
     }
 
     // Delete batch materials
@@ -61,7 +73,7 @@ try {
     }
     $stmt->close();
 
-    // Hide related notifications using batch_id
+    // Mark notifications canceled
     $updateNotif = $conn->prepare("
         UPDATE notifications
         SET type = 'deleted', message = CONCAT(message, ' (Canceled)')

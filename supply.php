@@ -242,40 +242,40 @@ $stmt->close();
     // --- Inventory ---
     const invTableBody = document.querySelector('.table-container table');
 
-    const fetchInventory = async () => {
-        try {
-            const res = await fetch('backend/get_inventory.php');
-            const data = await res.json();
+const fetchInventory = async () => {
+    try {
+        const res = await fetch('backend/production_page/get_inventory_low_stock.php');
+        const data = await res.json();
 
-            // Clear old rows except header
-            invTableBody.querySelectorAll('tr:not(:first-child)').forEach(r => r.remove());
+        // Make sure we have items array
+        const items = data.items || [];
 
-            data.forEach(item => {
-                let quantity = parseInt(item.quantity);
-                let status = item.status.toLowerCase();
+        // Clear old rows except header
+        invTableBody.querySelectorAll('tr:not(:first-child)').forEach(r => r.remove());
 
-                // Determine display status
-                let displayStatus = status;
+        items.forEach(item => {
+            let quantity = parseInt(item.quantity);
+            let status = (item.status || 'available').toLowerCase();
+            let displayStatus = status;
 
-                // Requestable if quantity > 0
-                let isRequestable = quantity > 0;
+            const isRequestable = quantity > 0;
 
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td>${item.item_name}</td>
-                    <td>${item.quantity}</td>
-                    <td>${item.unit}</td>
-                    <td><span class="badge ${displayStatus}">
-                        ${displayStatus.charAt(0).toUpperCase() + displayStatus.slice(1)}
-                    </span></td>
-                    <td>${isRequestable ? `<a href="request_form.php?ingredient=${encodeURIComponent(item.item_name)}" class="btn">Request</a>` : '<span style="color:#FF0000;">Out of Stock</span>'}</td>
-                `;
-                invTableBody.appendChild(tr);
-            });
-        } catch (err) {
-            console.error('Failed to fetch inventory:', err);
-        }
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${item.name}</td>
+                <td>${quantity}</td>
+                <td>${item.unit || 'kg'}</td>
+                <td><span class="badge ${displayStatus}">
+                    ${displayStatus.charAt(0).toUpperCase() + displayStatus.slice(1)}
+                </span></td>
+                <td>${isRequestable ? `<a href="request_form.php?ingredient=${encodeURIComponent(item.name)}" class="btn">Request</a>` : '<span style="color:#FF0000;">Out of Stock</span>'}</td>
+            `;
+            invTableBody.appendChild(tr);
+        });
+    } catch (err) {
+        console.error('Failed to fetch inventory:', err);
     }
+}
 
     // --- Requests ---
     const requestTableBody = document.querySelector('.request-table');

@@ -1,5 +1,4 @@
 <?php
-
 // ADMIN UPDATE FORM
 
 session_start();
@@ -53,48 +52,75 @@ $available_result = $available_query->get_result();
 $available = $available_result->fetch_assoc();
 $available_query->close();
 
-$real_available = $available ? (int)$available['available_quantity'] : (int)$stock['quantity'];
+$real_available = $available ? (float)$available['available_quantity'] : (float)$stock['quantity'];
 
 // Handle POST (update)
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $data = $_POST;
+    $item_name = $_POST['item_name'] ?? '';
+    $add_quantity = floatval($_POST['add_quantity'] ?? 0);
+    $unit = $_POST['unit'] ?? '';
+    $threshold = intval($_POST['threshold'] ?? 10);
 
-    if (empty($data['item_name']) || !isset($data['quantity']) || empty($data['unit'])) {
+    if (empty($item_name) || empty($unit)) {
         echo "❌ Missing required fields!";
         exit();
     }
 
-    $item_name = $data['item_name'];
-    $quantity = floatval($data['quantity']);
-    $unit = $data['unit'];
-    $threshold = intval($data['threshold'] ?? 10);
+    // Fetch latest inventory total
+    $inv_stmt = $conn->prepare("SELECT quantity FROM inventory WHERE id = ?");
+    $inv_stmt->bind_param("i", $id);
+    $inv_stmt->execute();
+    $inv_result = $inv_stmt->get_result()->fetch_assoc();
+    $current_total = $inv_result['quantity'] ?? 0;
+    $inv_stmt->close();
+
+    // 🧮 Compute new total (add replenishment)
+    $new_total = $current_total + $add_quantity;
 
     // Determine new status
-    $status = ($quantity == 0) ? 'out' : (($quantity <= $threshold) ? 'low' : 'available');
+    $status = ($new_total == 0) ? 'out' : (($new_total <= $threshold) ? 'low' : 'available');
 
-    $old_quantity = floatval($stock['quantity']);
-
-    // Update inventory
+    // Update inventory record
     $update = $conn->prepare("
         UPDATE inventory 
-        SET item_name=?, quantity=?, unit=?, status=?, updated_at=NOW() 
+        SET item_name=?, quantity=?, unit=?, status=?, updated_at=NOW()
         WHERE id=?
     ");
-    $update->bind_param("sdssi", $item_name, $quantity, $unit, $status, $id);
+    $update->bind_param("sdssi", $item_name, $new_total, $unit, $status, $id);
     $update->execute();
     $update->close();
 
-    // ✅ Always notify when quantity increases (no duplicate limiter)
-    if ($quantity > $old_quantity) {
-        $added = $quantity - $old_quantity;
-        $notif_msg = "♻️ $item_name stock replenished with {$added} {$unit}!";
+    // 🔹 Insert new batch for this replenishment
+    if ($add_quantity > 0) {
+        $expiration_date = !empty($_POST['expiration_date']) ? $_POST['expiration_date'] : $stock['expiration_date'];
+
+        // Determine batch status based on expiration date
+        $today = date('Y-m-d');
+        if ($expiration_date < $today) {
+            $batch_status = 'Expired';
+        } else {
+            $batch_status = 'Fresh';
+        }
+
+        $batch_stmt = $conn->prepare("
+        INSERT INTO inventory_batches (inventory_id, quantity, expiration_date, status, created_at, updated_at)
+        VALUES (?, ?, ?, ?, NOW(), NOW())
+    ");
+        $batch_stmt->bind_param("idss", $id, $add_quantity, $expiration_date, $batch_status);
+        $batch_stmt->execute();
+        $batch_stmt->close();
+    }
+
+    // ✅ Notify only if there’s an actual addition
+    if ($add_quantity > 0) {
+        $notif_msg = "♻️ $item_name stock replenished with {$add_quantity} {$unit}!";
         $notif_type = "replenished";
 
-        // Insert new notification
+        // Insert notification
         $stmt = $conn->prepare("
-        INSERT INTO notifications (type, message, created_at)
-        VALUES (?, ?, NOW())
-    ");
+            INSERT INTO notifications (type, message, created_at)
+            VALUES (?, ?, NOW())
+        ");
         $stmt->bind_param("ss", $notif_type, $notif_msg);
         $stmt->execute();
         $notification_id = $stmt->insert_id;
@@ -102,15 +128,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // Notify all users
         $stmt2 = $conn->prepare("
-        INSERT IGNORE INTO user_notifications (user_id, notification_id, is_read)
-        SELECT id, ?, 0 FROM users
-    ");
+            INSERT IGNORE INTO user_notifications (user_id, notification_id, is_read)
+            SELECT id, ?, 0 FROM users
+        ");
         $stmt2->bind_param("i", $notification_id);
         $stmt2->execute();
         $stmt2->close();
     }
-    
-    // Redirect back to add_stock page after update
+
+    // Redirect back
     header("Location: add_stock.php");
     exit();
 }
@@ -135,15 +161,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <label>Item Name</label>
                 <input type="text" name="item_name" value="<?= htmlspecialchars($stock['item_name']); ?>" required>
 
-                <label>Stored Quantity</label>
+                <label>Add Quantity</label>
                 <input
                     type="number"
-                    name="quantity"
-                    id="quantityInput"
-                    value="<?= $real_available ?>"
+                    name="add_quantity"
+                    id="addQuantityInput"
+                    placeholder="Enter amount to add"
                     min="0"
                     step="any"
                     required>
+
+                <?php if ($stock['expiration_date'] !== null || ($stock['is_perishable'] ?? false)): ?>
+                    <label>
+                        <input type="checkbox" id="hasExpirationToggle" checked>
+                        This stock has an expiration date
+                    </label>
+
+                    <label id="expirationLabel">
+                        Expiration Date
+                        <input type="date" name="expiration_date" id="expirationDateInput" value="" required> <!-- empty so user can set new date -->
+                    </label>
+                <?php endif; ?>
 
                 <div class="indicator">
                     📦 <strong>Real Available Quantity:</strong>
@@ -151,6 +189,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <?= $real_available ?>
                     </span>
                 </div>
+
+                <div id="predictedDisplay" style="margin-top:8px; font-weight:bold; color:#555;"></div>
 
                 <label>Unit</label>
                 <select name="unit" required>
@@ -163,81 +203,66 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 <input type="hidden" name="threshold" id="thresholdInput" value="<?= $stock['threshold']; ?>">
                 <input type="hidden" name="status" id="statusInput" value="<?= $stock['status']; ?>">
-                <div id="statusDisplay" class="status-display"></div>
 
                 <button type="submit">Update Stock</button>
             </form>
         </div>
 
         <script>
-            const quantityInput = document.getElementById('quantityInput');
-            const statusInput = document.getElementById('statusInput');
-            const statusDisplay = document.getElementById('statusDisplay');
+            const addInput = document.getElementById('addQuantityInput');
             const realIndicator = document.querySelector('.indicator span');
+            const predictedDisplay = document.getElementById('predictedDisplay');
             const thresholdInput = parseInt(document.getElementById('thresholdInput').value) || 10;
 
-            function updateStatus() {
-                const qty = parseFloat(quantityInput.value);
-                let status = '';
-
-                if (isNaN(qty) || qty < 0) {
-                    status = '';
-                    statusDisplay.textContent = 'Enter a valid number';
-                    statusDisplay.className = 'status-display status-out';
-                    return;
-                }
-
-                if (qty === 0) {
-                    status = 'out';
-                    statusDisplay.textContent = 'Out of Stock';
-                    statusDisplay.className = 'status-display status-out';
-                } else if (qty <= thresholdInput) {
-                    status = 'low';
-                    statusDisplay.textContent = 'Low';
-                    statusDisplay.className = 'status-display status-low';
-                } else {
-                    status = 'available';
-                    statusDisplay.textContent = 'Available';
-                    statusDisplay.className = 'status-display status-available';
-                }
-
-                statusInput.value = status;
+            function updatePredicted() {
+                const addQty = parseFloat(addInput.value) || 0;
+                const currentReal = parseFloat(realIndicator.textContent) || 0;
+                const predicted = currentReal + addQty;
+                predictedDisplay.textContent = addQty > 0 ?
+                    `After replenishment: ${predicted.toFixed(2)} total` :
+                    '';
             }
 
-            quantityInput.addEventListener('input', updateStatus);
-            updateStatus();
+            addInput.addEventListener('input', updatePredicted);
 
-            // Auto-refresh real quantity every 5 seconds
+            // 🔁 Auto-refresh real quantity
             async function refreshRealQuantity() {
                 try {
                     const res = await fetch(`admin_page/fetch_real_quantity.php?id=<?= $id ?>`);
                     const data = await res.json();
                     if (data.success) {
                         const realQty = data.available_quantity;
-
-                        // ✅ Update the "📦 Real Available Quantity" label
                         realIndicator.textContent = realQty;
                         realIndicator.style.color = (realQty <= thresholdInput) ? 'red' : 'green';
-
-                        // ✅ Update Stored Quantity ONLY if user is not typing
-                        if (!quantityInput.matches(':focus')) {
-                            const currentValue = parseFloat(quantityInput.value);
-                            if (!isNaN(realQty) && realQty !== currentValue) {
-                                quantityInput.value = realQty;
-                                updateStatus(); // auto-update status display
-                            }
-                        }
-
+                        updatePredicted();
                     }
                 } catch (err) {
                     console.error('Error fetching real quantity:', err);
                 }
             }
 
-            // 🔥 Fetch once immediately when form opens
-            refreshRealQuantity();
+            const hasExpirationToggle = document.getElementById('hasExpirationToggle');
+            const expirationLabel = document.getElementById('expirationLabel');
+            const expirationInput = document.getElementById('expirationDateInput');
 
-            // 🔁 Then refresh every 5 seconds
+            if (hasExpirationToggle) { // only initialize if toggle exists
+                function toggleExpiration() {
+                    if (hasExpirationToggle.checked) {
+                        expirationLabel.style.display = 'block';
+                        expirationInput.required = true;
+                    } else {
+                        expirationLabel.style.display = 'none';
+                        expirationInput.required = false;
+                        expirationInput.value = ''; // clear input if toggled off
+                    }
+                }
+
+                hasExpirationToggle.addEventListener('change', toggleExpiration);
+                toggleExpiration(); // initialize on page load
+            }
+
+
+            refreshRealQuantity();
             setInterval(refreshRealQuantity, 5000);
         </script>
     </div>

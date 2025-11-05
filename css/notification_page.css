@@ -11,7 +11,7 @@
             font-family: 'Poppins', sans-serif;
             margin: 0;
             padding: 40px;
-            background: var(--bg);
+            background: url('https://thumbs.dreamstime.com/b/beautiful-colorful-meadow-wild-flowers-floral-background-landscape-purple-pink-sunset-blurred-soft-pastel-magical-332027305.jpg');
             color: var(--text);
             display: flex;
             flex-direction: column;
@@ -84,13 +84,13 @@
 
         #notifications-container {
             width: 100%;
-            max-width: 750px;
-            background: var(--card);
+            max-width: 850px;
+            background: linear-gradient(135deg, #ffb3ecff, #2e1a2eff, #ffb3ecff);
             border-radius: 20px;
             padding: 25px;
             box-shadow: var(--shadow);
             overflow-y: auto;
-            max-height: 75vh;
+            max-height: 66.5vh;
         }
 
         .notif-section {

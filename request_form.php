@@ -51,7 +51,8 @@ $inv_result = $stmt->get_result();
             display: flex;
             justify-content: center;
             align-items: center;
-            width: 100%;
+            margin: 0 auto;
+            width: 40%;
             min-height: calc(100vh - 120px);
             box-sizing: border-box;
         }
@@ -169,7 +170,6 @@ $inv_result = $stmt->get_result();
 
                     <button class="submit-btn" type="submit">Submit Request</button>
                 </form>
-                <a href="supply.php" class="back-link">⬅ Back to Supply</a>
             </div>
         </div>
     </div>

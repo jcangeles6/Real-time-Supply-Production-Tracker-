@@ -33,7 +33,7 @@ if (!isset($_SESSION['user_id'])) {
     <h1>🌸 BloomLux Admin Inventory Dashboard 🌸</h1>
 
     <div class="add-btn-container">
-      <button class="btn" onclick="toggleForm()">➕ Add Stock</button>
+      <button class="btn" onclick="toggleForm()">➕ Add Materials</button>
       <button class="btn" onclick="window.location.href='admin_reports.php'">📊 View Daily Report</button>
     </div>
 
@@ -57,7 +57,7 @@ if (!isset($_SESSION['user_id'])) {
 
     <!-- Add Stock Form -->
     <div id="addStockForm" class="form-box">
-      <h2>➕ Add Stock Item</h2>
+      <h2>➕ Add Item</h2>
       <div id="formMsg"></div>
       <form id="stockForm">
         <label>Item Name</label>
@@ -68,6 +68,33 @@ if (!isset($_SESSION['user_id'])) {
 
         <label>Threshold</label>
         <input type="number" name="threshold" id="thresholdInput" min="1" required>
+
+        <!-- Shelf Life Option -->
+        <div class="shelf-life-toggle">
+          <label class="switch">
+            <input type="checkbox" id="hasShelfLife" name="has_shelf_life">
+            <span class="slider"></span>
+          </label>
+          <span class="toggle-label">Has Shelf Life?</span>
+        </div>
+
+        <div id="expirationField" style="display:none;">
+  <label>Expiration Date</label>
+  <input type="date" id="expirationDate" name="expiration_date">
+
+  <!-- ➡ Near Expiry Days -->
+  <label>Near Expiry Threshold (days)</label>
+  <input type="number" id="nearExpiryDays" name="near_expiry_days" min="1" value="7">
+</div>
+
+        <script>
+          const hasShelfLifeCheckbox = document.getElementById('hasShelfLife');
+          const expirationField = document.getElementById('expirationField');
+
+          hasShelfLifeCheckbox.addEventListener('change', () => {
+            expirationField.style.display = hasShelfLifeCheckbox.checked ? 'block' : 'none';
+          });
+        </script>
 
         <label>Status</label>
         <span id="statusDisplay" class="status-display">Available</span>
@@ -189,17 +216,18 @@ if (!isset($_SESSION['user_id'])) {
         data.stocks.forEach(stock => {
           const tr = document.createElement('tr');
           tr.innerHTML = `
-            <td>${stock.id}</td>
-            <td>${stock.item_name}</td>
-            <td>${stock.quantity}</td>
-            <td>${stock.unit}</td>
-            <td class="status-${stock.status}">${getStatusText(stock.status)}</td>
-            <td>${formatTimestamp(stock.created_at)}</td>
-            <td>${formatTimestamp(stock.updated_at)}</td>
-            <td>
-              <button class="btn" onclick="window.location.href='update_stock.php?id=${stock.id}'">Edit</button>
-              <button class="btn btn-delete" onclick="showDeleteModal(${stock.id})">Delete</button>
-            </td>`;
+          <td>${stock.id}</td>
+          <td>${stock.item_name}</td>
+          <td>${stock.quantity}</td>
+          <td>${stock.unit}</td>
+          <td class="status-${stock.status}">${getStatusText(stock.status)}</td>
+          <td>${formatTimestamp(stock.created_at)}</td>
+          <td>${formatTimestamp(stock.updated_at)}</td>
+          <td>
+            <button class="btn" onclick="window.location.href='update_stock.php?id=${stock.id}'">Add Stock</button>
+            <button class="btn" onclick="window.location.href='view_stock.php?id=${stock.id}'">View Stock</button>
+            <button class="btn btn-delete" onclick="showDeleteModal(${stock.id})">Delete</button>
+          </td>`;
           tbody.appendChild(tr);
         });
         renderPagination(page, limit, data.total);
@@ -259,7 +287,14 @@ if (!isset($_SESSION['user_id'])) {
           headers: {
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify(formData)
+         body: JSON.stringify({
+  ...formData,
+  has_shelf_life: document.getElementById('hasShelfLife').checked,
+  expiration_date: document.getElementById('expirationDate').value || null,
+  near_expiry_days: document.getElementById('nearExpiryDays').value || 7
+})
+
+
         });
         const result = await res.json();
         if (result.success) {
@@ -335,44 +370,9 @@ if (!isset($_SESSION['user_id'])) {
     thresholdInput.addEventListener('input', updateStatus);
     updateStatus(); // initial call
 
-    async function refreshInventory() {
-      try {
-        // call your fetch file (the one you pasted)
-        const res = await fetch('inventory_page/fetch_inventory.php');
-        const data = await res.json();
-
-        if (!data.success) return;
-
-        const tbody = document.querySelector('#inventoryTable tbody');
-        tbody.innerHTML = '';
-
-        data.items.forEach(item => {
-          const tr = document.createElement('tr');
-          tr.innerHTML = `
-        <td>${item.id}</td>
-        <td>${item.item_name}</td>
-        <td>${item.available_quantity}</td>
-        <td>${item.unit}</td>
-        <td class="status-${item.status.toLowerCase()}">${item.status}</td>
-        <td>${item.created_at || '—'}</td>
-        <td>${item.updated_at || '—'}</td>
-        <td>
-          <button class="btn" onclick="window.location.href='update_stock.php?id=${item.id}'">Edit</button>
-          <button class="btn btn-delete" onclick="showDeleteModal(${item.id})">Delete</button>
-        </td>
-      `;
-          tbody.appendChild(tr);
-        });
-      } catch (err) {
-        console.error('Error refreshing inventory:', err);
-      }
-    }
-
-    // 🔁 Auto refresh every 5 seconds
-    setInterval(refreshInventory, 5000);
-
-    // Load immediately on page load
-    refreshInventory();
+    // ✅ Use your existing fetchStocks function (paginated + search + status)
+    setInterval(() => fetchStocks(currentPage, currentSearch, filterType.value), 5000);
+    fetchStocks(currentPage);
   </script>
 </body>
 

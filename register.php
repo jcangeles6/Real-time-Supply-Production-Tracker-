@@ -46,28 +46,46 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <title>🌸 BloomLux | Register</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
+        /* ---------------- VARIABLES ---------------- */
         :root {
             --bg: #ffb3ecff;
             --card: #f5f0fa;
             --primary: #2e1a2eff;
-            --text: #000000ff;
-            --highlight: #000000ff;
-            --shadow: 0 3px 10px rgba(0,0,0,0.08);
+            --text: #000;
+            --accent: #2e1a2eff;
+            --shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
         }
 
         body {
             font-family: 'Poppins', sans-serif;
-            background: var(--bg);
             margin: 0;
+            background: var(--bg);
             display: flex;
+            color: var(--text);
             justify-content: center;
             align-items: center;
             height: 100vh;
-            color: var(--text);
+        }
+
+        /* Background with floral image + tint layers */
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            background: url('https://thumbs.dreamstime.com/b/beautiful-colorful-meadow-wild-flowers-floral-background-landscape-purple-pink-sunset-blurred-soft-pastel-magical-332027305.jpg') no-repeat center/cover;
+            z-index: -2;
+        }
+        body::after {
+            content: "";
+            position: fixed;
+            inset: 0;
+            background: linear-gradient(120deg, rgba(214, 122, 177, 0.4), rgba(184, 112, 209, 0.4));
+            backdrop-filter: blur(15px);
+            z-index: -1;
         }
 
         .register-container {
-            background: var(--card);
+            background: var(--bg);
             border-radius: 20px;
             box-shadow: var(--shadow);
             padding: 40px 35px;

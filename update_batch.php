@@ -1,9 +1,9 @@
 <?php
-
-//NOTIFICATION PARA SA BATCHES PRODUCTION (STARTED, COMPLETED)
+// NOTIFICATION PARA SA BATCHES PRODUCTION (STARTED, COMPLETED)
 
 include 'backend/init.php';
 session_start();
+
 $user_id = $_SESSION['user_id'] ?? null;
 
 if (!isset($_GET['id'], $_GET['status'])) {
@@ -23,21 +23,27 @@ if (!in_array($status, $allowed)) {
 }
 
 try {
+    if (!isset($conn) || !$conn instanceof mysqli) {
+        throw new Exception("Database connection error.");
+    }
+
     $conn->begin_transaction();
 
-    // Fetch batch
+    // Fetch batch info
     $stmt = $conn->prepare("SELECT id, status FROM batches WHERE id = ?");
     $stmt->bind_param("i", $id);
     $stmt->execute();
     $batch = $stmt->get_result()->fetch_assoc();
     $stmt->close();
 
-    if (!$batch) throw new Exception("Batch not found.");
+    if (!$batch) {
+        throw new Exception("Batch not found.");
+    }
 
     // --- Start batch → deduct stock ---
     if ($status === 'in_progress' && $batch['status'] !== 'in_progress') {
         $stmt = $conn->prepare("
-            SELECT bm.stock_id, bm.quantity_used, i.quantity AS current_stock, i.item_name
+            SELECT bm.stock_id, bm.quantity_used, i.item_name
             FROM batch_materials bm
             JOIN inventory i ON bm.stock_id = i.id
             WHERE bm.batch_id = ?
@@ -49,17 +55,79 @@ try {
         $stmt->close();
 
         foreach ($materials as $mat) {
-            $new_stock = $mat['current_stock'] - $mat['quantity_used'];
-            if ($new_stock < 0) {
-                throw new Exception("⚠️ Not enough stock for '{$mat['item_name']}'. Needed: {$mat['quantity_used']}, Available: {$mat['current_stock']}");
-            }
-            // Deduct actual inventory
+            $needed = $mat['quantity_used'];
+// Fetch inventory_batches in order of expiry
+$stmt = $conn->prepare("
+    SELECT * FROM inventory_batches
+    WHERE inventory_id = ?
+      AND quantity > 0
+    ORDER BY expiration_date ASC
+    FOR UPDATE
+");
+$stmt->bind_param("i", $mat['stock_id']);
+$stmt->execute();
+$batches = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+$stmt->close();
+
+$has_valid_stock = false;
+
+foreach ($batches as $inv_batch) {
+    // Skip expired
+    if ($inv_batch['expiration_date'] !== null && $inv_batch['expiration_date'] <= date('Y-m-d')) {
+        continue;
+    }
+
+    $has_valid_stock = true;
+
+    if ($needed <= 0) break;
+
+    $use_qty = min($inv_batch['quantity'], $needed);
+    $new_batch_qty = $inv_batch['quantity'] - $use_qty;
+
+    $stmt = $conn->prepare("UPDATE inventory_batches SET quantity = ?, updated_at = NOW() WHERE id = ?");
+    $stmt->bind_param("di", $new_batch_qty, $inv_batch['id']);
+    $stmt->execute();
+    $stmt->close();
+
+    // Record usage
+    $stmt = $conn->prepare("
+        INSERT INTO batch_material_usage (batch_id, stock_id, inventory_batch_id, quantity_used)
+        VALUES (?, ?, ?, ?)
+    ");
+    $stmt->bind_param("iiid", $id, $mat['stock_id'], $inv_batch['id'], $use_qty);
+    $stmt->execute();
+    $stmt->close();
+
+    $needed -= $use_qty;
+}
+
+// If there is no valid stock at all
+if (!$has_valid_stock) {
+    throw new Exception("⚠️ Cannot start batch: '{$mat['item_name']}' has only expired stock.");
+}
+
+// If some stock was used but not enough
+if ($needed > 0) {
+    throw new Exception("⚠️ Not enough stock in batches for '{$mat['item_name']}'");
+}
+
+            // ✅ Update main inventory using total of inventory_batches
+            $stmt = $conn->prepare("
+                SELECT SUM(quantity) AS total_qty FROM inventory_batches WHERE inventory_id = ?
+            ");
+            $stmt->bind_param("i", $mat['stock_id']);
+            $stmt->execute();
+            $res = $stmt->get_result()->fetch_assoc();
+            $stmt->close();
+
+            $total_stock = $res['total_qty'] ?? 0;
+
             $stmt = $conn->prepare("UPDATE inventory SET quantity = ? WHERE id = ?");
-            $stmt->bind_param("ii", $new_stock, $mat['stock_id']);
+            $stmt->bind_param("di", $total_stock, $mat['stock_id']);
             $stmt->execute();
             $stmt->close();
 
-            // Clear reserved quantities
+            // Reset reserved quantities
             $stmt = $conn->prepare("UPDATE batch_materials SET quantity_reserved = 0 WHERE batch_id = ? AND stock_id = ?");
             $stmt->bind_param("ii", $id, $mat['stock_id']);
             $stmt->execute();
@@ -67,7 +135,7 @@ try {
         }
     }
 
-    // --- Complete batch → clear reserved quantities ---
+    // --- Complete batch ---
     if ($status === 'completed') {
         $stmt = $conn->prepare("UPDATE batch_materials SET quantity_reserved = 0 WHERE batch_id = ?");
         $stmt->bind_param("i", $id);
@@ -82,10 +150,64 @@ try {
     $stmt->execute();
     $stmt->close();
 
-    // Log action
+    // --- Cancel batch → refund stock ---
+    if ($status === 'scheduled' && $batch['status'] === 'in_progress') {
+        $stmt = $conn->prepare("
+            SELECT bm.stock_id, bm.quantity_used, i.item_name
+            FROM batch_materials bm
+            JOIN inventory i ON bm.stock_id = i.id
+            WHERE bm.batch_id = ?
+            FOR UPDATE
+        ");
+        $stmt->bind_param("i", $id);
+        $stmt->execute();
+        $materials = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+        $stmt->close();
+
+        foreach ($materials as $mat) {
+            $refund_qty = $mat['quantity_used'];
+
+            $stmt = $conn->prepare("
+                SELECT id, quantity
+                FROM inventory_batches
+                WHERE inventory_id = ?
+                ORDER BY expiration_date DESC
+                LIMIT 1
+                FOR UPDATE
+            ");
+            $stmt->bind_param("i", $mat['stock_id']);
+            $stmt->execute();
+            $batch_row = $stmt->get_result()->fetch_assoc();
+            $stmt->close();
+
+            if ($batch_row) {
+                $new_qty = $batch_row['quantity'] + $refund_qty;
+                $stmt = $conn->prepare("UPDATE inventory_batches SET quantity = ?, updated_at = NOW() WHERE id = ?");
+                $stmt->bind_param("di", $new_qty, $batch_row['id']);
+                $stmt->execute();
+                $stmt->close();
+            }
+
+            $stmt = $conn->prepare("UPDATE inventory SET quantity = quantity + ? WHERE id = ?");
+            $stmt->bind_param("di", $refund_qty, $mat['stock_id']);
+            $stmt->execute();
+            $stmt->close();
+        }
+
+        // Reset material usage
+        $stmt = $conn->prepare("UPDATE batch_materials SET quantity_reserved = quantity_used, quantity_used = 0 WHERE batch_id = ?");
+        $stmt->bind_param("i", $id);
+        $stmt->execute();
+        $stmt->close();
+    }
+
+    // --- Log user action ---
     if ($user_id) {
-        $action = $status === 'in_progress' ? "Batch Started" : ($status === 'completed' ? "Batch Completed" : "");
-        if ($action) {
+        $action = '';
+        if ($status === 'in_progress') $action = "Batch Started";
+        elseif ($status === 'completed') $action = "Batch Completed";
+
+        if ($action !== '') {
             $stmt = $conn->prepare("INSERT INTO batch_log (batch_id, user_id, action, timestamp) VALUES (?, ?, ?, NOW())");
             $stmt->bind_param("iis", $id, $user_id, $action);
             $stmt->execute();
@@ -93,66 +215,61 @@ try {
         }
     }
 
-   // --- Notifications for batch start/completion ---
-// Fetch product_name securely
-$stmt = $conn->prepare("SELECT product_name FROM batches WHERE id = ?");
-$stmt->bind_param("i", $id);
-$stmt->execute();
-$batch_info = $stmt->get_result()->fetch_assoc();
-$stmt->close();
-
-$product_name = $batch_info['product_name'] ?? '';
-
-if ($status === 'in_progress' || $status === 'completed') {
-    $notif_type = 'batch';
-    $notif_message = $status === 'in_progress'
-        ? "🛠️ $product_name - Batch Started"
-        : "✔️ $product_name - Batch Completed";
-
-    // Check if a notification exists for this batch
-    $stmt = $conn->prepare("SELECT id FROM notifications WHERE batch_id = ? AND type = ? LIMIT 1");
-    $stmt->bind_param("is", $id, $notif_type);
+    // --- Notifications ---
+    $stmt = $conn->prepare("SELECT product_name FROM batches WHERE id = ?");
+    $stmt->bind_param("i", $id);
     $stmt->execute();
-    $existing = $stmt->get_result()->fetch_assoc();
+    $batch_info = $stmt->get_result()->fetch_assoc();
     $stmt->close();
 
-    if ($existing) {
-        // Update the notification message and timestamp
-        $stmt = $conn->prepare("UPDATE notifications SET message = ?, created_at = NOW() WHERE id = ?");
-        $stmt->bind_param("si", $notif_message, $existing['id']);
+    $product_name = $batch_info['product_name'] ?? '';
+
+    if ($status === 'in_progress' || $status === 'completed') {
+        $notif_type = 'batch';
+        $notif_message = $status === 'in_progress'
+            ? "🛠️ $product_name - Batch Started"
+            : "✔️ $product_name - Batch Completed";
+
+        $stmt = $conn->prepare("SELECT id FROM notifications WHERE batch_id = ? AND type = ? LIMIT 1");
+        $stmt->bind_param("is", $id, $notif_type);
         $stmt->execute();
+        $existing = $stmt->get_result()->fetch_assoc();
         $stmt->close();
 
-        $notification_id = $existing['id'];
-    } else {
-        // Insert new notification if none exists
-        $stmt = $conn->prepare("INSERT INTO notifications (batch_id, type, message, created_at) VALUES (?, ?, ?, NOW())");
-        $stmt->bind_param("iss", $id, $notif_type, $notif_message);
+        if ($existing) {
+            $stmt = $conn->prepare("UPDATE notifications SET message = ?, created_at = NOW() WHERE id = ?");
+            $stmt->bind_param("si", $notif_message, $existing['id']);
+            $stmt->execute();
+            $stmt->close();
+            $notification_id = $existing['id'];
+        } else {
+            $stmt = $conn->prepare("INSERT INTO notifications (batch_id, type, message, created_at) VALUES (?, ?, ?, NOW())");
+            $stmt->bind_param("iss", $id, $notif_type, $notif_message);
+            $stmt->execute();
+            $notification_id = $stmt->insert_id;
+            $stmt->close();
+        }
+
+        $stmt = $conn->prepare("
+            INSERT INTO user_notifications (user_id, notification_id, is_read)
+            SELECT id, ?, 0 FROM users
+            ON DUPLICATE KEY UPDATE is_read = 0
+        ");
+        $stmt->bind_param("i", $notification_id);
         $stmt->execute();
-        $notification_id = $stmt->insert_id;
         $stmt->close();
     }
-
-    // Reset user_notifications to unread for all users
-    $stmt = $conn->prepare("
-        INSERT INTO user_notifications (user_id, notification_id, is_read)
-        SELECT id, ?, 0 FROM users
-        ON DUPLICATE KEY UPDATE is_read = 0
-    ");
-    $stmt->bind_param("i", $notification_id);
-    $stmt->execute();
-    $stmt->close();
-}
-
-
-
 
     $conn->commit();
     header("Location: production.php");
     exit();
+
 } catch (Exception $e) {
-    $conn->rollback();
+    if ($conn && $conn->errno === 0) {
+        $conn->rollback();
+    }
     $_SESSION['batch_error'] = "❌ Error: " . $e->getMessage();
     header("Location: production.php");
     exit();
 }
+    

@@ -47,11 +47,23 @@ $username = $user['username'] ?? 'User';
 
 <!-- Main -->
 <div class="main">
-    <h1>🌸 BloomLux Inventory Dashboard 🌸</h1>
-    <div id="clock"></div>
+    <div class="top-bar">
+        <div class="welcome">🍰 Materials Inventory List</div>
+        <div class="top-right">
+            <div id="live-time">⏰ Loading...</div>
+            <div class="search-bar">
+            </div>
+            <div class="notif" id="notif-icon">
+                🔔
+                <span id="notif-badge" style="background:red;color:white;font-size:0.75rem;border-radius:50%;padding:2px 6px;position:absolute;top:-5px;right:-5px;display:none;">0</span>
+            </div>
+            <div id="notif-dropdown">
+                <ul id="notif-feed"></ul>
+            </div>
+        </div>
+    </div>
 
     <div class="card">
-        <h3>🍰 Materials Inventory List</h3>
         <table>
             <thead>
                 <tr>
@@ -125,13 +137,6 @@ async function fetchInventory() {
         console.error('Error fetching inventory:', err);
     }
 }
-function updateClock() {
-    const now = new Date();
-    document.getElementById('clock').innerText =
-        "📅 " + now.toLocaleDateString() + " | ⏰ " + now.toLocaleTimeString();
-}
-setInterval(updateClock, 1000);
-window.onload = updateClock;
 
 // Fetch immediately
 fetchInventory();
@@ -141,22 +146,6 @@ setInterval(() => {
     const searchValue = document.getElementById('searchInput').value.trim();
     if (searchValue === '') fetchInventory();
 }, 15000);
-
-// Live search (frontend filter) with debounce
-document.getElementById('searchInput').addEventListener('input', function() {
-    const filter = this.value.toLowerCase();
-
-    // Clear any scheduled fetchInventory call
-    if (fetchTimeout) clearTimeout(fetchTimeout);
-
-    // Debounce: only apply filter 300ms after user stops typing
-    fetchTimeout = setTimeout(() => {
-        document.querySelectorAll('#inventoryBody tr').forEach(tr => {
-            const name = tr.children[1].textContent.toLowerCase();
-            tr.style.display = name.includes(filter) ? '' : 'none';
-        });
-    }, 300);
-});
 
 </script>
 

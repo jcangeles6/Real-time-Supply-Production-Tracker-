@@ -7,36 +7,46 @@ ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 
+// --- Get batch info ---
+$current_batch_id = isset($_GET['batch_id']) ? intval($_GET['batch_id']) : 0;
+$search = $_GET['search'] ?? '';
+$is_edit = $current_batch_id > 0;
+
+// --- Fetch inventory with available stock ---
 $stmt = $conn->prepare("
     SELECT 
-        i.id, 
-        i.item_name, 
-        i.quantity - IFNULL(SUM(bm.quantity_reserved), 0) AS available_quantity
+        i.id,
+        i.item_name,
+        COALESCE(SUM(ib.quantity),0) AS total_stock,
+        COALESCE(SUM(CASE WHEN b.id IS NULL THEN 0 ELSE bm.quantity_reserved END),0) AS reserved_stock,
+        COALESCE(SUM(ib.quantity),0) - COALESCE(SUM(CASE WHEN b.id IS NULL THEN 0 ELSE bm.quantity_reserved END),0) AS available_quantity
     FROM inventory i
+    LEFT JOIN inventory_batches ib 
+        ON ib.inventory_id = i.id 
+        AND (ib.expiration_date IS NULL OR ib.expiration_date >= CURDATE())
     LEFT JOIN batch_materials bm 
         ON bm.stock_id = i.id
     LEFT JOIN batches b 
-        ON bm.batch_id = b.id AND b.is_deleted = 0
+        ON bm.batch_id = b.id 
+        AND b.is_deleted = 0
+        AND bm.batch_id != ?
     WHERE i.item_name LIKE CONCAT('%', ?, '%')
     GROUP BY i.id
-    ORDER BY i.item_name ASC
 ");
-
-$search = $_GET['search'] ?? '';
-$stmt->bind_param("s", $search);
+$stmt->bind_param("is", $current_batch_id, $search);
 $stmt->execute();
 $inventory_items = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 $stmt->close();
 
-
-// Prefill variables
+// --- Prefill batch variables ---
 $product_type_prefill = $_GET['product_name'] ?? '';
 $quantity_prefill = $_GET['quantity'] ?? '';
 $materials_prefill = [];
 
-if (isset($_GET['batch_id'])) {
-    $batch_id = intval($_GET['batch_id']);
+if ($is_edit) {
+    $batch_id = $current_batch_id;
 
+    // Fetch batch materials
     $matQuery = $conn->prepare("
         SELECT i.id as stock_id, i.item_name, bm.quantity_used
         FROM batch_materials bm
@@ -48,6 +58,7 @@ if (isset($_GET['batch_id'])) {
     $materials_prefill = $matQuery->get_result()->fetch_all(MYSQLI_ASSOC);
     $matQuery->close();
 
+    // Fetch batch info
     $stmt = $conn->prepare("SELECT product_name, quantity FROM batches WHERE id = ?");
     $stmt->bind_param("i", $batch_id);
     $stmt->execute();
@@ -59,9 +70,11 @@ if (isset($_GET['batch_id'])) {
     }
 }
 
+// --- Initialize messages ---
 $message = '';
 $messageType = '';
 
+// --- Handle POST ---
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $product_type = trim($_POST['product_type'] ?? '');
     $batch_quantity = intval($_POST['batch_quantity'] ?? 0);
@@ -76,17 +89,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } else {
         $conn->begin_transaction();
         try {
-            $batch_id = isset($_GET['batch_id']) ? intval($_GET['batch_id']) : null;
-            $is_edit = $batch_id !== null;
+            $batch_id = $is_edit ? $current_batch_id : null;
 
             if ($is_edit) {
-                // Fetch old batch
+                // --- Edit existing batch ---
                 $stmt = $conn->prepare("SELECT status FROM batches WHERE id = ?");
                 $stmt->bind_param("i", $batch_id);
                 $stmt->execute();
                 $oldBatch = $stmt->get_result()->fetch_assoc();
                 $stmt->close();
-
                 if (!$oldBatch) throw new Exception("Batch not found");
                 $old_status = $oldBatch['status'];
 
@@ -111,6 +122,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             if ($mat['id'] == $oMat['stock_id']) $found = true;
                         }
                         if (!$found) {
+                            // Refund to inventory_batches (FIFO)
+                            $stmt = $conn->prepare("
+                                SELECT id FROM inventory_batches
+                                WHERE inventory_id = ? ORDER BY expiration_date ASC
+                            ");
+                            $stmt->bind_param("i", $oMat['stock_id']);
+                            $stmt->execute();
+                            $batches = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+                            $stmt->close();
+
+                            $remaining = $oMat['quantity_used'];
+                            foreach ($batches as $batch) {
+                                $stmt = $conn->prepare("UPDATE inventory_batches SET quantity = quantity + ? WHERE id = ?");
+                                $stmt->bind_param("di", $remaining, $batch['id']);
+                                $stmt->execute();
+                                $stmt->close();
+                                break; // fully refunded into first batch
+                            }
+
+                            // Refund main inventory too
                             $stmt = $conn->prepare("UPDATE inventory SET quantity = quantity + ? WHERE id = ?");
                             $stmt->bind_param("ii", $oMat['quantity_used'], $oMat['stock_id']);
                             $stmt->execute();
@@ -124,8 +155,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmt->bind_param("i", $batch_id);
                 $stmt->execute();
                 $stmt->close();
+
             } else {
-                // New batch insert
+                // --- New batch ---
                 $stmt = $conn->prepare("INSERT INTO batches (product_name, status, scheduled_at, quantity) VALUES (?, 'scheduled', NOW(), ?)");
                 $stmt->bind_param("si", $product_type, $batch_quantity);
                 $stmt->execute();
@@ -136,7 +168,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $old_status = 'scheduled';
             }
 
-            // --- MATERIALS HANDLING ---
+            // --- Materials Handling ---
             foreach ($materials as $mat) {
                 $stock_id = intval($mat['id']);
                 $new_qty = intval($mat['quantity']);
@@ -150,7 +182,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmt->close();
                 if (!$stockData) throw new Exception("Material not found");
 
-                // Old quantity
                 $old_qty = 0;
                 if ($is_edit) {
                     foreach ($oldMaterials as $oMat) {
@@ -160,84 +191,159 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 // Reserved stock in other batches
                 $stmt = $conn->prepare("
-                SELECT SUM(bm.quantity_reserved) AS total_reserved
-                FROM batch_materials bm
-                JOIN batches b ON bm.batch_id = b.id
-                WHERE bm.stock_id = ?
-                AND bm.batch_id != ?
-                AND b.is_deleted = 0
-            ");
-            $stmt->bind_param("ii", $stock_id, $batch_id);
-            $stmt->execute();
-            $res = $stmt->get_result()->fetch_assoc();
-            $reservedSum = $res['total_reserved'] ?? 0;
-            $stmt->close();
+                    SELECT SUM(bm.quantity_reserved) AS total_reserved
+                    FROM batch_materials bm
+                    JOIN batches b ON bm.batch_id = b.id
+                    WHERE bm.stock_id = ? AND bm.batch_id != ? AND b.is_deleted = 0
+                ");
+                $stmt->bind_param("ii", $stock_id, $batch_id);
+                $stmt->execute();
+                $res = $stmt->get_result()->fetch_assoc();
+                $reservedSum = $res['total_reserved'] ?? 0;
+                $stmt->close();
 
-                $available_stock = $stockData['quantity'] - $reservedSum;
-                if (!$is_edit || $old_status !== 'in_progress') {
+                // Available stock from inventory_batches
+                $stmt = $conn->prepare("
+                    SELECT id, quantity
+                    FROM inventory_batches
+                    WHERE inventory_id = ? AND (expiration_date IS NULL OR expiration_date >= CURDATE())
+                    ORDER BY expiration_date ASC
+                    FOR UPDATE
+                ");
+                $stmt->bind_param("i", $stock_id);
+                $stmt->execute();
+                $batches = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+                $stmt->close();
+
+                $available_batches = array_sum(array_column($batches, 'quantity'));
+                $available_stock = max(0, $available_batches - $reservedSum);
+
+                // Check stock
+                if ($is_edit && $old_status === 'in_progress') {
+                    if ($new_qty > $old_qty + $available_stock) {
+                        throw new Exception("⚠️ Not enough stock for '{$stockData['item_name']}'. Max allowed: " . ($old_qty + $available_stock));
+                    }
+                } else {
                     if ($new_qty > $available_stock) {
                         throw new Exception("⚠️ Not enough stock for '{$stockData['item_name']}'. Needed: {$new_qty}, Available: {$available_stock}");
                     }
                 }
 
+              // Deduct/refund stock for in-progress batch using batch_material_usage
+if ($old_status === 'in_progress') {
+    $diff = $new_qty - $old_qty;
 
-                // Adjust inventory if in-progress
-                if ($old_status === 'in_progress') {
-                    $diff = $new_qty - $old_qty;
-                    if ($diff != 0) {
-                        $stmt = $conn->prepare("UPDATE inventory SET quantity = quantity - ? WHERE id = ?");
-                        $stmt->bind_param("ii", $diff, $stock_id);
-                        $stmt->execute();
-                        $stmt->close();
-                    }
-                }
+    if ($diff != 0) {
+        // Fetch how stock was originally used per inventory batch
+        $stmt = $conn->prepare("
+            SELECT inventory_batch_id, quantity_used
+            FROM batch_material_usage
+            WHERE batch_id = ? AND stock_id = ?
+        ");
+        $stmt->bind_param("ii", $batch_id, $stock_id);
+        $stmt->execute();
+        $usage_rows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+        $stmt->close();
 
+        if ($diff > 0) {
+            // Increase usage: deduct from oldest available batches (FIFO)
+            $remaining = $diff;
+            $stmt = $conn->prepare("
+                SELECT id, quantity 
+                FROM inventory_batches 
+                WHERE inventory_id = ? AND (expiration_date IS NULL OR expiration_date >= CURDATE())
+                ORDER BY expiration_date ASC
+                FOR UPDATE
+            ");
+            $stmt->bind_param("i", $stock_id);
+            $stmt->execute();
+            $batches = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+            $stmt->close();
+
+            foreach ($batches as $batch) {
+                if ($remaining <= 0) break;
+                $take = min($batch['quantity'], $remaining);
+
+                $stmt = $conn->prepare("UPDATE inventory_batches SET quantity = quantity - ? WHERE id = ?");
+                $stmt->bind_param("di", $take, $batch['id']);
+                $stmt->execute();
+                $stmt->close();
+
+                // Record usage
+                $stmt = $conn->prepare("
+                    INSERT INTO batch_material_usage (batch_id, stock_id, inventory_batch_id, quantity_used, created_at)
+                    VALUES (?, ?, ?, ?, NOW())
+                    ON DUPLICATE KEY UPDATE quantity_used = quantity_used + VALUES(quantity_used)
+                ");
+                $stmt->bind_param("iiid", $batch_id, $stock_id, $batch['id'], $take);
+                $stmt->execute();
+                $stmt->close();
+
+                $remaining -= $take;
+            }
+
+        } else {
+            // Decrease usage: refund exactly to the batches used before
+            $remaining = abs($diff);
+$usage_rows = array_reverse($usage_rows); // Refund newest batches first
+foreach ($usage_rows as $usage) {
+    if ($remaining <= 0) break;
+    $refund = min($usage['quantity_used'], $remaining);
+
+    // Refund this batch
+    $stmt = $conn->prepare("UPDATE inventory_batches SET quantity = quantity + ? WHERE id = ?");
+    $stmt->bind_param("di", $refund, $usage['inventory_batch_id']);
+    $stmt->execute();
+    $stmt->close();
+
+    // Update usage
+    $stmt = $conn->prepare("
+        UPDATE batch_material_usage 
+        SET quantity_used = quantity_used - ? 
+        WHERE batch_id = ? AND stock_id = ? AND inventory_batch_id = ?
+    ");
+    $stmt->bind_param("diii", $refund, $batch_id, $stock_id, $usage['inventory_batch_id']);
+    $stmt->execute();
+    $stmt->close();
+
+    $remaining -= $refund;
+}
+
+        }
+
+        // Adjust main inventory
+        $stmt = $conn->prepare("UPDATE inventory SET quantity = quantity - ? WHERE id = ?");
+        $stmt->bind_param("ii", $diff, $stock_id);
+        $stmt->execute();
+        $stmt->close();
+    }
+}
                 // Reserved quantity
                 $reserved_qty = ($old_status === 'in_progress') ? 0 : $new_qty;
 
-                // Insert/update
+                // Insert or update batch_materials
                 $stmt = $conn->prepare("
-        INSERT INTO batch_materials (batch_id, stock_id, quantity_used, quantity_reserved)
-        VALUES (?, ?, ?, ?)
-        ON DUPLICATE KEY UPDATE quantity_used = VALUES(quantity_used), quantity_reserved = VALUES(quantity_reserved)
-    ");
+                    INSERT INTO batch_materials (batch_id, stock_id, quantity_used, quantity_reserved)
+                    VALUES (?, ?, ?, ?)
+                    ON DUPLICATE KEY UPDATE quantity_used = VALUES(quantity_used), quantity_reserved = VALUES(quantity_reserved)
+                ");
                 $stmt->bind_param("iiii", $batch_id, $stock_id, $new_qty, $reserved_qty);
                 $stmt->execute();
                 $stmt->close();
             }
 
-
-
             $conn->commit();
-            // --- Log user action (Batch Created or Updated) ---
+
+            // Log user action
             if (isset($_SESSION['user_id'])) {
                 $user_id = $_SESSION['user_id'];
                 $action = $is_edit ? "Batch Updated" : "Batch Created";
-
                 $stmt = $conn->prepare("INSERT INTO batch_log (batch_id, user_id, action, timestamp) VALUES (?, ?, ?, NOW())");
                 $stmt->bind_param("iis", $batch_id, $user_id, $action);
                 $stmt->execute();
                 $stmt->close();
             }
 
-
-            // --- REFRESH materials_prefill so form shows latest DB data ---
-            $matQuery = $conn->prepare("
-            SELECT i.id as stock_id, i.item_name, bm.quantity_used
-            FROM batch_materials bm
-            JOIN inventory i ON bm.stock_id = i.id
-            WHERE bm.batch_id = ?
-        ");
-            $matQuery->bind_param("i", $batch_id);
-            $matQuery->execute();
-            $materials_prefill = $matQuery->get_result()->fetch_all(MYSQLI_ASSOC);
-            $matQuery->close();
-
-            // --- Log user action (Batch Created or Updated) ---
-            if (isset($_SESSION['user_id'])) {
-                $user_id = $_SESSION['user_id'];
-                $action = $is_edit ? "Batch Updated" : "Batch Created";
-            }
             $messageType = 'success';
             $message = $is_edit ? "✅ Batch '$product_type' updated successfully!" : "✅ Batch '$product_type' added successfully!";
         } catch (Exception $e) {
@@ -247,7 +353,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 }
+
 ?>
+
 
 <!DOCTYPE html>
 <html lang="en">
@@ -258,27 +366,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <title>Add / Edit Batch | BloomLux</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/home.css">
-    <style>
-        .batch-container { display:flex; justify-content:center; align-items:flex-start; }
-        .batch-card { max-width: 600px; width:100%; margin:10px auto; }
-        .batch-card h2 { color: var(--primary); margin-bottom: 20px; text-align: center; }
-        .form-label { display:block; font-weight:600; color: var(--primary); margin:12px 0 6px; }
-        .form-input, .form-select { width:100%; padding:12px; border:1px solid #ddd; border-radius:10px; background:#fff; font-size:15px; transition:0.2s; box-sizing:border-box; margin-bottom:10px; }
-        .form-input:focus, .form-select:focus { outline:none; border-color: var(--primary); box-shadow: 0 0 6px rgba(46,26,46,0.25); }
-        .material-row { background: rgba(255,255,255,0.5); padding:15px; border-radius:12px; margin-bottom:15px; border:1px solid rgba(255,255,255,0.3); }
-        .submit-btn, .action-btn { width:100%; padding:12px; background: linear-gradient(135deg, #ffb3ec, #2e1a2eff); color:#fff; border:none; border-radius:12px; font-weight:600; cursor:pointer; transition:0.2s ease; margin-top:8px; margin-bottom:10px; }
-        .submit-btn:hover, .action-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(46,26,46,0.25); }
-        .action-btn { background: linear-gradient(135deg, #2e1a2eff, #4a2a4a); }
-        .back-link { display:inline-block; margin-bottom:15px; color:#fff; background: linear-gradient(135deg, #ff9eb3, #ff4d4d); text-decoration:none; padding:10px 18px; border-radius:10px; font-weight:600; transition:0.2s; }
-        .back-link:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(255,77,77,0.3); }
-        .removeMaterialBtn { background:#b22222 !important; color:#fff !important; border:none !important; border-radius:8px !important; padding:8px 14px !important; margin-top:8px !important; cursor:pointer !important; font-weight:500 !important; transition:0.2s !important; }
-        .removeMaterialBtn:hover { background:#8b1a1a !important; transform: translateY(-1px); }
-        .modal { display:none; position:fixed; z-index:999; left:0; top:0; width:100%; height:100%; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); }
-        .modal-content { background:#fff; border-radius:15px; padding:25px; max-width:400px; margin:15% auto; text-align:center; box-shadow: 0 8px 32px rgba(0,0,0,0.3); animation: popIn 0.3s ease; }
-        @keyframes popIn { from { transform: scale(0.9); opacity:0; } to { transform: scale(1); opacity:1; } }
-        .close-btn { background: linear-gradient(135deg, #ffb3ec, #2e1a2eff); color:#fff; border:none; border-radius:8px; padding:10px 20px; cursor:pointer; margin-top:15px; transition:0.2s; font-weight:600; }
-        .close-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(46,26,46,0.25); }
-    </style>
+    <link rel="stylesheet" href="css/add_batch.css">
 </head>
 
 <body>
@@ -296,8 +384,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <div class="main">
         <div class="section-container batch-container">
             <div class="card batch-card">
-                <a href="production.php" class="back-link">← Back to Production</a>
-                <h2>🍞 Add / Edit Batch</h2>
+                <h2>🌸 Add / Edit Batch 🌸</h2>
                 <form id="batchForm" method="POST">
                     <label class="form-label">Product Type</label>
                     <input class="form-input" type="text" name="product_type" value="<?php echo htmlspecialchars($product_type_prefill); ?>" required>
@@ -320,17 +407,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                     </select>
                                     <label class="form-label">Quantity</label>
                                     <input class="form-input" type="number"
-                                        name="materials[<?php echo $index; ?>][quantity]"
-                                        value="<?php echo htmlspecialchars($mat['quantity_used']); ?>"
-                                        min="1"
-                                        max="<?php
-                                                foreach ($inventory_items as $item) {
-                                                    if ($item['id'] == $mat['stock_id']) {
-                                                        echo max(1, $item['available_quantity'] + $mat['quantity_used']);
-                                                    }
-                                                }
-                                                ?>"
-                                        required>
+    name="materials[<?php echo $index; ?>][quantity]"
+value="<?php echo intval($mat['quantity_used']); ?>"
+    min="1"
+    max="<?php
+        $maxQty = 0;
+        foreach ($inventory_items as $item) {
+            if ($item['id'] == $mat['stock_id']) {
+                $available = $item['available_quantity'];
+                if ($is_edit) $available += $mat['quantity_used'];
+                $maxQty = max($available, $mat['quantity_used'], 1);
+                break;
+            }
+        }
+        echo $maxQty;
+    ?>"
+    required>
+
                                     <button type="button" class="removeMaterialBtn">Remove</button>
                                 </div>
                             <?php endforeach; ?>
@@ -341,8 +434,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                     <option value="">-- Select Material --</option>
                                     <?php foreach ($inventory_items as $item): ?>
                                         <option value="<?php echo $item['id']; ?>">
-                                            <?php echo htmlspecialchars($item['item_name']); ?> (Available: <?php echo max(0, $item['available_quantity']); ?>)
-                                        </option>
+    <?php echo htmlspecialchars($item['item_name']); ?> (Available: <?php echo intval(max(0, $item['available_quantity'])); ?>)
+</option>
+
                                     <?php endforeach; ?>
                                 </select>
                                 <label class="form-label">Quantity</label>
@@ -381,9 +475,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <select class="form-select" name="materials[${index}][id]" required>
                 <option value="">-- Select Material --</option>
                 <?php foreach ($inventory_items as $item): ?>
-                <option value="<?php echo $item['id']; ?>">
-                    <?php echo htmlspecialchars($item['item_name']); ?> (Available: <?php echo max(0, $item['available_quantity']); ?>)
-                </option>
+<option value="<?php echo $item['id']; ?>">
+    <?php echo htmlspecialchars($item['item_name']); ?> (Available: <?php echo intval(max(0, $item['available_quantity'])); ?>)
+</option>
+
                 <?php endforeach; ?>
             </select>
             <label class="form-label">Quantity</label>
