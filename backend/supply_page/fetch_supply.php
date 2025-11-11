@@ -16,6 +16,7 @@ $reserved_stmt = $conn->prepare("
     JOIN batches b ON bm.batch_id = b.id
     WHERE bm.stock_id = ? 
       AND b.status IN ('scheduled','in_progress')
+      AND (b.is_deleted = 0 OR b.is_deleted IS NULL)
 ");
 
 $threshold_stmt = $conn->prepare("

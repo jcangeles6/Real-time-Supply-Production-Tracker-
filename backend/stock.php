@@ -1,13 +1,20 @@
 <?php
-header('Content-Type: application/json');
 session_start();
 include '../db.php';
 
+header('Content-Type: application/json');
+
 // Helper function to get JSON input
-function getJsonInput()
-{
+function getJsonInput() {
     $input = file_get_contents('php://input');
     return json_decode($input, true);
+}
+
+function isJsonRequest(): bool {
+    if (!isset($_SERVER['CONTENT_TYPE'])) {
+        return false;
+    }
+    return stripos($_SERVER['CONTENT_TYPE'], 'application/json') === 0;
 }
 
 // Ensure user is logged in
@@ -57,6 +64,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         i.unit,
         i.created_at,
         i.updated_at,
+        i.image_path,
         COALESCE(SUM(
             CASE 
                 WHEN (ib.expiration_date IS NULL OR ib.expiration_date >= CURDATE())
@@ -111,6 +119,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             'quantity' => $available_quantity, // show real available
             'unit' => $row['unit'],
             'status' => $status,
+            'image_path' => $row['image_path'],
             'created_at' => $row['created_at'],
             'updated_at' => $row['updated_at']
         ];
@@ -144,21 +153,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
 
 // POST → add new stock
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $data = getJsonInput();
+    if (isJsonRequest()) {
+        $data = getJsonInput() ?? [];
+    } else {
+        $data = $_POST;
+    }
 
-    if (empty($data['item_name']) || !isset($data['quantity']) || !isset($data['unit'])) {
+    if (!isset($data['item_name'], $data['quantity'], $data['unit']) || trim($data['item_name']) === '') {
         http_response_code(400);
         echo json_encode(['error' => 'Missing required fields']);
         exit();
     }
 
     $item_name = trim($data['item_name']);
-    $quantity = intval($data['quantity']);
+    $quantity = isset($data['quantity']) ? intval($data['quantity']) : 0;
     $unit = trim($data['unit']);
     $threshold = isset($data['threshold']) ? max(1, intval($data['threshold'])) : 10;
 
     // ✅ Optional shelf life support
-    $has_shelf_life = isset($data['has_shelf_life']) ? (bool)$data['has_shelf_life'] : false;
+    $has_shelf_life = !empty($data['has_shelf_life']) && $data['has_shelf_life'] !== '0';
     $expiration_date = ($has_shelf_life && !empty($data['expiration_date'])) ? $data['expiration_date'] : NULL;
     $near_expiry_days = ($has_shelf_life && !empty($data['near_expiry_days'])) ? intval($data['near_expiry_days']) : 7;
 
@@ -169,6 +182,56 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($quantity < 0) {
         http_response_code(400);
         echo json_encode(['error' => 'Quantity must be 0 or greater']);
+        exit();
+    }
+
+    $image_path = NULL;
+    $upload_error = null;
+
+    if (!empty($_FILES['item_image']) && $_FILES['item_image']['error'] !== UPLOAD_ERR_NO_FILE) {
+        $fileError = $_FILES['item_image']['error'];
+        if ($fileError === UPLOAD_ERR_OK) {
+            $allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+            $detectedType = $_FILES['item_image']['type'] ?? '';
+            if (function_exists('finfo_open')) {
+                $finfo = finfo_open(FILEINFO_MIME_TYPE);
+                if ($finfo) {
+                    $detectedType = finfo_file($finfo, $_FILES['item_image']['tmp_name']);
+                    finfo_close($finfo);
+                }
+            }
+            if (!in_array($detectedType, $allowedTypes, true)) {
+                http_response_code(400);
+                echo json_encode(['error' => 'Unsupported image format. Use JPG, PNG, GIF or WEBP.']);
+                exit();
+            }
+
+            $uploadDir = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . 'inventory';
+            if (!is_dir($uploadDir)) {
+                mkdir($uploadDir, 0775, true);
+            }
+
+            $extension = pathinfo($_FILES['item_image']['name'], PATHINFO_EXTENSION);
+            $extension = strtolower(preg_replace('/[^a-zA-Z0-9]/', '', $extension));
+            if ($extension === '') {
+                $extension = 'jpg';
+            }
+            $filename = uniqid('stock_', true) . '.' . $extension;
+            $targetPath = $uploadDir . DIRECTORY_SEPARATOR . $filename;
+            if (move_uploaded_file($_FILES['item_image']['tmp_name'], $targetPath)) {
+                // Store web-friendly path
+                $image_path = 'uploads/inventory/' . $filename;
+            } else {
+                $upload_error = 'Failed to save uploaded image.';
+            }
+        } else {
+            $upload_error = 'Image upload error (code ' . $fileError . ').';
+        }
+    }
+
+    if ($upload_error) {
+        http_response_code(400);
+        echo json_encode(['error' => $upload_error]);
         exit();
     }
 
@@ -190,9 +253,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // ✅ Insert new stock with expiration support
 $stmt = $conn->prepare("INSERT INTO inventory 
-    (item_name, quantity, unit, expiration_date, near_expiry_days, status, created_at, updated_at)
-    VALUES (?, ?, ?, ?, ?, ?, NOW(), NOW())");
-$stmt->bind_param("sissis", $item_name, $quantity, $unit, $expiration_date, $near_expiry_days, $status);
+    (item_name, quantity, unit, expiration_date, near_expiry_days, status, created_at, updated_at, image_path)
+    VALUES (?, ?, ?, ?, ?, ?, NOW(), NOW(), ?)");
+$stmt->bind_param("sississ", $item_name, $quantity, $unit, $expiration_date, $near_expiry_days, $status, $image_path);
 
 if ($stmt->execute()) {
     $new_item_id = $stmt->insert_id;
@@ -260,7 +323,8 @@ if ($quantity > 0) {
                 'quantity' => $quantity,
                 'unit' => $unit,
                 'expiration_date' => $expiration_date,
-                'status' => $status
+                'status' => $status,
+                'image_path' => $image_path
             ]
         ]);
     } else {

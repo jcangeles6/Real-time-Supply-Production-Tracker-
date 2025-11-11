@@ -828,3 +828,10 @@ h1 {
             transform: translateY(-1px); 
             box-shadow: 0 4px 12px rgba(46,26,46,0.25); 
         }
+        .wait-text {
+            display: block;
+            margin-top: 4px;
+            color: #777;
+            font-size: 0.85em;
+            font-style: italic;
+        }

@@ -122,24 +122,53 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             if ($mat['id'] == $oMat['stock_id']) $found = true;
                         }
                         if (!$found) {
-                            // Refund to inventory_batches (FIFO)
+                            // Refund using recorded usage so freshest stock returns first
                             $stmt = $conn->prepare("
-                                SELECT id FROM inventory_batches
-                                WHERE inventory_id = ? ORDER BY expiration_date ASC
+                                SELECT bmu.inventory_batch_id, bmu.quantity_used
+                                FROM batch_material_usage bmu
+                                LEFT JOIN inventory_batches ib ON bmu.inventory_batch_id = ib.id
+                                WHERE bmu.batch_id = ? AND bmu.stock_id = ?
+                                ORDER BY 
+                                    CASE WHEN ib.expiration_date IS NULL THEN 1 ELSE 0 END,
+                                    ib.expiration_date ASC,
+                                    bmu.inventory_batch_id ASC
                             ");
-                            $stmt->bind_param("i", $oMat['stock_id']);
+                            $stmt->bind_param("ii", $batch_id, $oMat['stock_id']);
                             $stmt->execute();
-                            $batches = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+                            $usageRows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
                             $stmt->close();
 
+                            $usageRows = array_reverse($usageRows); // refund fresh batches first
                             $remaining = $oMat['quantity_used'];
-                            foreach ($batches as $batch) {
+                            foreach ($usageRows as $usage) {
+                                if ($remaining <= 0) break;
+                                $refund = min($usage['quantity_used'], $remaining);
+
                                 $stmt = $conn->prepare("UPDATE inventory_batches SET quantity = quantity + ? WHERE id = ?");
-                                $stmt->bind_param("di", $remaining, $batch['id']);
+                                $stmt->bind_param("di", $refund, $usage['inventory_batch_id']);
                                 $stmt->execute();
                                 $stmt->close();
-                                break; // fully refunded into first batch
+
+                                $stmt = $conn->prepare("
+                                    UPDATE batch_material_usage
+                                    SET quantity_used = quantity_used - ?
+                                    WHERE batch_id = ? AND stock_id = ? AND inventory_batch_id = ?
+                                ");
+                                $stmt->bind_param("diii", $refund, $batch_id, $oMat['stock_id'], $usage['inventory_batch_id']);
+                                $stmt->execute();
+                                $stmt->close();
+
+                                $remaining -= $refund;
                             }
+
+                            // Remove depleted usage rows
+                            $stmt = $conn->prepare("
+                                DELETE FROM batch_material_usage
+                                WHERE batch_id = ? AND stock_id = ? AND quantity_used <= 0
+                            ");
+                            $stmt->bind_param("ii", $batch_id, $oMat['stock_id']);
+                            $stmt->execute();
+                            $stmt->close();
 
                             // Refund main inventory too
                             $stmt = $conn->prepare("UPDATE inventory SET quantity = quantity + ? WHERE id = ?");
@@ -169,6 +198,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
             // --- Materials Handling ---
+            $insufficientStocks = [];
             foreach ($materials as $mat) {
                 $stock_id = intval($mat['id']);
                 $new_qty = intval($mat['quantity']);
@@ -219,14 +249,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $available_stock = max(0, $available_batches - $reservedSum);
 
                 // Check stock
+                $maxAllowed = $available_stock;
                 if ($is_edit && $old_status === 'in_progress') {
-                    if ($new_qty > $old_qty + $available_stock) {
-                        throw new Exception("⚠️ Not enough stock for '{$stockData['item_name']}'. Max allowed: " . ($old_qty + $available_stock));
-                    }
-                } else {
-                    if ($new_qty > $available_stock) {
-                        throw new Exception("⚠️ Not enough stock for '{$stockData['item_name']}'. Needed: {$new_qty}, Available: {$available_stock}");
-                    }
+                    $maxAllowed = $old_qty + $available_stock;
+                }
+                if ($new_qty > $maxAllowed) {
+                    $insufficientStocks[] = "⚠️ Not enough stock for '{$stockData['item_name']}'. Needed: {$new_qty}, Available: {$maxAllowed}";
+                    continue;
                 }
 
               // Deduct/refund stock for in-progress batch using batch_material_usage
@@ -236,9 +265,14 @@ if ($old_status === 'in_progress') {
     if ($diff != 0) {
         // Fetch how stock was originally used per inventory batch
         $stmt = $conn->prepare("
-            SELECT inventory_batch_id, quantity_used
-            FROM batch_material_usage
-            WHERE batch_id = ? AND stock_id = ?
+            SELECT bmu.inventory_batch_id, bmu.quantity_used
+            FROM batch_material_usage bmu
+            LEFT JOIN inventory_batches ib ON bmu.inventory_batch_id = ib.id
+            WHERE bmu.batch_id = ? AND bmu.stock_id = ?
+            ORDER BY 
+                CASE WHEN ib.expiration_date IS NULL THEN 1 ELSE 0 END,
+                ib.expiration_date ASC,
+                bmu.inventory_batch_id ASC
         ");
         $stmt->bind_param("ii", $batch_id, $stock_id);
         $stmt->execute();
@@ -283,9 +317,9 @@ if ($old_status === 'in_progress') {
             }
 
         } else {
-            // Decrease usage: refund exactly to the batches used before
+            // Decrease usage: refund freshest allocations first
             $remaining = abs($diff);
-$usage_rows = array_reverse($usage_rows); // Refund newest batches first
+            $usage_rows = array_reverse($usage_rows);
 foreach ($usage_rows as $usage) {
     if ($remaining <= 0) break;
     $refund = min($usage['quantity_used'], $remaining);
@@ -330,6 +364,10 @@ foreach ($usage_rows as $usage) {
                 $stmt->bind_param("iiii", $batch_id, $stock_id, $new_qty, $reserved_qty);
                 $stmt->execute();
                 $stmt->close();
+            }
+
+            if (!empty($insufficientStocks)) {
+                throw new Exception(implode(" | ", $insufficientStocks));
             }
 
             $conn->commit();
@@ -439,6 +477,9 @@ value="<?php echo intval($mat['quantity_used']); ?>"
 
                                     <?php endforeach; ?>
                                 </select>
+
+                                 <small class="wait-text">⏳ Please wait at least 3 - 5 seconds</small>
+
                                 <label class="form-label">Quantity</label>
                                 <input class="form-input" type="number" name="materials[0][quantity]" min="1" max="9999" required>
                                 <button type="button" class="removeMaterialBtn">Remove</button>
@@ -466,6 +507,14 @@ value="<?php echo intval($mat['quantity_used']); ?>"
             const addMaterialBtn = document.getElementById('addMaterialBtn');
             let materialIndex = <?php echo count($materials_prefill) ?: 1; ?>;
 
+            function attachSelectListeners(selectEl) {
+                if (!selectEl) return;
+                const triggerUpdate = () => updateStockOptions();
+                selectEl.addEventListener('focus', triggerUpdate);
+                selectEl.addEventListener('mousedown', triggerUpdate);
+                selectEl.addEventListener('click', triggerUpdate);
+            }
+
             // Function to create a new material row
             function createMaterialRow(index) {
                 const div = document.createElement('div');
@@ -486,6 +535,7 @@ value="<?php echo intval($mat['quantity_used']); ?>"
             <button type="button" class="removeMaterialBtn">Remove</button>
         `;
                 div.querySelector('.removeMaterialBtn').addEventListener('click', () => div.remove());
+                attachSelectListeners(div.querySelector('select'));
                 return div;
             }
 
@@ -544,6 +594,8 @@ value="<?php echo intval($mat['quantity_used']); ?>"
 
             setInterval(updateStockOptions, 5000);
             updateStockOptions();
+
+            materialsContainer.querySelectorAll('select.form-select').forEach(attachSelectListeners);
 
             // Modal logic
             const messageModal = document.getElementById('messageModal');

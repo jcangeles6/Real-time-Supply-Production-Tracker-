@@ -14,28 +14,34 @@ try {
         i.id,
         i.item_name,
         i.unit,
+        i.quantity AS total_quantity,
         i.created_at,
         i.updated_at,
-        COALESCE(SUM(
-            CASE 
-                WHEN (ib.expiration_date IS NULL OR ib.expiration_date >= CURDATE()) 
-                THEN ib.quantity 
-                ELSE 0 
-            END
-        ), 0) AS available_quantity,
-        t.threshold
+        i.image_path,
+        COALESCE(t.threshold, 10) AS threshold,
+        COALESCE(res.reserved_quantity, 0) AS reserved_quantity
     FROM inventory i
-    LEFT JOIN inventory_batches ib ON ib.inventory_id = i.id
     LEFT JOIN stock_thresholds t ON i.id = t.item_id
-    GROUP BY i.id
-    ORDER BY available_quantity DESC, i.item_name ASC
+    LEFT JOIN (
+        SELECT 
+            bm.stock_id,
+            SUM(bm.quantity_reserved) AS reserved_quantity
+        FROM batch_materials bm
+        JOIN batches b ON bm.batch_id = b.id
+        WHERE b.status IN ('scheduled', 'in_progress')
+          AND (b.is_deleted = 0 OR b.is_deleted IS NULL)
+        GROUP BY bm.stock_id
+    ) res ON res.stock_id = i.id
+    ORDER BY i.item_name ASC
 ");
     $stmt->execute();
     $result = $stmt->get_result();
 
     $items = [];
     while ($row = $result->fetch_assoc()) {
-        $available_quantity = (int)$row['available_quantity'];
+        $total_quantity = isset($row['total_quantity']) ? (float)$row['total_quantity'] : 0;
+        $reserved = isset($row['reserved_quantity']) ? (float)$row['reserved_quantity'] : 0;
+        $available_quantity = max($total_quantity - $reserved, 0);
         $threshold = isset($row['threshold']) ? (int)$row['threshold'] : 0;
 
         if ($available_quantity <= 0) $status = 'Out of Stock';
@@ -49,8 +55,10 @@ try {
             'id' => $row['id'],
             'item_name' => $row['item_name'],
             'unit' => $row['unit'],
+            'total_quantity' => $total_quantity,
             'available_quantity' => $available_quantity,
             'status' => $status,
+            'image_path' => $row['image_path'],
             'created_at' => $created_at,
             'updated_at' => $updated_at
         ];

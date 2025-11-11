@@ -59,7 +59,7 @@ if (!isset($_SESSION['user_id'])) {
     <div id="addStockForm" class="form-box">
       <h2>➕ Add Item</h2>
       <div id="formMsg"></div>
-      <form id="stockForm">
+      <form id="stockForm" enctype="multipart/form-data">
         <label>Item Name</label>
         <input type="text" name="item_name" required>
 
@@ -108,6 +108,9 @@ if (!isset($_SESSION['user_id'])) {
           <option value="m">Meters (M)</option>
           <option value="pcs">Pieces</option>
         </select>
+
+        <label>Photo</label>
+        <input type="file" name="item_image" accept="image/*">
 
         <button type="submit">Add Stock</button>
       </form>
@@ -279,27 +282,22 @@ if (!isset($_SESSION['user_id'])) {
 
     document.getElementById('stockForm').addEventListener('submit', async (e) => {
       e.preventDefault();
-      const formData = Object.fromEntries(new FormData(e.target).entries());
+      const formElement = e.target;
+      const formData = new FormData(formElement);
+      formData.set('has_shelf_life', document.getElementById('hasShelfLife').checked ? '1' : '0');
+      formData.set('expiration_date', document.getElementById('expirationDate').value || '');
+      formData.set('near_expiry_days', document.getElementById('nearExpiryDays').value || '7');
       const msgDiv = document.getElementById('formMsg');
       try {
         const res = await fetch(apiUrl, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-         body: JSON.stringify({
-  ...formData,
-  has_shelf_life: document.getElementById('hasShelfLife').checked,
-  expiration_date: document.getElementById('expirationDate').value || null,
-  near_expiry_days: document.getElementById('nearExpiryDays').value || 7
-})
-
-
+          body: formData
         });
         const result = await res.json();
         if (result.success) {
           msgDiv.innerHTML = '<div class="success-msg">Stock added successfully! ✅</div>';
-          e.target.reset();
+          formElement.reset();
+          expirationField.style.display = 'none';
           fetchStocks(currentPage, currentSearch, filterType.value);
         } else {
           msgDiv.innerHTML = `<div class="error-msg">${result.error || 'Failed to add stock'}</div>`;

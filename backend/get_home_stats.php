@@ -5,18 +5,26 @@ session_start();
 $response = ['success' => false];
 
 try {
-    // ✅ Materials in stock (only non-expired)
-    // Uses inventory_batches safely without assuming an is_deleted column
+    // ✅ Materials in stock (available quantity minus reserved, same logic as supply/inventory views)
     $stmt = $conn->prepare("
         SELECT 
             COALESCE(SUM(
-                CASE 
-                    WHEN expiration_date IS NULL OR expiration_date >= CURDATE()
-                    THEN quantity
-                    ELSE 0
-                END
+                GREATEST(
+                    i.quantity - COALESCE(res.reserved_quantity, 0),
+                    0
+                )
             ), 0) AS totalMaterials
-        FROM inventory_batches
+        FROM inventory i
+        LEFT JOIN (
+            SELECT 
+                bm.stock_id,
+                SUM(bm.quantity_reserved) AS reserved_quantity
+            FROM batch_materials bm
+            JOIN batches b ON bm.batch_id = b.id
+            WHERE b.status IN ('scheduled', 'in_progress')
+              AND (b.is_deleted = 0 OR b.is_deleted IS NULL)
+            GROUP BY bm.stock_id
+        ) res ON res.stock_id = i.id
     ");
     $stmt->execute();
     $materials = (float)$stmt->get_result()->fetch_assoc()['totalMaterials'];

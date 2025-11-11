@@ -71,7 +71,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $update_stmt->bind_param("ii", $failed_attempts, $user_id);
                 $update_stmt->execute();
 
-                $error_message = "Invalid username or password. Attempts left: " . (5 - $failed_attempts);
+                $error_message = "Invalid username or password. Attempts left: " . (3 - $failed_attempts);
             }
         }
     } else {

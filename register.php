@@ -20,20 +20,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if (strlen($password) < 8 || !$uppercase || !$number || !$specialChars) {
             $message = "❌ Password must be at least 8 characters long and include 1 uppercase letter, 1 number, and 1 special character.";
-        }
-    }
-
-    if (empty($message)) {
-        $hashed_password = password_hash($password, PASSWORD_DEFAULT);
-        $hashed_answer   = password_hash($security_answer, PASSWORD_DEFAULT);
-
-        $stmt = $conn->prepare("INSERT INTO users (username, email, password, security_question, security_answer) VALUES (?, ?, ?, ?, ?)");
-        $stmt->bind_param("sssss", $username, $email, $hashed_password, $security_question, $hashed_answer);
-
-        if ($stmt->execute()) {
-            $message = "✅ Registration successful. You can now <a href='login.php'>log in</a>.";
         } else {
-            $message = "❌ Error: This username or email might already be taken.";
+            // ✅ Check if username or email already exists
+            $check = $conn->prepare("SELECT * FROM users WHERE username = ? OR email = ?");
+            $check->bind_param("ss", $username, $email);
+            $check->execute();
+            $result = $check->get_result();
+
+            if ($result->num_rows > 0) {
+                $message = "❌ Username or Email already exists. Please choose another.";
+            } else {
+                // Hash password and answer
+                $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+                $hashed_answer   = password_hash($security_answer, PASSWORD_DEFAULT);
+
+                // Insert new user
+                $stmt = $conn->prepare("INSERT INTO users (username, email, password, security_question, security_answer) VALUES (?, ?, ?, ?, ?)");
+                $stmt->bind_param("sssss", $username, $email, $hashed_password, $security_question, $hashed_answer);
+
+                if ($stmt->execute()) {
+                    $message = "✅ Registration successful. You can now <a href='login.php'>log in</a>.";
+                } else {
+                    $message = "❌ Error occurred during registration. Please try again.";
+                }
+                $stmt->close();
+            }
+            $check->close();
         }
     }
 }

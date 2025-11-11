@@ -6,10 +6,12 @@ $daily_batches_stmt = $conn->prepare("
     SELECT COUNT(*) as count 
     FROM batches 
     WHERE DATE(scheduled_at) = CURDATE() 
+      AND status = 'scheduled'
       AND is_deleted = 0
 ");
 $daily_batches_stmt->execute();
 $daily_batches = $daily_batches_stmt->get_result()->fetch_assoc()['count'];
+
 
 $in_progress_stmt = $conn->prepare("
     SELECT COUNT(*) as count 
@@ -26,6 +28,18 @@ $completed_today_stmt = $conn->prepare("
 ");
 $completed_today_stmt->execute();
 $completed_today = $completed_today_stmt->get_result()->fetch_assoc()['count'];
+
+function formatDurationSeconds(int $seconds): string {
+    $seconds = max(0, $seconds);
+    $hours = intdiv($seconds, 3600);
+    $minutes = intdiv($seconds % 3600, 60);
+    $secs = $seconds % 60;
+
+    if ($hours > 0) {
+        return sprintf('%d:%02d:%02d', $hours, $minutes, $secs);
+    }
+    return sprintf('%d:%02d', $minutes, $secs);
+}
 
 $ingredients_stmt = $conn->prepare("
     SELECT COUNT(*) as count 
@@ -123,6 +137,38 @@ if (!$batches) die("SQL Error: " . $conn->error);
 
         function closeBreakdownModal() {
             document.getElementById('breakdownModal').style.display = 'none';
+        }
+
+        function updateBatchTimers() {
+            const now = Date.now();
+            document.querySelectorAll('.batch-timer[data-start]').forEach(timer => {
+                const start = Date.parse(timer.getAttribute('data-start'));
+                if (!start || Number.isNaN(start)) return;
+                const elapsedMs = now - start;
+                if (elapsedMs < 0) {
+                    timer.textContent = '⏱ 0:00';
+                    return;
+                }
+                const totalSeconds = Math.floor(elapsedMs / 1000);
+                const hours = Math.floor(totalSeconds / 3600);
+                const minutes = Math.floor((totalSeconds % 3600) / 60);
+                const seconds = totalSeconds % 60;
+                const formatted = hours > 0
+                    ? `${hours}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
+                    : `${minutes}:${String(seconds).padStart(2, '0')}`;
+                timer.textContent = `⏱ ${formatted}`;
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            updateBatchTimers();
+            setInterval(updateBatchTimers, 1000);
+        });
+        function openBreakdownModal() {
+            document.getElementById("breakdownModal").style.display = "flex";
+        }
+        function closeBreakdownModal() {
+            document.getElementById("breakdownModal").style.display = "none";
         }
     </script>
 </head>
@@ -294,7 +340,24 @@ if (!$batches) die("SQL Error: " . $conn->error);
                         </td>
                         <td class="status-<?= $row['status'] ?>"><?= ucfirst($row['status']) ?></td>
                         <td><?= date("M d, Y, h:i A", strtotime($row['scheduled_at'])) ?></td>
-                        <td><?= $row['completed_at'] ? date("M d, Y, h:i A", strtotime($row['completed_at'])) : '—' ?></td>
+                        <td>
+                            <?php
+                            $startedAt = $row['started_at'] ? strtotime($row['started_at']) : null;
+                            $completedAt = $row['completed_at'] ? strtotime($row['completed_at']) : null;
+                            if ($row['status'] === 'in_progress' && $startedAt):
+                                $startIso = date(DATE_ATOM, $startedAt);
+                            ?>
+                                <div class="timestamp-label" style="display:none;">Started <?= date("M d, Y, h:i A", $startedAt) ?></div>
+                                <div class="batch-timer" data-start="<?= htmlspecialchars($startIso) ?>">⏱ 0:00</div>
+                            <?php elseif ($row['status'] === 'completed' && $completedAt): ?>
+                                <div><?= date("M d, Y, h:i A", $completedAt) ?></div>
+                                <?php if ($startedAt): ?>
+                                    <div class="timer-duration">⏱ <?= formatDurationSeconds($completedAt - $startedAt) ?></div>
+                                <?php endif; ?>
+                            <?php else: ?>
+                                —
+                            <?php endif; ?>
+                        </td>
                         <td class="actions">
                             <?php if ($row['status'] === 'scheduled'): ?>
                                 <?php if ($startDisabled): ?>

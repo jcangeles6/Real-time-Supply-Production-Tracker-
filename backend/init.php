@@ -1,21 +1,45 @@
 <?php
-ini_set('session.cookie_httponly', 1);
-ini_set('session.use_strict_mode', 1);
-// ini_set('session.cookie_secure', 1); // Uncomment if using HTTPS AND FOR DEPLOYING
+include __DIR__ . '/../db.php'; // Always include DB first
 
-include __DIR__ . '/../db.php'; // ensures it always points to root db.php
+// ------------------ SESSION SETTINGS ------------------
+$cookie_lifetime = 3600; // 1 hour
+$cookie_path = '/';
+$cookie_domain = ''; // current domain
+$cookie_secure = true; // ✅ set true since InfinityFree uses HTTPS
+$cookie_httponly = true;
+$cookie_samesite = 'Lax'; // can be 'Strict' later
+
+session_set_cookie_params([
+    'lifetime' => $cookie_lifetime,
+    'path' => $cookie_path,
+    'domain' => $cookie_domain,
+    'secure' => $cookie_secure,
+    'httponly' => $cookie_httponly,
+    'samesite' => $cookie_samesite
+]);
+
+// Hardening
+ini_set('session.use_strict_mode', 1);
+
 session_start();
 mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 
-function handle_error($user_message = "Something went wrong. Please try again later.", $error_detail = null) {
-    // Log the detailed error for developers
+// Track last activity (optional)
+if (!isset($_SESSION['last_activity'])) {
+    $_SESSION['last_activity'] = time();
+} else {
+    $_SESSION['last_activity'] = time();
+}
+
+// ------------------ ERROR HANDLER ------------------
+function handle_error($user_message = "Something went wrong. Please try again later.", $error_detail = null)
+{
     if ($error_detail) {
         error_log("[" . date('Y-m-d H:i:s') . "] ERROR: " . $error_detail . "\n", 3, __DIR__ . "/error_log.txt");
     }
 
-    // Detect if it's an AJAX request
     $is_ajax = isset($_SERVER['HTTP_X_REQUESTED_WITH']) &&
-               strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
+        strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
 
     if ($is_ajax) {
         echo json_encode([
@@ -85,24 +109,26 @@ function handle_error($user_message = "Something went wrong. Please try again la
         </body>
         </html>";
     }
-
     exit;
 }
 
-// Pages that do NOT require login
-$no_redirect_pages = ['login.php','register.php','forgot_password.php','reset_password.php'];
+// ------------------ LOGIN HANDLING ------------------
+$no_redirect_pages = ['login.php', 'register.php', 'forgot_password.php', 'reset_password.php'];
 
 if (!isset($_SESSION['user_id']) && !in_array(basename($_SERVER['PHP_SELF']), $no_redirect_pages)) {
     header("Location: login.php");
     exit();
 }
-function redirect_if_logged_in() {
+
+function redirect_if_logged_in()
+{
     if (isset($_SESSION['user_id'])) {
         header("Location: home.php");
         exit();
     }
 }
 
-// Prevent caching
+// ------------------ CACHE PREVENTION ------------------
 header("Cache-Control: no-store, no-cache, must-revalidate");
 header("Pragma: no-cache");
+?>

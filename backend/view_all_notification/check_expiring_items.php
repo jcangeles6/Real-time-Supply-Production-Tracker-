@@ -2,10 +2,9 @@
 header('Content-Type: application/json');
 include __DIR__ . '/../init.php';
 
-// Number of days before expiration to warn
 $daysBeforeExpire = 3;
 
-// ✅ Updated query — removed `b.is_deleted`
+// ✅ Safe parameterized SELECT
 $query = $conn->prepare("
     SELECT 
         i.item_name,
@@ -22,6 +21,7 @@ $query->execute();
 $result = $query->get_result();
 
 $count = 0;
+
 while ($row = $result->fetch_assoc()) {
     $item = $row['item_name'];
     $batchId = $row['batch_id'];
@@ -33,7 +33,7 @@ while ($row = $result->fetch_assoc()) {
         ? "💀 {$item} (Batch #{$batchId}) has expired!"
         : "⏳ {$item} (Batch #{$batchId}) will expire on {$expDate}!";
 
-    // Avoid duplicates
+    // ✅ Safe check query
     $exists = $conn->prepare("SELECT id FROM notifications WHERE batch_id = ? AND type = ?");
     $exists->bind_param('is', $batchId, $type);
     $exists->execute();
@@ -46,14 +46,17 @@ while ($row = $result->fetch_assoc()) {
         ");
         $insertNotif->bind_param('iss', $batchId, $type, $message);
         $insertNotif->execute();
+        $notifId = $conn->insert_id;
         $insertNotif->close();
 
-        // Assign to all users (if user_notifications table exists)
-        $notifId = $conn->insert_id;
-        $conn->query("
+        // Safe insert into user_notifications using prepared statement
+        $userInsert = $conn->prepare("
             INSERT INTO user_notifications (user_id, notification_id, is_read)
-            SELECT id, {$notifId}, 0 FROM users
+            SELECT id, ?, 0 FROM users
         ");
+        $userInsert->bind_param('i', $notifId);
+        $userInsert->execute();
+        $userInsert->close();
 
         $count++;
     }

@@ -95,6 +95,41 @@ $username = $user['username'] ?? 'User';
     </div>
 </div>
 
+<!-- Image Zoom Modal -->
+<div id="imageModal" class="image-modal">
+  <span class="close-btn">&times;</span>
+  <img class="modal-content" id="modalImage">
+</div>
+
+<script>
+document.addEventListener("click", function(e) {
+  if (e.target.classList.contains("product-image")) {
+    const modal = document.getElementById("imageModal");
+    const modalImg = document.getElementById("modalImage");
+    const bgImage = getComputedStyle(e.target).backgroundImage;
+
+    // Extract actual image URL from background-image: url("...")
+    const imageUrl = bgImage.slice(5, -2);
+    modal.style.display = "flex";
+    modalImg.src = imageUrl;
+  }
+});
+
+// Close button
+document.querySelector(".close-btn").onclick = function() {
+  document.getElementById("imageModal").style.display = "none";
+};
+
+// Click outside to close
+window.onclick = function(event) {
+  const modal = document.getElementById("imageModal");
+  if (event.target === modal) {
+    modal.style.display = "none";
+  }
+};
+</script>
+
+
 <script src="js/time.js"></script>
 <script src="js/notification.js"></script>
 <script>
@@ -119,10 +154,19 @@ async function fetchInventory() {
 
         pageItems.forEach(row => {
             const tr = document.createElement('tr');
+            let imageStyle = '';
+            if (row.image_path) {
+                let imageUrl = row.image_path.replace(/'/g, '%27');
+                imageUrl = encodeURI(imageUrl);
+                imageStyle = `style="background-image:url('${imageUrl}')"`
+            }
+            const initial = row.image_path ? '' : `<span class="product-initial">${row.item_name.charAt(0).toUpperCase()}</span>`;
+
             tr.innerHTML = `
                 <td>${row.id}</td>
                 <td class="product-image-cell">
-                    <div class="product-image product-${row.item_name.toLowerCase().replace(/\s+/g, '-')}">
+                    <div class="product-image" ${imageStyle}>
+                        ${initial}
                     </div>
                 </td> 
                 <td>${row.item_name}</td>

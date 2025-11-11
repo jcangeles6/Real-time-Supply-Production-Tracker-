@@ -141,11 +141,22 @@ if ($needed > 0) {
         $stmt->bind_param("i", $id);
         $stmt->execute();
         $stmt->close();
-
-        $stmt = $conn->prepare("UPDATE batches SET status = ?, completed_at = NOW() WHERE id = ?");
-    } else {
-        $stmt = $conn->prepare("UPDATE batches SET status = ? WHERE id = ?");
     }
+
+    $updateFields = ["status = ?"];
+    if ($status === 'in_progress') {
+        $updateFields[] = "started_at = COALESCE(started_at, NOW())";
+        $updateFields[] = "completed_at = NULL";
+    } elseif ($status === 'completed') {
+        $updateFields[] = "completed_at = NOW()";
+        $updateFields[] = "started_at = COALESCE(started_at, NOW())";
+    } elseif ($status === 'scheduled') {
+        $updateFields[] = "started_at = NULL";
+        $updateFields[] = "completed_at = NULL";
+    }
+
+    $sql = "UPDATE batches SET " . implode(', ', $updateFields) . " WHERE id = ?";
+    $stmt = $conn->prepare($sql);
     $stmt->bind_param("si", $status, $id);
     $stmt->execute();
     $stmt->close();

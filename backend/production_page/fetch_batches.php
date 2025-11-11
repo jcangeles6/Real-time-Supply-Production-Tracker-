@@ -4,6 +4,17 @@
 
 include '../init.php'; // adjust path if needed
 
+function formatDurationSeconds(int $seconds): string {
+    $seconds = max(0, $seconds);
+    $hours = intdiv($seconds, 3600);
+    $minutes = intdiv($seconds % 3600, 60);
+    $secs = $seconds % 60;
+    if ($hours > 0) {
+        return sprintf('%d:%02d:%02d', $hours, $minutes, $secs);
+    }
+    return sprintf('%d:%02d', $minutes, $secs);
+}
+
 $status_filter = $_GET['status_filter'] ?? 'all';
 
 try {
@@ -104,7 +115,24 @@ try {
             </td>
             <td class="status-<?= htmlspecialchars($row['status']) ?>"><?= ucfirst(htmlspecialchars($row['status'])) ?></td>
             <td><?= date("M d, Y, h:i A", strtotime($row['scheduled_at'])) ?></td>
-            <td><?= $row['completed_at'] ? date("M d, Y, h:i A", strtotime($row['completed_at'])) : '—' ?></td>
+            <td>
+                <?php
+                $startedAt = $row['started_at'] ? strtotime($row['started_at']) : null;
+                $completedAt = $row['completed_at'] ? strtotime($row['completed_at']) : null;
+                if ($row['status'] === 'in_progress' && $startedAt):
+                    $startIso = date(DATE_ATOM, $startedAt);
+                ?>
+                    <div class="timestamp-label" style="display:none;">Started <?= date("M d, Y, h:i A", $startedAt) ?></div>
+                    <div class="batch-timer" data-start="<?= htmlspecialchars($startIso) ?>">⏱ 0:00</div>
+                <?php elseif ($row['status'] === 'completed' && $completedAt): ?>
+                    <div><?= date("M d, Y, h:i A", $completedAt) ?></div>
+                    <?php if ($startedAt): ?>
+                        <div class="timer-duration">⏱ <?= formatDurationSeconds($completedAt - $startedAt) ?></div>
+                    <?php endif; ?>
+                <?php else: ?>
+                    —
+                <?php endif; ?>
+            </td>
             <td class="actions">
                 <?php if ($row['status'] === 'scheduled'): ?>
                     <?php if ($startDisabled): ?>
