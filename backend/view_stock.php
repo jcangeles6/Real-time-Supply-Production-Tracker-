@@ -50,11 +50,192 @@ $batch_stmt->close();
     <title>🌸 View Stock - <?= htmlspecialchars($inventory['item_name']); ?></title>
     <link rel="stylesheet" href="../css/add_stock.css">
     <style>
-        /* Color-coded status */
-        .status-expired { color: red; font-weight: bold; }
-        .status-near { color: orange; font-weight: bold; }
-        .status-fresh { color: green; font-weight: bold; }
-        .status-none { color: gray; font-weight: bold; }
+        /* 🌸 BloomLux Glassmorphic Table Theme */
+        body {
+            margin: 0;
+            font-family: 'Poppins', sans-serif;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #1e0e1e;
+            color: #fff;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* 🌺 Background Layers */
+        body::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: url('https://thumbs.dreamstime.com/b/beautiful-colorful-meadow-wild-flowers-floral-background-landscape-purple-pink-sunset-blurred-soft-pastel-magical-332027305.jpg')
+                no-repeat center/cover;
+            filter: blur(8px) brightness(0.7);
+            transform: scale(1.05);
+            z-index: 0;
+        }
+
+        body::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(120deg, rgba(255, 179, 236, 0.25), rgba(211, 164, 255, 0.25));
+            z-index: 1;
+            animation: hueShift 12s infinite alternate ease-in-out;
+        }
+
+        /* 🌼 Main Glass Container */
+        .main {
+            position: relative;
+            z-index: 2;
+            width: 90%;
+            max-width: 1100px;
+            margin: 60px auto;
+            padding: 40px 50px;
+            background: rgba(255, 255, 255, 0.12);
+            border-radius: 24px;
+            backdrop-filter: blur(18px) saturate(180%);
+            -webkit-backdrop-filter: blur(18px) saturate(180%);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3),
+                        0 0 20px rgba(255, 179, 236, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            animation: fadeIn 0.7s ease;
+        }
+
+        /* 🌷 Title */
+        h1 {
+            text-align: center;
+            color: #fff;
+            font-weight: 700;
+            margin-bottom: 30px;
+            text-shadow: 0 0 15px rgba(255, 179, 236, 0.6);
+        }
+
+        /* 🩷 Back Button */
+        .back-btn {
+            display: inline-block;
+            background: linear-gradient(120deg, #ffb3ec, #d3a4ff);
+            color: #2e1a2e;
+            padding: 10px 20px;
+            border-radius: 30px;
+            text-decoration: none;
+            font-weight: 600;
+            box-shadow: 0 0 15px rgba(255, 179, 236, 0.3);
+            transition: 0.3s ease;
+            margin-bottom: 20px;
+        }
+        .back-btn:hover {
+            background: linear-gradient(120deg, #ffc7f5, #e3baff);
+            transform: scale(1.05);
+            box-shadow: 0 0 25px rgba(255, 179, 236, 0.6);
+        }
+
+        /* 🌸 Table */
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        table thead th {
+            background: linear-gradient(120deg, #ffb3ec, #d3a4ff);
+            color: #2e1a2e;
+            padding: 14px 16px;
+            font-size: 1rem;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        table tbody td {
+            background: rgba(255, 255, 255, 0.1);
+            text-align: center;
+            padding: 14px 12px;
+            color: #fff;
+            font-size: 0.95rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        table tbody tr:nth-child(even) td {
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        table tbody tr:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.01);
+            transition: 0.25s ease-in-out;
+            box-shadow: 0 0 20px rgba(255, 179, 236, 0.4);
+        }
+
+        /* 🌼 Table Links */
+        table a {
+            color: #ffb3ec;
+            font-weight: 600;
+            text-decoration: none;
+            transition: 0.2s ease;
+        }
+        table a:hover {
+            text-decoration: underline;
+            color: #ffd6fa;
+        }
+
+        /* 🌺 Status Colors */
+        .status-expired { color: #ff7b7b; font-weight: bold; }
+        .status-near { color: #ffc85f; font-weight: bold; }
+        .status-fresh { color: #b0ffb0; font-weight: bold; }
+        .status-none { color: #cfcfcf; font-weight: bold; }
+
+        /* ✨ Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes hueShift {
+            0% { filter: hue-rotate(0deg); }
+            100% { filter: hue-rotate(40deg); }
+        }
+
+        /* 📱 Responsive Table */
+        @media (max-width: 768px) {
+            .main {
+                width: 95%;
+                padding: 25px;
+            }
+
+            table {
+                width: 100%;
+                font-size: 0.85rem;
+            }
+            table thead {
+                display: none;
+            }
+            table tbody tr {
+                display: block;
+                margin-bottom: 15px;
+                background: rgba(255, 255, 255, 0.12);
+                border-radius: 12px;
+                padding: 10px;
+            }
+            table tbody td {
+                display: flex;
+                justify-content: space-between;
+                text-align: right;
+                padding: 8px 10px;
+                border: none;
+            }
+            table tbody td::before {
+                content: attr(data-label);
+                font-weight: bold;
+                color: #ffb3ec;
+                text-align: left;
+            }
+        }
+
     </style>
 </head>
 <body>

@@ -81,7 +81,146 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
     <meta charset="UTF-8">
     <title>✏️ Edit Batch</title>
-    <link rel="stylesheet" href="../css/add_stock.css">
+    <style>
+        /* 🌸 BloomLux Glassmorphic Dashboard Theme */
+        body {
+            margin: 0;
+            font-family: 'Poppins', sans-serif;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #1e0e1e;
+            color: #fff;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* 🌺 Background image + tint layers */
+        body::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: url('https://thumbs.dreamstime.com/b/beautiful-colorful-meadow-wild-flowers-floral-background-landscape-purple-pink-sunset-blurred-soft-pastel-magical-332027305.jpg') no-repeat center/cover;
+            z-index: 0;
+            filter: blur(8px) brightness(0.7);
+            transform: scale(1.05);
+        }
+
+        body::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(120deg, rgba(255, 179, 236, 0.25), rgba(211, 164, 255, 0.25));
+            z-index: 1;
+            animation: hueShift 12s infinite alternate ease-in-out;
+        }
+
+        /* 🌸 Main glass container */
+        .main {
+            position: relative;
+            z-index: 2;
+            background: rgba(255, 255, 255, 0.12);
+            backdrop-filter: blur(18px) saturate(180%);
+            border-radius: 24px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3),
+                        0 0 20px rgba(255, 179, 236, 0.2);
+            padding: 40px 60px;
+            text-align: center;
+            width: 400px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            animation: fadeIn 0.7s ease;
+        }
+
+        /* 🌼 Text */
+        h1 {
+            font-size: 1.8em;
+            color: #fff;
+            margin-bottom: 25px;
+            text-shadow: 0 0 10px rgba(255, 179, 236, 0.5);
+        }
+
+        /* 🩷 Labels + Inputs */
+        label {
+            display: block;
+            text-align: left;
+            margin-top: 15px;
+            font-weight: 600;
+            color: #fbeaff;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px 12px;
+            border: none;
+            border-radius: 12px;
+            margin-top: 8px;
+            background: rgba(255, 255, 255, 0.2);
+            color: #fff;
+            font-size: 1em;
+            backdrop-filter: blur(8px);
+            outline: none;
+            transition: 0.3s ease;
+        }
+
+        input:focus {
+            background: rgba(255, 255, 255, 0.3);
+            box-shadow: 0 0 8px rgba(255, 179, 236, 0.5);
+        }
+
+        /* 💾 Buttons */
+        button {
+            margin-top: 25px;
+            background: linear-gradient(120deg, #ffb3ec, #d3a4ff);
+            border: none;
+            color: #2e1a2e;
+            padding: 10px 25px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 1em;
+            box-shadow: 0 0 15px rgba(255, 179, 236, 0.4);
+            transition: 0.3s ease;
+        }
+
+        button:hover {
+            background: linear-gradient(120deg, #ffc7f5, #e3baff);
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(255, 179, 236, 0.6);
+        }
+
+        /* ⬅ Back button */
+        .back-btn {
+            display: inline-block;
+            margin-bottom: 20px;
+            background: linear-gradient(120deg, #ffb3ec, #d3a4ff);
+            color: #2e1a2e;
+            padding: 8px 18px;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: 600;
+            box-shadow: 0 0 15px rgba(255, 179, 236, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .back-btn:hover {
+            background: linear-gradient(120deg, #ffc7f5, #e3baff);
+            transform: scale(1.05);
+            box-shadow: 0 0 25px rgba(255, 179, 236, 0.6);
+        }
+
+        /* ✨ Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes hueShift {
+            0% { filter: hue-rotate(0deg); }
+            100% { filter: hue-rotate(40deg); }
+        }
+
+    </style>
 </head>
 <body>
 <div class="main">
